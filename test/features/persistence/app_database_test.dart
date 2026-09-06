@@ -10,8 +10,12 @@ void main() {
   tearDown(() => db.close());
 
   group('the database', () {
-    test('opens at schema version 1', () async {
-      expect(db.schemaVersion, 1);
+    test('opens at the current schema version', () async {
+      // Bumped to 2 by add-remote-config, which added the config cache table.
+      // Asserted by number rather than loosely, so a schema change has to
+      // change a test that names the version — and, with it, produce a
+      // snapshot and a migration.
+      expect(db.schemaVersion, 2);
       // Force the connection open — schemaVersion alone is a Dart getter and
       // would pass without sqlite ever being touched.
       await db.customSelect('SELECT 1').get();

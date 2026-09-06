@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "ads.interstitial_node_interval": 3,
+  "ads.interstitial_minimum_gap_seconds": 90,
+  "ads.interstitials_per_session": 6
+}

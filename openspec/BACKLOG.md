@@ -183,6 +183,8 @@ AdMob with mediation. Interstitial only after node completion, after celebration
 **Depends on:** 15.
 **Watch for:** the caps are the feature. Ship the placement rules as testable logic, not as an ad-SDK configuration someone can quietly loosen later.
 
+**Already done for you by change 4.** The D-24 volume caps are remotely tunable and read from `ConfigValue` — consume them rather than re-deciding where they live. They are clamped so a config can only tighten them, never loosen them, and *placement* is deliberately not configurable at all. `lib/features/remote_config/PUBLISHING.md` is the specification for the config document.
+
 ### 25. `add-rewarded-video`
 **Capabilities:** `ads`
 Opt-in rewarded placements: a hint, an auto-notes charge, doubling a chest, one bonus daily chest (D-26).

@@ -3075,6 +3075,310 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $ConfigCacheTable extends ConfigCache
+    with TableInfo<$ConfigCacheTable, ConfigCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConfigCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _documentMeta = const VerificationMeta(
+    'document',
+  );
+  @override
+  late final GeneratedColumn<String> document = GeneratedColumn<String>(
+    'document',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _validatorMeta = const VerificationMeta(
+    'validator',
+  );
+  @override
+  late final GeneratedColumn<String> validator = GeneratedColumn<String>(
+    'validator',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, document, validator, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'config_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ConfigCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('document')) {
+      context.handle(
+        _documentMeta,
+        document.isAcceptableOrUnknown(data['document']!, _documentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentMeta);
+    }
+    if (data.containsKey('validator')) {
+      context.handle(
+        _validatorMeta,
+        validator.isAcceptableOrUnknown(data['validator']!, _validatorMeta),
+      );
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ConfigCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ConfigCacheData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      document: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document'],
+      )!,
+      validator: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}validator'],
+      ),
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ConfigCacheTable createAlias(String alias) {
+    return $ConfigCacheTable(attachedDatabase, alias);
+  }
+}
+
+class ConfigCacheData extends DataClass implements Insertable<ConfigCacheData> {
+  /// Always [singletonId]. One config, one row.
+  final int id;
+
+  /// The document exactly as fetched, re-parsed on read rather than stored
+  /// pre-parsed: the parser is where per-key fallback and clamping happen, and
+  /// a cached config must go through both again after an app upgrade that
+  /// changed either.
+  final String document;
+
+  /// The server's entity tag, sent on the next fetch so an unchanged document
+  /// costs a round trip and no payload.
+  final String? validator;
+  final DateTime fetchedAt;
+  const ConfigCacheData({
+    required this.id,
+    required this.document,
+    this.validator,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['document'] = Variable<String>(document);
+    if (!nullToAbsent || validator != null) {
+      map['validator'] = Variable<String>(validator);
+    }
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  ConfigCacheCompanion toCompanion(bool nullToAbsent) {
+    return ConfigCacheCompanion(
+      id: Value(id),
+      document: Value(document),
+      validator: validator == null && nullToAbsent
+          ? const Value.absent()
+          : Value(validator),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory ConfigCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ConfigCacheData(
+      id: serializer.fromJson<int>(json['id']),
+      document: serializer.fromJson<String>(json['document']),
+      validator: serializer.fromJson<String?>(json['validator']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'document': serializer.toJson<String>(document),
+      'validator': serializer.toJson<String?>(validator),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  ConfigCacheData copyWith({
+    int? id,
+    String? document,
+    Value<String?> validator = const Value.absent(),
+    DateTime? fetchedAt,
+  }) => ConfigCacheData(
+    id: id ?? this.id,
+    document: document ?? this.document,
+    validator: validator.present ? validator.value : this.validator,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  ConfigCacheData copyWithCompanion(ConfigCacheCompanion data) {
+    return ConfigCacheData(
+      id: data.id.present ? data.id.value : this.id,
+      document: data.document.present ? data.document.value : this.document,
+      validator: data.validator.present ? data.validator.value : this.validator,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfigCacheData(')
+          ..write('id: $id, ')
+          ..write('document: $document, ')
+          ..write('validator: $validator, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, document, validator, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ConfigCacheData &&
+          other.id == this.id &&
+          other.document == this.document &&
+          other.validator == this.validator &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class ConfigCacheCompanion extends UpdateCompanion<ConfigCacheData> {
+  final Value<int> id;
+  final Value<String> document;
+  final Value<String?> validator;
+  final Value<DateTime> fetchedAt;
+  const ConfigCacheCompanion({
+    this.id = const Value.absent(),
+    this.document = const Value.absent(),
+    this.validator = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+  });
+  ConfigCacheCompanion.insert({
+    this.id = const Value.absent(),
+    required String document,
+    this.validator = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+  }) : document = Value(document);
+  static Insertable<ConfigCacheData> custom({
+    Expression<int>? id,
+    Expression<String>? document,
+    Expression<String>? validator,
+    Expression<DateTime>? fetchedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (document != null) 'document': document,
+      if (validator != null) 'validator': validator,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+    });
+  }
+
+  ConfigCacheCompanion copyWith({
+    Value<int>? id,
+    Value<String>? document,
+    Value<String?>? validator,
+    Value<DateTime>? fetchedAt,
+  }) {
+    return ConfigCacheCompanion(
+      id: id ?? this.id,
+      document: document ?? this.document,
+      validator: validator ?? this.validator,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (document.present) {
+      map['document'] = Variable<String>(document.value);
+    }
+    if (validator.present) {
+      map['validator'] = Variable<String>(validator.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConfigCacheCompanion(')
+          ..write('id: $id, ')
+          ..write('document: $document, ')
+          ..write('validator: $validator, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3086,6 +3390,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LifetimeStatsTable lifetimeStats = $LifetimeStatsTable(this);
   late final $TechniqueStatsTable techniqueStats = $TechniqueStatsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $ConfigCacheTable configCache = $ConfigCacheTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3099,6 +3404,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     lifetimeStats,
     techniqueStats,
     settings,
+    configCache,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -4726,6 +5032,181 @@ typedef $$SettingsTableProcessedTableManager =
       Setting,
       PrefetchHooks Function()
     >;
+typedef $$ConfigCacheTableCreateCompanionBuilder =
+    ConfigCacheCompanion Function({
+      Value<int> id,
+      required String document,
+      Value<String?> validator,
+      Value<DateTime> fetchedAt,
+    });
+typedef $$ConfigCacheTableUpdateCompanionBuilder =
+    ConfigCacheCompanion Function({
+      Value<int> id,
+      Value<String> document,
+      Value<String?> validator,
+      Value<DateTime> fetchedAt,
+    });
+
+class $$ConfigCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $ConfigCacheTable> {
+  $$ConfigCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get document => $composableBuilder(
+    column: $table.document,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get validator => $composableBuilder(
+    column: $table.validator,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ConfigCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConfigCacheTable> {
+  $$ConfigCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get document => $composableBuilder(
+    column: $table.document,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get validator => $composableBuilder(
+    column: $table.validator,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ConfigCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConfigCacheTable> {
+  $$ConfigCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get document =>
+      $composableBuilder(column: $table.document, builder: (column) => column);
+
+  GeneratedColumn<String> get validator =>
+      $composableBuilder(column: $table.validator, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$ConfigCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ConfigCacheTable,
+          ConfigCacheData,
+          $$ConfigCacheTableFilterComposer,
+          $$ConfigCacheTableOrderingComposer,
+          $$ConfigCacheTableAnnotationComposer,
+          $$ConfigCacheTableCreateCompanionBuilder,
+          $$ConfigCacheTableUpdateCompanionBuilder,
+          (
+            ConfigCacheData,
+            BaseReferences<_$AppDatabase, $ConfigCacheTable, ConfigCacheData>,
+          ),
+          ConfigCacheData,
+          PrefetchHooks Function()
+        > {
+  $$ConfigCacheTableTableManager(_$AppDatabase db, $ConfigCacheTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConfigCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConfigCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ConfigCacheTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> document = const Value.absent(),
+                Value<String?> validator = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+              }) => ConfigCacheCompanion(
+                id: id,
+                document: document,
+                validator: validator,
+                fetchedAt: fetchedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String document,
+                Value<String?> validator = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+              }) => ConfigCacheCompanion.insert(
+                id: id,
+                document: document,
+                validator: validator,
+                fetchedAt: fetchedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ConfigCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ConfigCacheTable,
+      ConfigCacheData,
+      $$ConfigCacheTableFilterComposer,
+      $$ConfigCacheTableOrderingComposer,
+      $$ConfigCacheTableAnnotationComposer,
+      $$ConfigCacheTableCreateCompanionBuilder,
+      $$ConfigCacheTableUpdateCompanionBuilder,
+      (
+        ConfigCacheData,
+        BaseReferences<_$AppDatabase, $ConfigCacheTable, ConfigCacheData>,
+      ),
+      ConfigCacheData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4746,4 +5227,6 @@ class $AppDatabaseManager {
       $$TechniqueStatsTableTableManager(_db, _db.techniqueStats);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$ConfigCacheTableTableManager get configCache =>
+      $$ConfigCacheTableTableManager(_db, _db.configCache);
 }

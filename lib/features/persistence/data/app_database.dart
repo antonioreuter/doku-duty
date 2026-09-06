@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'app_database.steps.dart';
+
 import '../domain/note_enums.dart';
 import '../domain/rank.dart';
 import '../domain/technique.dart';
@@ -11,6 +13,36 @@ export '../domain/rank.dart';
 export '../domain/technique.dart';
 
 part 'app_database.g.dart';
+
+/// The last usable remote config, kept so a player who was online once stays
+/// configured offline afterwards.
+///
+/// **Not player state.** Losing it is harmless — the compiled-in fallback
+/// answers every value — so it inherits none of the write-on-every-change
+/// discipline that protects notes (D-33). It lives here rather than in a file
+/// only because there is already one durable store, and a second place data
+/// lives is a cost of its own.
+class ConfigCache extends Table {
+  /// Always [singletonId]. One config, one row.
+  IntColumn get id => integer()();
+
+  /// The document exactly as fetched, re-parsed on read rather than stored
+  /// pre-parsed: the parser is where per-key fallback and clamping happen, and
+  /// a cached config must go through both again after an app upgrade that
+  /// changed either.
+  TextColumn get document => text()();
+
+  /// The server's entity tag, sent on the next fetch so an unchanged document
+  /// costs a round trip and no payload.
+  TextColumn get validator => text().nullable()();
+
+  DateTimeColumn get fetchedAt => dateTime().clientDefault(DateTime.now)();
+
+  static const int singletonId = 0;
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
 
 /// Player settings, one row per setting the player has actually chosen.
 ///
@@ -242,6 +274,7 @@ class Notes extends Table {
     LifetimeStats,
     TechniqueStats,
     Settings,
+    ConfigCache,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -267,6 +300,23 @@ class AppDatabase extends _$AppDatabase {
           ),
         ),
       );
+
+  /// How the database gets from an older version to this one.
+  ///
+  /// `stepByStep` walks one version at a time, so a player upgrading from
+  /// several releases back takes the same path as several consecutive upgrades
+  /// — which is the path that has tests.
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: stepByStep(
+      // Version 2 adds the remote-config cache. Nothing existing moves, so
+      // every saved game, note, statistic and setting carries over
+      // untouched — which task 6.4 asserts rather than assumes.
+      from1To2: (m, schema) async {
+        await m.createTable(schema.configCache);
+      },
+    ),
+  );
 
   /// Bump this for any schema change — and in the same commit:
   ///
@@ -295,5 +345,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 }

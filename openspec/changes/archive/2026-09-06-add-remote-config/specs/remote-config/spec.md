@@ -1,0 +1,173 @@
+# Delta for remote-config
+
+## ADDED Requirements
+
+### Requirement: Every configured value always has an answer
+
+The system MUST return a typed value for every configured setting at all times,
+falling back to a value compiled into the binary when no remote config has been
+fetched, and MUST NOT expose absence, staleness, or network state to callers.
+
+#### Scenario: Fresh install with no network
+
+- **WHEN** a value is read on a first launch with no network and no cached config
+- **THEN** the compiled-in value is returned, and the caller cannot tell that no
+  fetch has happened
+
+#### Scenario: A value is read while a fetch is in flight
+
+- **WHEN** a value is read before the current fetch completes
+- **THEN** the value currently in effect is returned immediately, without waiting
+
+#### Scenario: Reading is synchronous
+
+- **WHEN** any configured value is read
+- **THEN** it is available without awaiting, so a caller deciding what to do next
+  is never made to pause on configuration
+
+### Requirement: A config that cannot be used is ignored, not surfaced
+
+The system MUST continue on the values already in effect when a fetch fails, times
+out, returns an error, or returns content that cannot be parsed, and MUST show the
+player nothing in any of those cases.
+
+#### Scenario: The network is unavailable
+
+- **WHEN** a fetch is attempted with no connectivity
+- **THEN** the app carries on with the values in effect, and no dialog, banner,
+  spinner, or retry prompt appears
+
+#### Scenario: The response is not valid config
+
+- **WHEN** a fetch returns malformed content, an error status, or an empty body
+- **THEN** it is discarded, the previous values remain in effect, and the failure
+  is reported to the crash reporter rather than to the player
+
+#### Scenario: No endpoint is configured
+
+- **WHEN** a build carries no address to fetch from
+- **THEN** it never attempts one, and behaves exactly as a build that has simply
+  never been online — which is a fully configured app
+
+#### Scenario: A fetch never completes
+
+- **WHEN** a fetch hangs
+- **THEN** it is abandoned after a bounded time and nothing else is affected
+
+### Requirement: Fetching never delays the player
+
+The system MUST NOT place a config fetch, or any wait for one, on the path to the
+first frame, and MUST NOT block any player interaction on a fetch.
+
+#### Scenario: Cold start
+
+- **WHEN** the app is launched
+- **THEN** the first frame renders without any config fetch having been awaited
+
+#### Scenario: A value changes while the app is open
+
+- **WHEN** a fetched config replaces the values in effect
+- **THEN** the change does not interrupt, reverse, or alter anything the player
+  is in the middle of
+
+### Requirement: The last usable config survives a restart
+
+The system MUST retain the most recent usable config and use it on the next
+launch, in preference to the compiled-in values.
+
+#### Scenario: Offline after a successful fetch
+
+- **WHEN** the app is relaunched with no network, having fetched successfully at
+  some earlier point
+- **THEN** the values from that fetch are in effect, not the compiled-in ones
+
+#### Scenario: A retained config is checked again on every read
+
+- **WHEN** a retained config is read back by a version of the app with different
+  limits or different keys from the one that stored it
+- **THEN** it is interpreted under the current rules, so a retained value that
+  would now be out of bounds is brought back into them
+
+#### Scenario: The retained config is unreadable
+
+- **WHEN** the retained config cannot be read back
+- **THEN** the compiled-in values are used and the app continues normally
+
+### Requirement: An unrecognised config degrades one key at a time
+
+The system MUST ignore keys it does not recognise, and MUST fall back to the
+compiled-in value for any individual key that is absent or cannot be interpreted,
+without discarding the rest of the config.
+
+#### Scenario: The config carries a key the app does not know
+
+- **WHEN** a fetched config contains keys this version has no concept of
+- **THEN** they are ignored and every key the app does recognise still takes
+  effect
+
+#### Scenario: One key is malformed
+
+- **WHEN** a single value in an otherwise valid config cannot be interpreted
+- **THEN** that one key falls back to its compiled-in value and every other key
+  in the config still takes effect
+
+#### Scenario: A number is written in a form a hand-edited file would use
+
+- **WHEN** a whole number arrives written with a decimal point or in quotes
+- **THEN** it is accepted, because a file people edit will contain all three
+  forms
+
+#### Scenario: A number is not whole
+
+- **WHEN** a value that must be a whole number arrives fractional
+- **THEN** it falls back to its compiled-in value rather than being rounded,
+  because guessing what half of it meant is worse than the default
+
+#### Scenario: The config declares a schema version
+
+- **WHEN** a config is fetched
+- **THEN** the schema version it declares is recorded, so a later version can be
+  told apart from a corrupt one
+
+### Requirement: Ad volume limits are tunable only downward
+
+The system MUST allow a remote config to make the ad volume limits in D-24 more
+restrictive, and MUST reject any value that would make them less restrictive than
+D-24 states.
+
+#### Scenario: A config tightens a limit
+
+- **WHEN** a config sets a session limit below the documented maximum, or a gap
+  between interstitials longer than the documented minimum
+- **THEN** the stricter value takes effect
+
+#### Scenario: A config tries to loosen a limit
+
+- **WHEN** a config sets a session limit above the documented maximum, a gap
+  shorter than the documented minimum, or a **node** interval below the documented
+  one
+- **THEN** that value is rejected and the documented limit remains in effect
+
+#### Scenario: The documented limits are the defaults
+
+- **WHEN** no remote config has been applied
+- **THEN** the limits in effect are exactly those in D-24 — at most one
+  interstitial per three completed **nodes**, at least ninety seconds apart, at most
+  six per session
+
+### Requirement: Ad placement rules are not configurable
+
+The system MUST NOT expose the rules governing when an ad may appear to remote
+configuration.
+
+#### Scenario: Looking for a placement switch
+
+- **WHEN** the set of configurable values is enumerated
+- **THEN** it contains no value that could permit an ad during a puzzle, before a
+  celebration completes, without an explicit tap, or on a chest, boss, or daily
+  **node**
+
+#### Scenario: A config attempts to carry one
+
+- **WHEN** a fetched config contains a key that looks like a placement rule
+- **THEN** it is ignored like any other unrecognised key

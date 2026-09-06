@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/persistence/application/settings_providers.dart';
+import 'features/remote_config/application/config_refresh.dart';
 import 'features/platform_shell/application/crash_reporting.dart';
 import 'features/platform_shell/application/flavour_provider.dart';
 import 'features/platform_shell/application/orientation.dart';
@@ -22,18 +23,30 @@ Future<void> bootstrap(FlavourConfig config) async {
   // the first frame.
   unawaited(applyOrientationLock(currentDeviceClass(binding)));
 
+  final container = ProviderContainer(
+    overrides: [
+      flavourConfigProvider.overrideWithValue(config),
+      // Settings come from storage in the real app. The override lives here
+      // rather than inside either feature so neither imports the other.
+      persistedReduceEffectsOverride,
+    ],
+  );
+
   await runWithCrashReporting(
     config,
     () => runApp(
-      ProviderScope(
-        overrides: [
-          flavourConfigProvider.overrideWithValue(config),
-          // Settings come from storage in the real app. The override lives here
-          // rather than inside either feature so neither imports the other.
-          persistedReduceEffectsOverride,
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: const DokuDutyApp(),
       ),
     ),
   );
+
+  // After the first frame, never before it. The config refresh opens the
+  // database and may touch the network; neither belongs on the path to a
+  // rendered screen, and every value answers from its compiled-in default
+  // until this finishes — or if it never does.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(container.read(configRefresherProvider).run());
+  });
 }
