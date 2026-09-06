@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "oz-harness-support@claude-code-warp": true,
+    "mattpocock-skills@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  }
+}

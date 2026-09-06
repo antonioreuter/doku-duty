@@ -1,0 +1,621 @@
+<title>Doku Duty Game Bible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Zilla+Slab:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  /* ---------------------------------------------------------------
+     Palette: the game's own eight tokens (docs/DESIGN.md §1).
+     Light only, by design — the frontier's ground is bleached paper.
+     !important beats the artifact runtime's inline color-scheme on
+     <html>, which would otherwise darken scrollbars on a light page.
+     --------------------------------------------------------------- */
+  :root {
+    color-scheme: light !important;
+
+    --sand:      #E4D4AE;
+    --bone:      #F5EBD6;
+    --dusk-ink:  #2E2438;
+    --ink-soft:  #6B5F73;
+    --hairline:  #D9C9A6;
+
+    --gold:      #F2B33D;
+    --indigo:    #4A3F9E;
+    --turquoise: #2AA39A;
+    --red:       #E05A2B;
+    --green:     #4E9E62;
+
+    --gold-pale:   #FDEFC6;
+    --indigo-pale: #E6DEFA;
+    --red-pale:    #FBDDD6;
+    --green-pale:  #CFE0BE;
+
+    --ground:  var(--sand);
+    --surface: var(--bone);
+    --raised:  #FBF5E8;
+    --fg:      var(--dusk-ink);
+    --fg-soft: var(--ink-soft);
+    --rule:    var(--hairline);
+    --accent:  #8A5A12;
+    --code-bg: #EFE3C8;
+
+    --measure: 66ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--fg);
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.64;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+  /* ---- Masthead ---- */
+  .masthead {
+    padding: 4rem 0 2rem;
+    border-bottom: 4px double var(--rule);
+    margin-bottom: 3.5rem;
+  }
+  .kicker {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 0 0 1.1rem;
+  }
+  h1 {
+    font-family: Rye, "Zilla Slab", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 7vw, 4.1rem);
+    line-height: 1.02;
+    margin: 0 0 1rem;
+    color: var(--dusk-ink);
+    text-wrap: balance;
+  }
+  .logline {
+    font-family: "Zilla Slab", Georgia, serif;
+    font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+    font-weight: 500;
+    line-height: 1.45;
+    max-width: 46ch;
+    margin: 0;
+    color: var(--fg);
+  }
+
+  /* ---- Sections ---- */
+  section { margin-bottom: 4rem; }
+  .eyebrow {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.69rem;
+    font-weight: 700;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.55rem;
+  }
+  h2 {
+    font-family: "Zilla Slab", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(1.7rem, 3.6vw, 2.25rem);
+    line-height: 1.14;
+    margin: 0 0 1.1rem;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: "Zilla Slab", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.28rem;
+    margin: 2.2rem 0 0.55rem;
+  }
+  p { max-width: var(--measure); margin: 0 0 1.05rem; }
+  .standfirst { font-size: 1.19rem; color: var(--fg-soft); max-width: 60ch; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  /* ---- Tally divider: the jailhouse wall gag, doing real work ---- */
+  .tally {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 3.5rem 0;
+    color: var(--red);
+  }
+  .tally::before, .tally::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .tally span {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.28em;
+  }
+
+  /* ---- Tables ---- */
+  .tw { overflow-x: auto; margin: 0 0 1.6rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-width: 32rem; }
+  caption {
+    text-align: left;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fg-soft);
+    padding-bottom: 0.6rem;
+  }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--fg-soft); border-bottom: 2px solid var(--rule);
+  }
+  tbody tr:nth-child(odd) { background: color-mix(in srgb, var(--surface) 60%, transparent); }
+  td.num { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---- Cast cards ---- */
+  .cast { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .who {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 4px solid var(--gold);
+    border-radius: 4px;
+    padding: 1.1rem 1.15rem;
+  }
+  .who.ace   { border-top-color: var(--red); }
+  .who.pal   { border-top-color: var(--green); }
+  .who.wild  { border-top-color: var(--indigo); }
+  .who h3 { margin: 0 0 0.1rem; font-size: 1.15rem; }
+  .who .role {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.63rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--fg-soft); display: block; margin-bottom: 0.5rem;
+  }
+  .who p { margin: 0; font-size: 0.95rem; max-width: none; }
+
+  /* ---- Figures ---- */
+  figure {
+    margin: 0 0 1.8rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 1.5rem 1.25rem 1.1rem;
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption {
+    font-size: 0.88rem; color: var(--fg-soft);
+    margin-top: 1rem; padding-top: 0.85rem;
+    border-top: 1px solid var(--rule); max-width: 64ch;
+  }
+
+  /* ---- Callouts ---- */
+  .rule-box {
+    background: var(--surface);
+    border-left: 4px solid var(--indigo);
+    padding: 1.05rem 1.2rem;
+    border-radius: 0 4px 4px 0;
+    margin: 0 0 1.3rem;
+  }
+  .rule-box.refuse { border-left-color: var(--red); }
+  .rule-box.win    { border-left-color: var(--green); }
+  .rule-box p:last-child { margin-bottom: 0; }
+  .rule-box .tag {
+    display: block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--indigo); margin-bottom: 0.35rem;
+  }
+  .rule-box.refuse .tag { color: var(--red); }
+  .rule-box.win .tag    { color: var(--green); }
+
+  ul { padding-left: 1.15rem; max-width: var(--measure); }
+  li { margin-bottom: 0.5rem; }
+
+  .foot {
+    font-size: 0.9rem; color: var(--fg-soft);
+    border-top: 1px solid var(--rule); padding-top: 1.2rem;
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 40rem) {
+    .wrap { padding: 0 1.1rem 4rem; }
+    table { font-size: 0.9rem; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">Territory of the Frontier · Bureau of Numbers</p>
+    <h1>Doku Duty</h1>
+    <p class="logline">You are a frontier deputy who files numbers for a living. Solve sudoku, rise from Greenhorn to Legend, and try to stop the outlaw Ace from tallying your mistakes on the jailhouse wall.</p>
+  </header>
+
+  <section>
+    <p class="eyebrow">Narrative</p>
+    <h2>A territory where the law is administered through paperwork</h2>
+    <p class="standfirst">Dusty towns, a self-important bureaucracy, and everyone takes numbers extremely seriously. The comedy is deadpan bureaucracy as a foundation — never the joke itself.</p>
+
+    <p>Sudoku puzzles are mathematically identical in every app on the store. There is no puzzle-quality advantage available to win, and every serious competitor is calm, minimal, and blue. <strong>Nobody owns comedy in this category.</strong> That is the whole thesis: the art direction and comedy writing <em>are</em> the product, and the sudoku engine is table stakes.</p>
+
+    <div class="cast">
+      <div class="who">
+        <h3>The Sheriff</h3>
+        <span class="role">Your boss</span>
+        <p>Grizzled. Dispenses dry, grudging approval and very little of it. Employs you; does not admire you.</p>
+      </div>
+      <div class="who ace">
+        <h3>Ace</h3>
+        <span class="role">Antagonist</span>
+        <p>The outlaw. Tallies your mistakes on the jailhouse wall with weary satisfaction, and cheats at numbers. Never openly hostile, which is worse.</p>
+      </div>
+      <div class="who pal">
+        <h3>Biscuit</h3>
+        <span class="role">Ally</span>
+        <p>A burro. Wordless, loyal, visibly delighted by your successes. The only warmth in a cast otherwise made of obstacles.</p>
+      </div>
+      <div class="who wild">
+        <h3>Number Four</h3>
+        <span class="role">Wildcard</span>
+        <p>A digit with opinions and a bounty on its head. Occasionally objects to placement and must be coaxed. Establishes that the numbers are people.</p>
+      </div>
+    </div>
+
+    <p><strong>Biscuit never speaks.</strong> That is a costed decision, not a whim: zero localisation spend across fifteen-plus languages, identical comic timing in every market, and wordless characters reliably become the most-loved in a cast.</p>
+
+    <h3>The running gags carry the comedy</h3>
+    <p>These matter more than the character art, because they fire constantly and cost little per season.</p>
+    <ul>
+      <li><strong>The jailhouse tally.</strong> Errors accumulate as scratch marks on Ace's wall, visible on the map and growing across the season. Solve with no mistakes and Biscuit kicks the wall, knocking marks off. Purely cosmetic — it never touches difficulty, rewards, or progression.</li>
+      <li><strong>Digits react to each other.</strong> Place a 7 where an existing 7 can see it and both notice, in horror, for about half a second. This <em>is</em> the duplicate feedback — it replaces the conventional red flash.</li>
+      <li><strong>Telegrams as loading screens.</strong> Genuine-looking notices — a stolen ledger, mandatory numeracy retraining, a stern reminder about hitching posts. One line each, from a pool of several hundred.</li>
+      <li><strong>The wanted-poster wall.</strong> The trophy cabinet is a wall of posters of your own deputy, one per season, in progressively more deranged outfits as rank rises.</li>
+      <li><strong>Ad breaks in character.</strong> The Sheriff announces the interruption as a mandatory territorial sponsorship obligation, visibly resenting it.</li>
+    </ul>
+  </section>
+
+  <div class="tally" aria-hidden="true"><span>||||&nbsp;||||&nbsp;|||</span></div>
+
+  <section>
+    <p class="eyebrow">Rules</p>
+    <h2>How the grid actually works</h2>
+    <p class="standfirst">Standard 9×9. Every puzzle has exactly one solution and is solvable by logic alone at every rank — no guess-and-check, ever.</p>
+
+    <h3>A cell holds a value or notes, never both</h3>
+    <p>Values are committed answers. Notes are the working out — up to nine candidates per cell. The critical rule is that notes are <strong>positional</strong>: every digit owns a fixed slot in a 3×3 arrangement inside the cell, and adding or removing one never moves the others.</p>
+
+    <figure>
+      <svg viewBox="0 0 720 300" role="img" aria-label="A cell holds either a committed value or up to nine positional notes. Placing a value clears the notes and removes that candidate from the row, column and block. In notes mode each digit occupies a fixed slot: one top-left, five centre, nine bottom-right.">
+        <defs>
+          <marker id="gb-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- value cell -->
+        <rect x="56" y="70" width="140" height="140" rx="6" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5"/>
+        <text x="126" y="167" text-anchor="middle" font-family="Zilla Slab, Georgia, serif" font-size="86" font-weight="700" fill="#2E2438">7</text>
+        <text x="126" y="240" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="currentColor">VALUE — committed</text>
+
+        <!-- arrow -->
+        <line x1="212" y1="140" x2="352" y2="140" stroke="currentColor" stroke-width="1.8" marker-end="url(#gb-ar)"/>
+        <text x="282" y="126" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor">places a value</text>
+        <text x="282" y="162" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#E05A2B">clears notes · auto-cleanup</text>
+
+        <!-- notes cell -->
+        <rect x="368" y="70" width="140" height="140" rx="6" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5"/>
+        <g stroke="#D9C9A6" stroke-width="1">
+          <line x1="414.7" y1="70" x2="414.7" y2="210"/>
+          <line x1="461.3" y1="70" x2="461.3" y2="210"/>
+          <line x1="368" y1="116.7" x2="508" y2="116.7"/>
+          <line x1="368" y1="163.3" x2="508" y2="163.3"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="19" font-weight="700" text-anchor="middle" fill="#4A3F9E">
+          <text x="391.3" y="100">1</text>
+          <text x="391.3" y="147">4</text>
+          <text x="438"   y="147">5</text>
+          <text x="484.7" y="194">9</text>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="19" text-anchor="middle" fill="#2E2438" opacity="0.16">
+          <text x="438"   y="100">2</text>
+          <text x="484.7" y="100">3</text>
+          <text x="484.7" y="147">6</text>
+          <text x="391.3" y="194">7</text>
+          <text x="438"   y="194">8</text>
+        </g>
+        <text x="438" y="240" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="currentColor">NOTES — up to nine, fixed slots</text>
+
+        <!-- callouts -->
+        <g font-family="JetBrains Mono, monospace" font-size="11" fill="#4A3F9E">
+          <line x1="560" y1="96"  x2="516" y2="96"  stroke="#4A3F9E" stroke-width="1.2"/>
+          <text x="568" y="100">1 always top-left</text>
+          <line x1="560" y1="143" x2="516" y2="143" stroke="#4A3F9E" stroke-width="1.2"/>
+          <text x="568" y="147">5 always centre</text>
+          <line x1="560" y1="190" x2="516" y2="190" stroke="#4A3F9E" stroke-width="1.2"/>
+          <text x="568" y="194">9 always bottom-right</text>
+        </g>
+
+        <text x="56" y="284" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">Indigo = settled notes (derived). A second turquoise ink marks provisional notes — hypotheses under test.</text>
+      </svg>
+      <figcaption>Fixed slots are what make a densely marked board usable: the player scans by <em>position</em> rather than reading each cell. Notes that reflow when a candidate is removed are the hidden cause of a sudoku app feeling bad.</figcaption>
+    </figure>
+
+    <h3>Two inks, and a one-tap escape hatch</h3>
+    <p><strong>Settled</strong> notes are candidates the player has derived. <strong>Provisional</strong> notes are a hypothesis under test, for chain reasoning at the top tiers. A single control clears every provisional note, so a failed line of reasoning is abandoned in one tap without disturbing settled work.</p>
+
+    <h3>The note behaviours that make it trustworthy</h3>
+    <ul>
+      <li><strong>Auto-cleanup, always on.</strong> Placing a value removes that candidate from its row, column, and block. Without it, notes go stale within twenty moves and players stop trusting them.</li>
+      <li><strong>Candidate highlighting.</strong> Tapping a pad digit highlights every cell holding it as a note — this is how pointing pairs and X-wings become visible rather than deduced by squinting.</li>
+      <li><strong>Auto-notes.</strong> Fills every empty cell with its legal candidates. Free during tutorials, then metered; unlimited for subscribers.</li>
+      <li><strong>Notes never count as mistakes</strong>, even when wrong.</li>
+      <li><strong>Undo covers notes at full depth</strong>, including auto-notes and auto-cleanup as single reversible operations.</li>
+    </ul>
+
+    <div class="rule-box win">
+      <span class="tag">The non-punitive rule</span>
+      <p>Auto-check is <strong>off by default</strong> and there is <strong>no mistake limit by default</strong>. Mistakes are recorded silently, for statistics only. The timer is display-only, hideable, and can never fail a puzzle. Overwriting an already-correct cell never counts as a mistake in any mode.</p>
+      <p><strong>Strict mode</strong> exists for players who want stakes — immediate error flagging, three mistakes ends the attempt — and is never enabled without a deliberate choice.</p>
+    </div>
+  </section>
+
+  <div class="tally" aria-hidden="true"><span>||||&nbsp;||||&nbsp;|||</span></div>
+
+  <section>
+    <p class="eyebrow">Objectives</p>
+    <h2>Six ranks, graded by thinking — not by clue count</h2>
+    <p class="standfirst">Difficulty is the hardest technique a puzzle <em>requires</em>, so progression feels like getting smarter rather than grinding.</p>
+
+    <div class="tw">
+      <table>
+        <caption>The rank ladder</caption>
+        <thead>
+          <tr><th>Rank</th><th>Techniques required</th><th>Target solve</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Greenhorn</strong></td><td>Full house, naked single</td><td class="num">2–4 min</td></tr>
+          <tr><td><strong>Deputy</strong></td><td>+ hidden single</td><td class="num">4–7 min</td></tr>
+          <tr><td><strong>Sheriff</strong></td><td>+ naked pair, pointing pair</td><td class="num">7–12 min</td></tr>
+          <tr><td><strong>Marshal</strong></td><td>+ box-line reduction, naked triple</td><td class="num">12–20 min</td></tr>
+          <tr><td><strong>Ranger</strong></td><td>+ hidden pair, X-wing</td><td class="num">20–35 min</td></tr>
+          <tr><td><strong>Legend</strong></td><td>+ swordfish, XY-wing, simple chains</td><td class="num">35 min+</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Each tier introduces its technique with a short interactive tutorial the first time the player meets a puzzle needing it — skippable, and replayable from the cabinet. Notes become effectively mandatory from Marshal upward, so <strong>the notes tutorial must land no later than Sheriff rank.</strong></p>
+
+    <h3>Three progression layers, on three different clocks</h3>
+    <p>They run independently. That independence is the point: missing a week damages none of them permanently.</p>
+
+    <figure>
+      <svg viewBox="0 0 800 280" role="img" aria-label="Three independent progression layers. The permanent cabinet never resets. The seasonal map runs six weeks over forty-two nodes then rotates out, but its trophies persist into the cabinet. The daily challenge resets at midnight and feeds a streak protected by weekly freezes.">
+        <defs>
+          <marker id="gb-ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4A3F9E"/>
+          </marker>
+        </defs>
+
+        <g font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700" fill="currentColor">
+          <text x="16" y="52">PERMANENT</text>
+          <text x="16" y="140">SEASONAL</text>
+          <text x="16" y="222">DAILY</text>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="10" fill="currentColor" opacity="0.65">
+          <text x="16" y="68">the cabinet</text>
+          <text x="16" y="156">the map</text>
+          <text x="16" y="238">challenge</text>
+        </g>
+
+        <!-- permanent -->
+        <rect x="150" y="30" width="600" height="30" rx="4" fill="#E6DEFA" stroke="#4A3F9E" stroke-width="2"/>
+        <text x="166" y="50" font-family="JetBrains Mono, monospace" font-size="11.5" fill="#4A3F9E" font-weight="700">ranks · every trophy ever earned · lifetime stats — never resets</text>
+        <polygon points="750,30 768,45 750,60" fill="#4A3F9E"/>
+
+        <!-- seasonal -->
+        <rect x="150" y="118" width="470" height="30" rx="4" fill="#FDEFC6" stroke="#F2B33D" stroke-width="2"/>
+        <g stroke="#F2B33D" stroke-width="1" opacity="0.85">
+          <line x1="216" y1="118" x2="216" y2="148"/><line x1="282" y1="118" x2="282" y2="148"/>
+          <line x1="348" y1="118" x2="348" y2="148"/><line x1="414" y1="118" x2="414" y2="148"/>
+          <line x1="480" y1="118" x2="480" y2="148"/><line x1="546" y1="118" x2="546" y2="148"/>
+        </g>
+        <text x="166" y="138" font-family="JetBrains Mono, monospace" font-size="11.5" fill="#8A5A12" font-weight="700">6 weeks · 42 nodes · 30 puzzle / 6 variant / 4 chest / 2 boss</text>
+        <line x1="620" y1="133" x2="700" y2="133" stroke="#E05A2B" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="706" y="137" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#E05A2B">rotates out</text>
+
+        <!-- trophies persist -->
+        <path d="M 400 118 L 400 66" fill="none" stroke="#4A3F9E" stroke-width="2" marker-end="url(#gb-ar2)"/>
+        <text x="410" y="94" font-family="JetBrains Mono, monospace" font-size="11" fill="#4A3F9E" font-weight="700">trophies persist</text>
+
+        <!-- daily -->
+        <g fill="#CFE0BE" stroke="#4E9E62" stroke-width="1.6">
+          <rect x="150" y="200" width="34" height="30" rx="3"/><rect x="192" y="200" width="34" height="30" rx="3"/>
+          <rect x="234" y="200" width="34" height="30" rx="3"/><rect x="276" y="200" width="34" height="30" rx="3"/>
+          <rect x="318" y="200" width="34" height="30" rx="3"/>
+        </g>
+        <rect x="360" y="200" width="34" height="30" rx="3" fill="none" stroke="#4E9E62" stroke-width="1.6" stroke-dasharray="4 3"/>
+        <g fill="#CFE0BE" stroke="#4E9E62" stroke-width="1.6">
+          <rect x="402" y="200" width="34" height="30" rx="3"/><rect x="444" y="200" width="34" height="30" rx="3"/>
+        </g>
+        <text x="366" y="192" font-family="JetBrains Mono, monospace" font-size="10" fill="#4E9E62">freeze</text>
+        <text x="496" y="220" font-family="JetBrains Mono, monospace" font-size="11.5" fill="#4E9E62" font-weight="700">resets at midnight · one free freeze weekly</text>
+
+        <text x="16" y="270" font-family="JetBrains Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.65">The map creates urgency. The cabinet creates sunk cost. Nodes never expire within a season.</text>
+      </svg>
+      <figcaption>Seasonal content rotates out, but nothing earned is ever lost — expired seasonal trophies still file into the cabinet, and unearned ones show as <em>unfiled</em> rather than hidden. A missed day costs a freeze, not the streak.</figcaption>
+    </figure>
+
+    <h3>Stamps and perks</h3>
+    <p>The non-punitive rule removed lives, energy, timers, and failure states — and with them every source of tension the category normally relies on. <strong>Stamps</strong> restore a decision without putting anything at risk: <em>is this puzzle worth a Stamp?</em></p>
+    <p>Stamps are earned only through play (D-66). They cannot be purchased at any price — no coin store, no bundles.</p>
+
+    <div class="tw">
+      <table>
+        <caption>Earning</caption>
+        <thead><tr><th>Earned for</th><th>Stamps</th></tr></thead>
+        <tbody>
+          <tr><td>Completing the daily challenge</td><td class="num">2</td></tr>
+          <tr><td>Solving a puzzle with no mistakes</td><td class="num">3</td></tr>
+          <tr><td>Reaching a 7-day streak milestone</td><td class="num">10</td></tr>
+          <tr><td>Opening a chest node</td><td class="num">12</td></tr>
+          <tr><td>Defeating a boss node</td><td class="num">20</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Hints are metered (D-67).</strong> Every puzzle includes one free hint; beyond that a hint costs Stamps or a rewarded video. Subscribers are unlimited.</p>
+
+    <div class="tw">
+      <table>
+        <caption>The perk catalogue</caption>
+        <thead><tr><th>Perk</th><th>Stamps</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Hint</strong></td><td class="num">3</td><td>Names the next logical step and the technique that produces it</td></tr>
+          <tr><td><strong>Auto-notes charge</strong></td><td class="num">4</td><td>One auto-notes fill</td></tr>
+          <tr><td><strong>Reveal a cell</strong></td><td class="num">5</td><td>Fills one chosen cell with its correct value</td></tr>
+          <tr><td><strong>Scan a unit</strong></td><td class="num">8</td><td>Marks which candidates in one chosen unit are eliminable</td></tr>
+          <tr><td><strong>Digit sweep</strong></td><td class="num">12</td><td>Reveals every remaining cell where one chosen digit belongs</td></tr>
+          <tr><td><strong>Solve a row</strong></td><td class="num">15</td><td>Completes one chosen row</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rule-box win">
+      <span class="tag">Running out never blocks play</span>
+      <p>No puzzle becomes unsolvable, no node locks, no attempt ends. A zero-Stamp player keeps the full grid, the complete notes system, one hint per puzzle, and rewarded video if they want more. <strong>Scarcity in the assists is legitimate; scarcity in play is what the ten constraints forbid.</strong></p>
+    </div>
+
+    <div class="rule-box">
+      <span class="tag">Digit sweep is not candidate highlighting</span>
+      <p>Highlighting (D-13) is free, always on, and shows where a digit is <em>already</em> marked or placed. Digit sweep reveals where it <em>belongs</em> — solving rather than surfacing. The free feature is never metered.</p>
+    </div>
+
+    <p>Because each season brings a <strong>rule variant</strong> — killer, thermo, sandwich, jigsaw — rather than only a new palette, the map has no content wall. Variants are the most under-exploited content lever in the category.</p>
+  </section>
+
+  <div class="tally" aria-hidden="true"><span>||||&nbsp;||||&nbsp;|||</span></div>
+
+  <section>
+    <p class="eyebrow">Mechanism</p>
+    <h2>Feel is engineering, not concept</h2>
+    <p class="standfirst">This is where clones fail. It cannot be added at the end, so it gets budgeted at the start.</p>
+
+    <p>Sub-100ms input response. No animation ever blocks the next tap. Nothing exceeds 400ms except one documented exception. Everything is skippable by tap, and OS reduce-motion disables all of it automatically.</p>
+
+    <div class="tw">
+      <table>
+        <caption>Motion, haptic, and sound per event</caption>
+        <thead>
+          <tr><th>Event</th><th>Duration</th><th>Motion</th><th>Haptic</th><th>Sound</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Value placed</td><td class="num">90ms</td><td>Cell scale 1.04 → 1.0</td><td>Selection tick</td><td>Wood block</td></tr>
+          <tr><td><strong>Note added</strong></td><td class="num">0ms</td><td>Instant, no transition</td><td><strong>None</strong></td><td><strong>None</strong></td></tr>
+          <tr><td>Row / column complete</td><td class="num">260ms</td><td>Lasso cinch</td><td>Light impact</td><td>Rising harmonica</td></tr>
+          <tr><td>Block complete</td><td class="num">340ms</td><td>Dynamite detonation</td><td>Medium impact</td><td>Banjo roll into a thump</td></tr>
+          <tr><td>Duplicate placed</td><td class="num">400ms</td><td>Both digits react</td><td>Light double tap</td><td>Dry pencil scratch</td></tr>
+          <tr><td>Cascade</td><td class="num">520ms</td><td>Chained, never stacked</td><td>One per step</td><td>Pitch rises per step</td></tr>
+          <tr><td>Puzzle complete</td><td class="num">1400ms</td><td>Four beats</td><td>Success pattern</td><td>Full cue, Biscuit's whinny</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rule-box">
+      <span class="tag">Notes trigger nothing</span>
+      <p>No particle, no sound, no haptic. A player marking a dense board makes forty entries a minute, and any celebration attached to that becomes noise within seconds. <strong>Notes are thinking, and thinking should be quiet.</strong></p>
+    </div>
+
+    <h3>The cascade is the best moment in ordinary play</h3>
+    <p>When one placement completes two or more units at once, the effects <strong>chain</strong> rather than fire together — row, then column, then block, at 90ms offsets, each brighter and a tone higher. Biscuit stamps on the third.</p>
+
+    <figure>
+      <svg viewBox="0 0 800 250" role="img" aria-label="Cascade timing. Row, column and block effects start at zero, ninety and one hundred eighty milliseconds and overlap without ever firing simultaneously, ending at five hundred twenty milliseconds total.">
+        <!-- axis -->
+        <line x1="140" y1="196" x2="770" y2="196" stroke="currentColor" stroke-width="1.4"/>
+        <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.75" text-anchor="middle">
+          <line x1="140" y1="196" x2="140" y2="203" stroke="currentColor"/><text x="140" y="218">0</text>
+          <line x1="295" y1="196" x2="295" y2="203" stroke="currentColor"/><text x="295" y="218">130ms</text>
+          <line x1="450" y1="196" x2="450" y2="203" stroke="currentColor"/><text x="450" y="218">260ms</text>
+          <line x1="605" y1="196" x2="605" y2="203" stroke="currentColor"/><text x="605" y="218">390ms</text>
+          <line x1="760" y1="196" x2="760" y2="203" stroke="currentColor"/><text x="760" y="218">520ms</text>
+        </g>
+
+        <g font-family="JetBrains Mono, monospace" font-size="11.5" font-weight="700">
+          <text x="16" y="55" fill="currentColor">ROW</text>
+          <text x="16" y="105" fill="currentColor">COLUMN</text>
+          <text x="16" y="155" fill="currentColor">BLOCK</text>
+        </g>
+
+        <rect x="140"   y="36"  width="310" height="30" rx="4" fill="#FDEFC6" stroke="#F2B33D" stroke-width="2"/>
+        <text x="152" y="56" font-family="JetBrains Mono, monospace" font-size="11" fill="#8A5A12">lasso · 260ms · light haptic</text>
+
+        <rect x="247.3" y="86"  width="310" height="30" rx="4" fill="#FDEFC6" stroke="#F2B33D" stroke-width="2"/>
+        <text x="259" y="106" font-family="JetBrains Mono, monospace" font-size="11" fill="#8A5A12">lasso · 260ms · pitch +1</text>
+
+        <rect x="354.6" y="136" width="405" height="30" rx="4" fill="#CFE0BE" stroke="#4E9E62" stroke-width="2"/>
+        <text x="366" y="156" font-family="JetBrains Mono, monospace" font-size="11" fill="#2E5B37">dynamite · 340ms · medium haptic · Biscuit stamps</text>
+
+        <g stroke="#E05A2B" stroke-width="1.5" stroke-dasharray="4 3">
+          <line x1="247.3" y1="30" x2="247.3" y2="176"/>
+          <line x1="354.6" y1="30" x2="354.6" y2="176"/>
+        </g>
+        <text x="251" y="26" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#E05A2B">+90ms</text>
+        <text x="358" y="26" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#E05A2B">+180ms</text>
+
+        <text x="16" y="243" font-family="JetBrains Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.7">520ms total — a deliberate exception to the 400ms ceiling, recorded as such rather than left looking like an oversight.</text>
+      </svg>
+      <figcaption>Staggering is the entire value. Fired simultaneously the player sees one loud flash instead of three escalating rewards — the same information, a third of the payoff.</figcaption>
+    </figure>
+
+    <h3>Completion tint: one flat level, never additive</h3>
+    <p>A cell in a completed row <em>and</em> column <em>and</em> block looks identical to a cell in just one. Stacking tints turns a nearly finished grid into mud, which is exactly when the board most needs to stay readable. A freshly completed unit holds a warmer highlight for about two seconds, then settles — the celebration and the record are different states. A corner mark always accompanies the tint, because <strong>colour is never the sole signal for any state</strong>.</p>
+  </section>
+
+  <div class="tally" aria-hidden="true"><span>||||&nbsp;||||&nbsp;|||</span></div>
+
+  <section>
+    <p class="eyebrow">Boundaries</p>
+    <h2>What the game refuses to do</h2>
+
+    <div class="rule-box refuse">
+      <span class="tag">No firearms, no gunfire, no weapons</span>
+      <p>Two reasons, and the second is the harder one. Punishment as an aesthetic undoes the design: sixty-five decisions removed failure states, and a gunshot on a wrong digit puts one back in tone even where it does not exist in mechanics.</p>
+      <p>And it costs money. Weapons push the age rating from 4+ toward 9+ or 12+, restrict which ad networks will serve the app, and forfeit the family audience — a large share of the daily-sudoku market. Dynamite survives this test because it is a celebration, not a threat.</p>
+    </div>
+
+    <div class="rule-box refuse">
+      <span class="tag">No ad ever interrupts a grid in progress</span>
+      <p>Interstitials fire only after a node completes, after the celebration, and after an explicit tap. Capped at one per three nodes, six per session, ninety seconds apart. Never on a chest, a boss, or the daily challenge. No banner is ever visible while a grid is on screen, and ad removal is verified by automated test on every release.</p>
+    </div>
+
+    <div class="rule-box refuse">
+      <span class="tag">No purchasable currency, no gacha, no character lies</span>
+      <p>Everything in the core loop is free: all puzzles, all six ranks, the full season map, the daily challenge, the complete notes system, offline play. No character ever gives deliberately wrong advice — a character may be unhelpful in tone, never in content. Hints are correct or absent.</p>
+      <p><strong>Stamps can never be bought.</strong> D-23's argument was against a <em>purchase</em> layer that obscures price; D-66 refines it rather than reversing it. There is no coin store and no bundle. If Stamps ever become purchasable, this boundary falls.</p>
+    </div>
+
+    <p>The main risk is stated plainly in the product brief: if the character animation and comedy writing are merely adequate, this is a competent sudoku app with no reason to exist. <strong>Budget the art before the engineering.</strong></p>
+  </section>
+
+  <p class="foot">Compiled from <code>docs/IDEA.md</code>, <code>docs/SPEC.md</code>, <code>docs/DESIGN.md</code> and <code>docs/DECISIONS.md</code>. Where those disagree, <code>docs/DESIGN.md</code> is treated as authoritative for colour and motion values. Palette drawn from the game's own eight design tokens; indigo marks what is settled, turquoise what is provisional — the same distinction the notes system makes on the grid.</p>
+
+</div>

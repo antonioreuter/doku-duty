@@ -1,0 +1,124 @@
+# Doku Duty release lanes.
+#
+# These build and sign. They do not upload: store registration, listings, and
+# submission belong to add-store-release-pipeline (backlog change 34). Every
+# secret is read from the environment — nothing signing-related is committed.
+
+FLAVOURS = %w[dev staging prod].freeze
+
+def flavour!
+  flavour = ENV.fetch('FLAVOUR', 'prod')
+  UI.user_error!("FLAVOUR must be one of #{FLAVOURS.join(', ')}, got #{flavour.inspect}") unless FLAVOURS.include?(flavour)
+  flavour
+end
+
+def require_env!(*keys)
+  missing = keys.reject { |k| ENV[k].to_s.strip != '' }
+  return if missing.empty?
+
+  UI.user_error!(
+    "Missing required environment variables: #{missing.join(', ')}. " \
+    'These are secrets and are never committed — see the table in README.md.'
+  )
+end
+
+# A changed --dart-define does NOT invalidate the cached Gradle release build:
+# a build can silently keep the previous SENTRY_DSN, or none at all. Every
+# release lane therefore starts from clean. Slower, and the alternative is
+# shipping a build whose configuration nobody can predict.
+def flutter_clean!
+  sh('cd .. && flutter clean && flutter pub get')
+end
+
+def dart_defines
+  # Empty DSN is legitimate: it disables the Sentry SDK outright.
+  ["SENTRY_DSN=#{ENV['SENTRY_DSN']}"]
+end
+
+platform :android do
+  desc 'Build a signed release App Bundle. FLAVOUR=dev|staging|prod'
+  lane :build_release do
+    require_env!(
+      'ANDROID_KEYSTORE_PATH',
+      'ANDROID_KEYSTORE_PASSWORD',
+      'ANDROID_KEY_ALIAS',
+      'ANDROID_KEY_PASSWORD'
+    )
+
+    flavour = flavour!
+    flutter_clean!
+
+    defines = dart_defines.map { |d| "--dart-define=#{d}" }.join(' ')
+    sh(
+      "cd .. && flutter build appbundle --release " \
+      "--flavor #{flavour} -t lib/main_#{flavour}.dart #{defines}"
+    )
+
+    aab = "../build/app/outputs/bundle/#{flavour}Release/app-#{flavour}-release.aab"
+    UI.user_error!("Expected bundle not found at #{aab}") unless File.exist?(aab)
+    UI.success("Signed bundle: #{aab}")
+  end
+end
+
+platform :ios do
+  desc 'Build a signed release archive. FLAVOUR=dev|staging|prod'
+  lane :build_release do
+    require_env!(
+      'MATCH_PASSWORD',
+      'APP_STORE_CONNECT_API_KEY_ID',
+      'APP_STORE_CONNECT_API_ISSUER_ID',
+      'APP_STORE_CONNECT_API_KEY_CONTENT'
+    )
+
+    flavour = flavour!
+    flutter_clean!
+
+    # A throwaway keychain, so the lane never depends on — or disturbs — the
+    # login keychain on a developer's machine, and behaves identically in CI.
+    keychain_name = 'doku-duty.keychain'
+    keychain_password = SecureRandom.uuid
+    create_keychain(
+      name: keychain_name,
+      password: keychain_password,
+      unlock: true,
+      timeout: 3600,
+      lock_when_sleeps: false
+    )
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch('APP_STORE_CONNECT_API_KEY_ID'),
+      issuer_id: ENV.fetch('APP_STORE_CONNECT_API_ISSUER_ID'),
+      key_content: ENV.fetch('APP_STORE_CONNECT_API_KEY_CONTENT'),
+      is_key_content_base64: true
+    )
+
+    suffix = flavour == 'prod' ? '' : ".#{flavour}"
+    match(
+      type: 'appstore',
+      app_identifier: "com.alreuter.dokuduty#{suffix}",
+      keychain_name: keychain_name,
+      keychain_password: keychain_password,
+      api_key: api_key,
+      readonly: true
+    )
+
+    # Dart defines have to reach the Xcode build, so the Flutter side is built
+    # first and gym archives the result.
+    defines = dart_defines.map { |d| "--dart-define=#{d}" }.join(' ')
+    sh(
+      "cd .. && flutter build ios --release --no-codesign " \
+      "--flavor #{flavour} -t lib/main_#{flavour}.dart #{defines}"
+    )
+
+    build_app(
+      workspace: '../ios/Runner.xcworkspace',
+      scheme: flavour,
+      configuration: "Release-#{flavour}",
+      export_method: 'app-store',
+      output_directory: '../build/ios/ipa',
+      skip_profile_detection: false
+    )
+  ensure
+    delete_keychain(name: keychain_name) if keychain_name && File.exist?(File.expand_path("~/Library/Keychains/#{keychain_name}-db"))
+  end
+end

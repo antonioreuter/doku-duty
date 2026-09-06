@@ -1,0 +1,572 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doku Duty — screen specifications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --sand:#E4D4AE;--bone:#F5EBD6;--card:#FBF5E9;--ink:#2E2438;--soft:#6B5F73;--faint:#9A8FA0;--hair:#DCCDA8;
+ --gold:#F2B33D;--goldP:#FDEFC6;--goldD:#B47A15;
+ --indigo:#4A3F9E;--indigoP:#E6DEFA;--indigoD:#2F2670;
+ --turq:#2AA39A;--red:#E05A2B;--redP:#FBDDD6;--redD:#A03A15;
+ --green:#4E9E62;--greenP:#CFE0BE;--greenD:#2F6E3F;--boneD:#C9B48C;
+}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:'Nunito Sans',system-ui,sans-serif;font-size:15px;line-height:1.7;padding:0 16px 80px}
+.sheet{max-width:1080px;margin:0 auto}
+.mast{padding:52px 0 30px}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:0 0 16px}
+h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(40px,9vw,74px);line-height:.95;margin:0}
+.sub{max-width:56ch;margin:18px 0 0;color:var(--soft)}
+.tagbadge{display:inline-block;margin:24px 0 0;padding:10px 22px;border-radius:22px;border:3px solid var(--ink);background:var(--gold);box-shadow:0 5px 0 var(--goldD);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A3405;transform:rotate(-2deg)}
+.screen{background:var(--card);border:3px solid var(--ink);border-radius:24px;box-shadow:0 6px 0 var(--boneD);margin:38px 0 0;padding:26px}
+@media(max-width:780px){.screen{padding:22px 18px}}
+.num{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 0 4px}
+h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:29px;margin:0 0 6px}
+.lede{margin:0 0 22px;color:var(--soft);max-width:58ch}
+.split{display:grid;grid-template-columns:302px 1fr;gap:32px;align-items:start}
+@media(max-width:780px){.split{grid-template-columns:1fr}}
+.phone{width:302px;background:var(--bone);border:3px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:0 6px 0 var(--boneD)}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--goldP);border-bottom:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:var(--soft)}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.notes{list-style:none;margin:0;padding:0}
+.notes li{padding:13px 0;border-bottom:2px solid var(--hair);display:grid;grid-template-columns:54px 1fr;gap:14px}
+.notes li:last-child{border-bottom:0}
+.ref{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--indigo);padding-top:3px}
+.nh{font-weight:600}.nb{color:var(--soft);font-size:14px}
+.flag{display:inline-block;padding:2px 10px;border-radius:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;border:2px solid currentColor;margin-right:7px}
+.f-red{color:#A83B18}.f-green{color:#2E6B3A}.f-ind{color:var(--indigo)}
+.btn{border:3px solid var(--ink);border-radius:18px;text-align:center;font-weight:600;font-size:14px;padding:12px 0 10px}
+.nav{display:flex;border-top:3px solid var(--ink);background:var(--goldP)}
+.nav div{flex:1;text-align:center;padding:10px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.nav div.on{background:var(--gold);color:#4A3405}
+.grid{display:grid;border:3px solid var(--ink);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 4px 0 var(--boneD)}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%}
+.mini span{display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--indigo);font-weight:400}
+.mini span.prov{color:#1A7A72}.mini span.hot{color:#2E2585;font-weight:500}
+.mark{position:absolute;top:1px;right:2px;font-size:6px;line-height:1;color:#3F6B4A}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.key{background:var(--card);border:3px solid var(--ink);border-radius:14px;text-align:center;padding:8px 0 6px;box-shadow:0 4px 0 var(--boneD);font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px}
+.tools{display:flex;gap:7px;margin-top:10px}
+.tool{flex:1;text-align:center;padding:9px 0 7px;background:var(--bone);border:3px solid var(--ink);border-radius:15px;box-shadow:0 4px 0 var(--boneD);font-size:11px;font-weight:600}
+.tool.on{background:var(--indigo);color:#F3EFFF;box-shadow:0 1px 0 var(--indigoD);transform:translateY(3px);padding:11px 0 5px}
+.char{display:flex;gap:10px;align-items:flex-end;margin:6px 14px 12px;transform:rotate(-1.2deg)}
+.av{width:42px;height:42px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bub{flex:1;border:3px solid var(--ink);border-radius:16px;padding:9px 12px}
+.cn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase}
+.reward{margin:14px;padding:22px 14px;text-align:center;border:3px solid var(--ink);border-radius:20px;background:var(--greenP);box-shadow:0 5px 0 var(--greenD)}
+.rt{font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px;color:#1C4A28}
+.adslot{margin:0 14px 14px;padding:15px;border-radius:18px;border:3px dashed var(--faint);text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.plan{border:3px solid var(--ink);border-radius:18px;background:var(--card);padding:13px 15px;margin:0 14px 10px;box-shadow:0 4px 0 var(--boneD)}
+.plan.best{border-color:var(--indigo);background:var(--indigoP);box-shadow:0 4px 0 var(--indigoD)}
+.pt{display:flex;justify-content:space-between;align-items:baseline}
+.pn{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px}
+.pp{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.ps{font-size:12px;color:var(--soft);margin-top:2px}
+.perk{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:13px;padding:4px 0}
+.perk b{color:#2E6B3A}
+.shelf{border-bottom:2px solid var(--hair);padding:12px 14px}
+.sl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+.posters{display:flex;gap:8px}
+.poster{width:44px;height:54px;border-radius:6px;border:3px solid var(--ink);box-shadow:0 3px 0 var(--goldD);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;background:var(--gold);color:#4A3405}
+.poster.gap{background:transparent;border-style:dashed;border-color:var(--faint);color:var(--faint);box-shadow:none}
+.stat{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1.5px solid var(--hair)}
+.stat:last-child{border-bottom:0}
+.stat span:last-child{font-family:'IBM Plex Mono',monospace}
+.sw{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sw>div{border:3px solid var(--ink);border-radius:14px;padding:9px 11px;background:var(--card);box-shadow:0 4px 0 var(--boneD)}
+.chip{height:30px;border:2.5px solid var(--ink);border-radius:9px;margin-bottom:7px}
+.hex{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--soft)}
+.prog{padding:11px 14px;border-top:3px solid var(--ink)}
+.track{height:15px;background:var(--sand);border:3px solid var(--ink);border-radius:11px;overflow:hidden}
+.fill{height:100%;background:var(--green)}
+footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);display:flex;flex-wrap:wrap;gap:8px 26px}
+@keyframes ddCell{0%{transform:scale(1);background:#FBF5E9}3%{transform:scale(1.08);background:#F2B33D}8%{transform:scale(1);background:#FDEFC6}15%{background:#CFE0BE}86%{background:#CFE0BE}95%{background:#FBF5E9}100%{background:#FBF5E9}}
+@keyframes ddDust{0%{opacity:0;transform:translate(0,0) scale(.4)}4%{opacity:.85;transform:translate(0,-7px) scale(1)}13%{opacity:0;transform:translate(0,-17px) scale(1.35)}100%{opacity:0}}
+@keyframes ddSpark{0%{opacity:0;transform:scale(0) rotate(0)}6%{opacity:1;transform:scale(1.25) rotate(80deg)}17%{opacity:0;transform:scale(.5) rotate(140deg)}100%{opacity:0}}
+@keyframes ddRope{0%{width:0;opacity:0}2%{opacity:1}9%{width:100%;opacity:1}15%{opacity:0}100%{opacity:0;width:0}}
+@keyframes ddDupe{0%{transform:translateX(0) rotate(0);background:#FBF5E9}6%{transform:translateX(-3px) rotate(-7deg);background:#FBDDD6}11%{transform:translateX(3px) rotate(6deg);background:#FBDDD6}16%{transform:translateX(-2px) rotate(-4deg)}21%{transform:translateX(0) rotate(0);background:#FBDDD6}80%{background:#FBDDD6}92%{background:#FBF5E9}100%{background:#FBF5E9}}
+@keyframes ddBang{0%{opacity:0;transform:translateY(2px) scale(.5)}7%{opacity:1;transform:translateY(-13px) scale(1.15)}24%{opacity:1;transform:translateY(-13px) scale(1)}34%{opacity:0}100%{opacity:0}}
+.dupe{animation:ddDupe 3s ease-out infinite}.dupe.d2{animation-delay:.05s}
+.bang{position:absolute;top:0;left:50%;margin-left:-5px;font-size:15px;font-weight:600;color:#E05A2B;animation:ddBang 3s ease-out infinite}
+.dupe.d2 .bang{animation-delay:.05s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<div class="sheet">
+<header class="mast">
+<p class="kick">Territorial office of interface standards</p>
+<h1>Doku Duty<br>screen specifications</h1>
+<p class="sub">Nine screens define the product. Everything else is a variation on one of them. Annotations cite decision IDs argued in <b>docs/DECISIONS.md</b>; exact values are canonical in <b>docs/DESIGN.md</b>.</p>
+<div class="tagbadge">Draft 1.0 · final</div>
+</header>
+
+<section class="screen">
+<p class="num">Screen 01 · session spine</p>
+<h2>Territory map</h2>
+<p class="lede">The screen players open to. A trail through one territory, six weeks long, then replaced. The map creates urgency; the cabinet behind it creates the sunk cost.</p>
+<div class="split">
+<div class="phone">
+<div class="bar"><span>9:41</span><span>Dust Gulch</span><span>◍ ◍ ◍</span></div>
+<div style="padding:12px 14px;border-bottom:3px solid var(--ink);display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-family:'Fredoka';font-weight:600;font-size:19px">Dust Gulch</div><div class="tag">Season 1 · 19 days left</div></div>
+<div style="background:var(--red);border:3px solid var(--ink);border-radius:20px;padding:3px 12px;box-shadow:0 3px 0 var(--redD);font-size:14px;font-weight:600;color:#5C1409">7</div>
+</div>
+<div style="background:var(--goldP);padding:4px 0">
+<svg viewBox="0 0 276 332" style="width:100%;display:block" role="img"><title>Territory trail</title><desc>A winding trail linking nodes, with a cactus, a wagon, a water trough and Biscuit the horse alongside.</desc>
+<path d="M214 34 C154 56 122 66 76 88 C38 108 46 142 98 160 C162 182 180 200 152 230 C128 256 86 266 70 298" fill="none" stroke="#C9B48C" stroke-width="9" stroke-linecap="round" stroke-dasharray="2 20"/>
+<ellipse cx="236" cy="258" rx="22" ry="7" fill="#D9C9A6"/>
+<path d="M226 258 Q230 222 240 216 Q246 236 238 258 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="2.5"/>
+<path d="M232 234 Q221 228 220 214" fill="none" stroke="#4E9E62" stroke-width="5.5" stroke-linecap="round"/>
+<g transform="translate(14,186)">
+<rect x="0" y="6" width="52" height="24" rx="5" fill="#B08050" stroke="#2E2438" stroke-width="3"/>
+<path d="M2 8 Q26 -14 50 8 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+<circle cx="12" cy="32" r="8" fill="#8C6A4A" stroke="#2E2438" stroke-width="3"/>
+<circle cx="42" cy="32" r="10" fill="#8C6A4A" stroke="#2E2438" stroke-width="3"/>
+</g>
+<circle cx="214" cy="34" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3.5"/>
+<path d="M206 34 l6 7 l12 -13" fill="none" stroke="#123A1E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="76" cy="88" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3.5"/>
+<path d="M68 88 l6 7 l12 -13" fill="none" stroke="#123A1E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="98" cy="160" r="22" fill="#F2B33D" stroke="#2E2438" stroke-width="3.5"/>
+<rect x="87" y="152" width="22" height="16" rx="3" fill="#7A5A33"/>
+<rect x="95" y="147" width="6" height="9" rx="3" fill="#7A5A33"/>
+<circle cx="152" cy="230" r="30" fill="#E05A2B" stroke="#2E2438" stroke-width="4"/>
+<text x="152" y="239" text-anchor="middle" style="font-family:Fredoka;font-size:22px;font-weight:600;fill:#5C1409">14</text>
+<circle cx="70" cy="298" r="21" fill="#E4D4AE" stroke="#9A8FA0" stroke-width="3.5"/>
+<rect x="61" y="294" width="18" height="13" rx="3" fill="#9A8FA0"/>
+<path d="M64 294 v-6 a6 6 0 0 1 12 0 v6" fill="none" stroke="#9A8FA0" stroke-width="2.5"/>
+<g transform="translate(188,146)">
+<ellipse cx="4" cy="50" rx="34" ry="5" fill="#D9C9A6"/>
+<path d="M-16 44 l-2 -18" stroke="#2E2438" stroke-width="5" stroke-linecap="round"/>
+<path d="M22 44 l3 -18" stroke="#2E2438" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="4" cy="20" rx="28" ry="17" fill="#B08050" stroke="#2E2438" stroke-width="3.5"/>
+<path d="M-4 44 l-3 -18" stroke="#2E2438" stroke-width="5" stroke-linecap="round"/>
+<path d="M12 45 l2 -18" stroke="#2E2438" stroke-width="5" stroke-linecap="round"/>
+<rect x="-8" y="2" width="24" height="12" rx="4" fill="#4A3F9E" stroke="#2E2438" stroke-width="2.5"/>
+<path d="M30 16 Q40 6 40 -6" stroke="#2E2438" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M-24 14 Q-36 6 -34 -8" stroke="#B08050" stroke-width="13" fill="none" stroke-linecap="round"/>
+<path d="M-24 14 Q-36 6 -34 -8" stroke="#2E2438" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-opacity=".0"/>
+<ellipse cx="-38" cy="-14" rx="11" ry="13" fill="#B08050" stroke="#2E2438" stroke-width="3.5" transform="rotate(-14 -38 -14)"/>
+<path d="M-44 -26 l-3 -10 l8 5 Z" fill="#B08050" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M-34 -28 l1 -10 l7 7 Z" fill="#B08050" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="-43" cy="-15" r="2.4" fill="#2E2438"/>
+<ellipse cx="-45" cy="-4" rx="6" ry="4.5" fill="#8C6440"/>
+<path d="M-30 -22 Q-22 -14 -24 -2" stroke="#2E2438" stroke-width="4" fill="none" stroke-linecap="round"/>
+</g>
+</svg>
+</div>
+<div class="prog">
+<div class="tag" style="display:flex;justify-content:space-between"><span>Trail progress</span><span>13 / 42</span></div>
+<div class="track" style="margin-top:6px"><div class="fill" style="width:31%"></div></div>
+</div>
+<div class="nav"><div class="on">Trail</div><div>Daily</div><div>Store</div><div>Cabinet</div></div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-18</span><div><div class="nh">42 nodes, six weeks</div><div class="nb">30 puzzle, 6 variant, 4 chest, 2 boss. Roughly a node a day with slack built in.</div></div></li>
+<li><span class="ref">D-19</span><div><div class="nh">Rewards front-loaded</div><div class="nb">Something meaningful every other node through node 8. The pass decision is made early, so the season must feel generous before commitment.</div></div></li>
+<li><span class="ref">D-20</span><div><div class="nh">Nodes never expire</div><div class="nb"><span class="flag f-green">Non-punitive</span>Missing days costs nothing. One streak freeze granted weekly, applied automatically.</div></div></li>
+<li><span class="ref">§4</span><div><div class="nh">Current node is larger, not just redder</div><div class="nb">Size carries the state as well as colour, so someone returning after three days finds their place instantly.</div></div></li>
+<li><span class="ref">§7</span><div><div class="nh">Biscuit walks the trail</div><div class="nb">A horse reads as western at 30px in a way a burro does not. Props — cactus, wagon, trough — are the cheap seasonal variable; the rig is shared.</div></div></li>
+<li><span class="ref">D-25</span><div><div class="nh">Banner permitted here</div><div class="nb"><span class="flag f-red">Ad rule</span>This screen and the cabinet only. Never with a grid on screen.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 02 · core loop</p>
+<h2>Puzzle</h2>
+<p class="lede">Where the time is spent and where the personality lands. Depth treatment applies to chrome only — never to grid cells, which would destroy readability at nine columns.</p>
+<div class="split">
+<div class="phone">
+<div class="bar">
+<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:var(--bone);border:2.5px solid var(--ink);box-shadow:0 2.5px 0 var(--boneD);text-align:center;line-height:22px;font-size:14px;color:var(--ink)">‹</span>
+<span style="text-align:center"><b style="font-family:Fredoka;font-size:14px;color:var(--ink)">Node 14</b><br>Sheriff rank</span>
+<span style="background:var(--gold);border:2.5px solid var(--ink);border-radius:15px;padding:2px 10px;box-shadow:0 2.5px 0 var(--goldD);font-weight:600;color:#4A3405">04:12</span>
+</div>
+<div style="padding:14px 14px 8px"><div class="grid" id="g-play" style="grid-template-columns:repeat(9,1fr)"></div></div>
+<div class="char">
+<div class="av" style="background:var(--red);box-shadow:0 3px 0 var(--redD)">
+<svg width="26" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="22" rx="13" ry="14" fill="#DEB68C"/><path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/><circle cx="15" cy="19" r="1.8" fill="#2E2438"/><circle cx="25" cy="19" r="1.8" fill="#2E2438"/><path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/><path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/></svg>
+</div>
+<div class="bub" style="background:var(--redP);box-shadow:0 3px 0 #C99E92">
+<div class="cn" style="color:#A83B18">Ace</div><div style="font-size:14px">That's one for the wall.</div>
+</div>
+</div>
+<div style="padding:0 14px 16px">
+<div class="pad" id="p-play"></div>
+<div class="tools"><div class="tool">Erase</div><div class="tool on">Notes</div><div class="tool">Hint</div></div>
+</div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-04</span><div><div class="nh">No mistake limit</div><div class="nb"><span class="flag f-green">Non-punitive</span>Auto-check off by default. Errors counted quietly for stats, not flagged. Strict mode is opt-in.</div></div></li>
+<li><span class="ref">§8</span><div><div class="nh">Five-column pad, not nine</div><div class="nb">Nine keys in a row cannot carry the depth treatment and are worse for thumbs regardless. Bigger targets, fewer per row.</div></div></li>
+<li><span class="ref">§4</span><div><div class="nh">Pressed state is visible</div><div class="nb">Notes is active: dropped 4px, depth reduced to 1px. Eight pixels of travel is enough to feel and not enough to lag.</div></div></li>
+<li><span class="ref">D-40</span><div><div class="nh">The strip is a stage, not a container</div><div class="nb">Empty most of the time. Character slides up, holds 2.5s, leaves. Reactions never queue and never cover the grid.</div></div></li>
+<li><span class="ref">D-24</span><div><div class="nh">No interstitial reachable from here</div><div class="nb"><span class="flag f-red">Ad rule</span>Nothing interrupts a grid in progress. Ever.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 03 · working notation</p>
+<h2>Notes and candidates</h2>
+<p class="lede">The system the top three ranks are built on. Nine candidates per cell in fixed positions, two inks, and highlighting that turns a wall of small digits into a readable pattern.</p>
+<div class="split">
+<div class="phone">
+<div class="bar"><span>‹</span><span>Node 31 · ranger</span><span>Highlighting 7</span></div>
+<div style="padding:14px 14px 8px"><div class="grid" id="g-notes" style="grid-template-columns:repeat(6,1fr)"></div></div>
+<div style="padding:0 14px 14px">
+<div class="pad" id="p-notes"></div>
+<div class="tools"><div class="tool">Clear provisional</div><div class="tool on">Auto-notes</div></div>
+<div style="display:flex;gap:16px;margin-top:11px" class="tag">
+<span><b style="color:var(--indigo);font-size:13px">7</b> settled</span>
+<span><b style="color:#1A7A72;font-size:13px">7</b> provisional</span>
+</div>
+</div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-09</span><div><div class="nh">Nine candidates, not three</div><div class="nb">A three-note cap makes Marshal upward literally unplayable. Naked triples and X-wings need full candidate sets.</div></div></li>
+<li><span class="ref">D-10</span><div><div class="nh">Fixed positions</div><div class="nb">1 top-left, 5 centre, 9 bottom-right, always. Players scan by position rather than reading. Notes that reflow are the hidden cause of an app feeling bad.</div></div></li>
+<li><span class="ref">D-11</span><div><div class="nh">Two inks</div><div class="nb"><span class="flag f-ind">Differentiator</span>Turquoise marks a hypothesis under test, cleared in one tap when a chain fails. Almost nobody ships this.</div></div></li>
+<li><span class="ref">D-13</span><div><div class="nh">Candidate highlighting</div><div class="nb">Tap a digit, every cell holding it lights up. Pointing pairs become visible instead of deduced.</div></div></li>
+<li><span class="ref">D-52</span><div><div class="nh">Notes are silent</div><div class="nb">No particle, no sound, no haptic. Forty entries a minute would turn any celebration into noise.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 04 · reward beat</p>
+<h2>Node complete</h2>
+<p class="lede">The most commercially sensitive screen in the product. The category leader's most repeated complaint is congratulating the player then immediately serving an ad. The fix is a tap between the two.</p>
+<div class="split">
+<div class="phone">
+<div class="bar"><span></span><span>Node 14 cleared</span><span></span></div>
+<div class="reward">
+<div class="tag">Filed with the territory</div>
+<div class="rt">Pointing pairs</div>
+<div style="font-size:13px;color:var(--soft);margin-top:6px">Technique unlocked · 06:44 · personal best</div>
+</div>
+<div class="char" style="transform:rotate(1deg)">
+<div class="av" style="background:var(--red);box-shadow:0 3px 0 var(--redD)">
+<svg width="26" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="22" rx="13" ry="14" fill="#DEB68C"/><path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/><circle cx="15" cy="20" r="2" fill="#2E2438"/><circle cx="25" cy="20" r="2" fill="#2E2438"/><path d="M9 14 l9 4 M31 14 l-9 4" stroke="#2E2438" stroke-width="2"/><path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/><path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/></svg>
+</div>
+<div class="bub" style="background:var(--redP);box-shadow:0 3px 0 #C99E92">
+<div class="cn" style="color:#A83B18">Ace</div><div style="font-size:14px">Beginner's luck, deputy.</div>
+</div>
+</div>
+<div class="btn" style="margin:0 14px 14px;background:var(--gold);box-shadow:0 5px 0 var(--goldD);color:#4A3405">Continue</div>
+<div class="adslot">Interstitial fires here<br>after the tap · if one is due</div>
+<div style="margin:0 14px 16px;padding:11px 12px;border:3px solid var(--ink);border-radius:16px;background:var(--goldP);box-shadow:0 4px 0 var(--boneD);display:flex;justify-content:space-between;align-items:center">
+<span style="font-size:13px">Double this chest</span><span class="tag" style="color:var(--ink)">Watch · 30s</span>
+</div>
+<div class="nav"><div class="on">Trail</div><div>Daily</div><div>Store</div><div>Cabinet</div></div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-24</span><div><div class="nh">Celebration, tap, then ad</div><div class="nb"><span class="flag f-red">Ad rule</span>Never before the tap. An ad on the reward beat reads as an ambush; after an explicit tap it reads as a transition.</div></div></li>
+<li><span class="ref">D-24</span><div><div class="nh">Hard volume caps</div><div class="nb">One per three nodes, ninety seconds apart, six per session maximum. Never on a chest, a boss, or the daily.</div></div></li>
+<li><span class="ref">D-26</span><div><div class="nh">Rewarded video is the volume driver</div><div class="nb">Opt-in ads draw almost no complaints and carry higher eCPM. The player set the price themselves.</div></div></li>
+<li><span class="ref">D-22</span><div><div class="nh">No failure variant of this screen</div><div class="nb"><span class="flag f-green">Non-punitive</span>Boss retries are unlimited and free. Nothing to lose at the season's most loaded moment.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 05 · subscription</p>
+<h2>The Deputy Badge</h2>
+<p class="lede">Ruby presents it, and that is the point — a store with no character reads as software. Offered at node 5, never on first open.</p>
+<div class="split">
+<div class="phone">
+<div class="bar"><span>✕</span><span>General store</span><span></span></div>
+<div style="display:flex;gap:11px;align-items:flex-end;padding:14px 14px 6px">
+<svg width="58" viewBox="0 0 70 76" role="img" style="flex-shrink:0"><title>Ruby</title><desc>Ruby the store proprietor, arms folded, spectacles, hair in a bun.</desc>
+<path d="M14 76 L17 46 Q35 38 53 46 L56 76 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+<path d="M25 48 L35 62 L45 48 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="2"/>
+<rect x="16" y="60" width="38" height="7" rx="3" fill="#DEB68C" stroke="#2E2438" stroke-width="2.5"/>
+<ellipse cx="35" cy="26" rx="18" ry="19" fill="#DEB68C" stroke="#2E2438" stroke-width="3"/>
+<path d="M17 20 Q35 6 53 20 Q46 12 35 11 Q24 12 17 20 Z" fill="#8C5A34" stroke="#2E2438" stroke-width="2.5"/>
+<circle cx="35" cy="6" r="8" fill="#8C5A34" stroke="#2E2438" stroke-width="2.5"/>
+<circle cx="28" cy="27" r="6" fill="none" stroke="#2E2438" stroke-width="2.2"/>
+<circle cx="42" cy="27" r="6" fill="none" stroke="#2E2438" stroke-width="2.2"/>
+<path d="M34 27 h2" stroke="#2E2438" stroke-width="2.2"/>
+<circle cx="28" cy="28" r="2" fill="#2E2438"/><circle cx="42" cy="28" r="2" fill="#2E2438"/>
+<path d="M29 37 q6 -3 12 0" fill="none" stroke="#2E2438" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
+<div class="bub" style="background:var(--greenP);border:3px solid var(--ink);box-shadow:0 3px 0 var(--greenD);transform:rotate(-1deg)">
+<div class="cn" style="color:#2E6B3A">Ruby</div><div style="font-size:14px">Credit? From me?</div>
+</div>
+</div>
+<div style="text-align:center;padding:6px 14px 10px">
+<div style="font-family:'Fredoka';font-weight:600;font-size:25px">The Deputy Badge</div>
+<div class="tag">Issued to sworn deputies only</div>
+</div>
+<div style="padding:0 14px 12px">
+<div class="perk"><b>✓</b><span>No ads. Not one.</span></div>
+<div class="perk"><b>✓</b><span>Every season pass included</span></div>
+<div class="perk"><b>✓</b><span>Unlimited hints and auto-notes</span></div>
+<div class="perk"><b>✓</b><span>Per-technique speed and accuracy</span></div>
+<div class="perk"><b>✓</b><span>The full daily archive, replayable</span></div>
+<div class="perk"><b>✓</b><span>Two extra streak freezes weekly</span></div>
+<div class="perk"><b>✓</b><span>Cloud save · a skin each territory</span></div>
+</div>
+<div class="plan best"><div class="pt"><span class="pn">Annual</span><span class="pp">$29.99</span></div><div class="ps">Less than the season passes alone · $2.50/mo</div></div>
+<div class="plan"><div class="pt"><span class="pn">Monthly</span><span class="pp">$4.99</span></div><div class="ps">Cancel any time</div></div>
+<div class="btn" style="margin:0 14px 12px;background:var(--gold);box-shadow:0 5px 0 var(--goldD);color:#4A3405">Start 7 days free</div>
+<div style="text-align:center;padding:0 14px 16px" class="tag">Or remove ads forever · $9.99</div>
+</div>
+<ul class="notes">
+<li><span class="ref">§7</span><div><div class="nh">Ruby gives monetisation a face</div><div class="nb">A store and a pass offer with no character reads as software. Same screen either way, and one version is warmer. She owns the store, the pass, and chest openings.</div></div></li>
+<li><span class="ref">D-27</span><div><div class="nh">Pass inclusion drives annual</div><div class="nb">Nine seasons at $4.99 is $44.91. The annual plan undercuts it and folds in everything else.</div></div></li>
+<li><span class="ref">D-27</span><div><div class="nh">Unlimited hints are safe to give</div><div class="nb">Solo game, no opponent, no fairness to protect. Withholding them buys nothing but resentment.</div></div></li>
+<li><span class="ref">D-28</span><div><div class="nh">A one-time exit for non-subscribers</div><div class="nb">Many will never subscribe but will pay once to be left alone. Twice the monthly rate makes the subscription look better without punishing the choice.</div></div></li>
+<li><span class="ref">D-29</span><div><div class="nh">Ad removal is absolute</div><div class="nb"><span class="flag f-red">Release blocker</span>Verified by automated test every release.</div></div></li>
+<li><span class="ref">D-30</span><div><div class="nh">Offered at node 5</div><div class="nb">After the player has progress worth protecting. On first open it reads as a paywall on a free game.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 06 · permanent record</p>
+<h2>The cabinet</h2>
+<p class="lede">The only layer that never resets, and the real retention engine. Territories rotate out; this is what makes rotation feel like accumulation rather than loss.</p>
+<div class="split">
+<div class="phone">
+<div class="bar"><span>‹</span><span>Deputy record</span><span>Rank · sheriff</span></div>
+<div class="shelf">
+<div class="sl">Wanted posters · one per territory</div>
+<div class="posters"><div class="poster">I</div><div class="poster">II</div><div class="poster gap">III</div><div class="poster gap">IV</div><div class="poster gap">V</div></div>
+</div>
+<div class="shelf">
+<div class="sl">Daily · august</div>
+<div class="posters">
+<div class="poster" style="border-radius:50%;width:42px;height:42px">★</div>
+<div class="poster gap" style="border-radius:50%;width:42px;height:42px">28</div>
+<div class="poster gap" style="border-radius:50%;width:42px;height:42px">29</div>
+<div class="poster gap" style="border-radius:50%;width:42px;height:42px">30</div>
+</div>
+</div>
+<div class="shelf" style="border-bottom:0">
+<div class="sl">Technique record</div>
+<div class="stat"><span>Hidden singles</span><span>0:41 avg</span></div>
+<div class="stat"><span>Pointing pairs</span><span>1:58 avg</span></div>
+<div class="stat"><span>Naked triples</span><span>4:12 avg</span></div>
+<div class="stat"><span>X-wing</span><span style="color:#A83B18">Not yet filed</span></div>
+</div>
+<div class="nav"><div>Trail</div><div>Daily</div><div>Store</div><div class="on">Cabinet</div></div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-17</span><div><div class="nh">Permanent, seasonal, daily</div><div class="nb">Three independent layers. A single permanent map runs out of content and takes the progression system down with it.</div></div></li>
+<li><span class="ref">D-21</span><div><div class="nh">Gaps stay visible</div><div class="nb">Unearned posters show as blank frames. Visible gaps drive return far better than absence, without shaming.</div></div></li>
+<li><span class="ref">D-45</span><div><div class="nh">The deputy avatar is the store</div><div class="nb">Every poster composites the player's own deputy. Hats, moustaches, kerchiefs, badges — cheap to produce, seen constantly.</div></div></li>
+<li><span class="ref">D-27</span><div><div class="nh">Per-technique stats are a subscriber hook</div><div class="nb">Aimed at the serious solver — smallest segment, likeliest subscriber, likeliest to recommend.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 07 · personnel</p>
+<h2>The cast</h2>
+<p class="lede">Five characters, each holding a role the others do not. Expression lives in eyes and brows only — everything else is fixed, which is what makes the rig affordable across nine territories a year.</p>
+<div class="split">
+<div style="width:302px">
+<svg width="302" viewBox="0 0 380 600" role="img"><title>Doku Duty cast</title><desc>Five cartoon characters: the Sheriff, Ace the outlaw, Biscuit the horse, Number Four, and Ruby the proprietor.</desc>
+<rect x="24" y="24" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="20" y="20" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+<rect x="204" y="24" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="200" y="20" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+<rect x="24" y="224" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="20" y="220" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+<rect x="204" y="224" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="200" y="220" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+<rect x="24" y="424" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="20" y="420" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+
+<path d="M72 176 L78 120 Q100 112 122 120 L128 176 Z" fill="#9C6234" stroke="#2E2438" stroke-width="3"/>
+<path d="M88 118 L100 138 L112 118 Z" fill="#E05A2B" stroke="#2E2438" stroke-width="2.5"/>
+<ellipse cx="100" cy="94" rx="22" ry="24" fill="#E8C49A" stroke="#2E2438" stroke-width="3"/>
+<circle cx="92" cy="90" r="2.6" fill="#2E2438"/><circle cx="108" cy="90" r="2.6" fill="#2E2438"/>
+<ellipse cx="91" cy="104" rx="11" ry="5.5" fill="#8A7A6A"/><ellipse cx="109" cy="104" rx="11" ry="5.5" fill="#8A7A6A"/>
+<g transform="rotate(-6 100 72)"><path d="M64 72 Q100 60 136 72 Q100 82 64 72 Z" fill="#6B4A2E" stroke="#2E2438" stroke-width="3"/><path d="M80 72 Q82 48 100 46 Q118 48 120 72 Z" fill="#7D573A" stroke="#2E2438" stroke-width="3"/></g>
+<path d="M118 134 l7 4 l7 -4 l-3 8 l3 8 l-7 -4 l-7 4 l3 -8 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="2"/>
+<text x="100" y="192" text-anchor="middle" style="font-family:Fredoka;font-size:13px;font-weight:600;fill:#2E2438">The sheriff</text>
+
+<path d="M252 176 L258 122 Q280 114 302 122 L308 176 Z" fill="#3B3355" stroke="#2E2438" stroke-width="3"/>
+<ellipse cx="280" cy="96" rx="21" ry="23" fill="#DEB68C" stroke="#2E2438" stroke-width="3"/>
+<path d="M259 98 Q280 90 301 98 Q298 120 280 122 Q262 120 259 98 Z" fill="#4A3F9E" stroke="#2E2438" stroke-width="2.5"/>
+<path d="M270 88 l10 3" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/><path d="M290 88 l-10 3" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="273" cy="92" r="2.2" fill="#2E2438"/><circle cx="287" cy="92" r="2.2" fill="#2E2438"/>
+<g transform="rotate(7 280 74)"><path d="M246 74 Q280 62 314 74 Q280 84 246 74 Z" fill="#2E2438"/><path d="M262 74 Q264 50 280 48 Q296 50 298 74 Z" fill="#2E2438"/></g>
+<rect x="298" y="132" width="26" height="34" rx="4" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5" transform="rotate(14 311 149)"/>
+<text x="311" y="155" text-anchor="middle" style="font-family:Fredoka;font-size:17px;font-weight:600;fill:#E05A2B" transform="rotate(14 311 149)">9</text>
+<text x="280" y="192" text-anchor="middle" style="font-family:Fredoka;font-size:13px;font-weight:600;fill:#2E2438">Ace</text>
+
+<ellipse cx="104" cy="376" rx="52" ry="7" fill="#E4D4AE"/>
+<path d="M78 352 l-4 22" stroke="#2E2438" stroke-width="6" stroke-linecap="round"/>
+<path d="M128 352 l5 22" stroke="#2E2438" stroke-width="6" stroke-linecap="round"/>
+<ellipse cx="106" cy="322" rx="40" ry="24" fill="#B08050" stroke="#2E2438" stroke-width="3.5"/>
+<path d="M92 350 l-4 24" stroke="#2E2438" stroke-width="6" stroke-linecap="round"/>
+<path d="M118 352 l3 22" stroke="#2E2438" stroke-width="6" stroke-linecap="round"/>
+<rect x="92" y="300" width="30" height="14" rx="5" fill="#4A3F9E" stroke="#2E2438" stroke-width="2.5"/>
+<path d="M144 316 Q158 306 156 292" stroke="#2E2438" stroke-width="7" fill="none" stroke-linecap="round"/>
+<path d="M70 316 Q54 306 58 290" stroke="#B08050" stroke-width="16" fill="none" stroke-linecap="round"/>
+<ellipse cx="52" cy="282" rx="14" ry="16" fill="#B08050" stroke="#2E2438" stroke-width="3.5" transform="rotate(-14 52 282)"/>
+<path d="M44 268 l-4 -13 l11 6 Z" fill="#B08050" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M57 266 l2 -13 l9 9 Z" fill="#B08050" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="46" cy="281" r="2.8" fill="#2E2438"/>
+<ellipse cx="44" cy="294" rx="7" ry="5" fill="#8C6440"/>
+<path d="M62 274 Q72 282 70 296" stroke="#2E2438" stroke-width="5" fill="none" stroke-linecap="round"/>
+<text x="100" y="392" text-anchor="middle" style="font-family:Fredoka;font-size:13px;font-weight:600;fill:#2E2438">Biscuit</text>
+
+<text x="280" y="352" text-anchor="middle" style="font-family:Fredoka;font-size:100px;font-weight:600;fill:#4A3F9E">4</text>
+<circle cx="268" cy="298" r="8" fill="#F5EBD6"/><circle cx="292" cy="298" r="8" fill="#F5EBD6"/>
+<circle cx="270" cy="300" r="3.5" fill="#2E2438"/><circle cx="294" cy="300" r="3.5" fill="#2E2438"/>
+<path d="M258 290 L274 286" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M302 290 L286 286" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M268 316 Q280 310 292 316" fill="none" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/>
+<rect x="248" y="328" width="64" height="9" rx="4.5" fill="#E8C49A" stroke="#2E2438" stroke-width="1.5" transform="rotate(-8 280 332)"/>
+<rect x="248" y="336" width="64" height="9" rx="4.5" fill="#E8C49A" stroke="#2E2438" stroke-width="1.5" transform="rotate(8 280 340)"/>
+<text x="280" y="392" text-anchor="middle" style="font-family:Fredoka;font-size:13px;font-weight:600;fill:#2E2438">Number four</text>
+
+<path d="M70 576 L74 512 Q100 500 126 512 L130 576 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+<path d="M86 514 L100 536 L114 514 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5"/>
+<rect x="72" y="534" width="56" height="10" rx="5" fill="#DEB68C" stroke="#2E2438" stroke-width="2.5"/>
+<ellipse cx="100" cy="486" rx="23" ry="24" fill="#DEB68C" stroke="#2E2438" stroke-width="3"/>
+<path d="M77 480 Q100 462 123 480 Q114 470 100 469 Q86 470 77 480 Z" fill="#8C5A34" stroke="#2E2438" stroke-width="2.5"/>
+<circle cx="100" cy="461" r="10" fill="#8C5A34" stroke="#2E2438" stroke-width="2.5"/>
+<circle cx="91" cy="487" r="7.5" fill="none" stroke="#2E2438" stroke-width="2.4"/>
+<circle cx="109" cy="487" r="7.5" fill="none" stroke="#2E2438" stroke-width="2.4"/>
+<path d="M98.5 487 h3" stroke="#2E2438" stroke-width="2.4"/>
+<circle cx="91" cy="488" r="2.4" fill="#2E2438"/><circle cx="109" cy="488" r="2.4" fill="#2E2438"/>
+<path d="M92 500 q8 -4 16 0" fill="none" stroke="#2E2438" stroke-width="2.6" stroke-linecap="round"/>
+<text x="100" y="592" text-anchor="middle" style="font-family:Fredoka;font-size:13px;font-weight:600;fill:#2E2438">Ruby</text>
+
+<g transform="translate(200,420)">
+<text x="80" y="26" text-anchor="middle" style="font-family:Fredoka;font-size:14px;font-weight:600;fill:#2E2438">Roles</text>
+<text x="12" y="52" style="font-size:11px;fill:#6B5F73">Ace · antagonist</text>
+<text x="12" y="74" style="font-size:11px;fill:#6B5F73">Sheriff · wrong advice</text>
+<text x="12" y="96" style="font-size:11px;fill:#6B5F73">Biscuit · wordless ally</text>
+<text x="12" y="118" style="font-size:11px;fill:#6B5F73">Number Four · wildcard</text>
+<text x="12" y="140" style="font-size:11px;fill:#6B5F73">Ruby · commerce</text>
+<text x="12" y="166" style="font-size:11px;fill:#9A8FA0">Cut order if budget</text>
+<text x="12" y="182" style="font-size:11px;fill:#9A8FA0">is short: Four, then</text>
+<text x="12" y="198" style="font-size:11px;fill:#9A8FA0">the Sheriff.</text>
+</g>
+</svg>
+</div>
+<ul class="notes">
+<li><span class="ref">D-37</span><div><div class="nh">Roles, not slots</div><div class="nb">Antagonist, counterweight, ally, wildcard, commerce. A character without a job is one nobody writes lines for.</div></div></li>
+<li><span class="ref">D-38</span><div><div class="nh">Biscuit never speaks</div><div class="nb"><span class="flag f-green">Zero localisation</span>A horse reads as western at 30px where a burro does not. Same wordless role — identical comic timing in every market.</div></div></li>
+<li><span class="ref">§7</span><div><div class="nh">The bandana is a budget decision</div><div class="nb"><span class="flag f-ind">Rig economy</span>Covering Ace's mouth means no mouth shapes, halving his rig cost and making lip-sync a non-question in fifteen languages. Design element and cost decision are the same decision.</div></div></li>
+<li><span class="ref">§7</span><div><div class="nh">Ruby owns monetisation</div><div class="nb">The store, the pass offer, and chest openings. A paywall becomes a conversation with someone who has seen every deputy come and go.</div></div></li>
+<li><span class="ref">D-39</span><div><div class="nh">The Sheriff is always wrong, never harmful</div><div class="nb">Following his advice wastes a move, never a puzzle. A wrong hint with real cost turns a gag into a trap.</div></div></li>
+<li><span class="ref">D-35</span><div><div class="nh">Five is over scope, stated plainly</div><div class="nb">v1 was scoped at one character, then four. This is five, and it is real additional art. The art budget is the product budget.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 08 · reward feedback</p>
+<h2>Completion effects</h2>
+<p class="lede">Particles come from the world, not a generic sparkle library. Rows are lassoed, blocks are detonated, and mistakes are noticed rather than punished.</p>
+<div class="split">
+<div style="width:302px">
+<div class="tag" style="margin-bottom:8px">Row · 260ms · lasso cinch</div>
+<div id="rowdemo" style="display:flex;border:3px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 4px 0 var(--boneD)"></div>
+<div class="tag" style="margin:20px 0 8px">Block · 340ms · dynamite</div>
+<div id="blockdemo" style="display:grid;grid-template-columns:repeat(3,1fr);width:126px;border:3px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 4px 0 var(--boneD)"></div>
+<div class="tag" style="margin:20px 0 8px">Duplicate · 400ms · digits react</div>
+<div style="display:flex;gap:40px;padding-left:8px">
+<div class="dupe" style="position:relative;width:46px;height:46px;border:3px solid var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-size:22px;font-weight:600">7<span class="bang">!</span></div>
+<div class="dupe d2" style="position:relative;width:46px;height:46px;border:3px solid var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-size:22px;font-weight:600">7<span class="bang">!</span></div>
+</div>
+</div>
+<ul class="notes">
+<li><span class="ref">§6</span><div><div class="nh">Lasso for rows, dynamite for blocks</div><div class="nb">A rope cinches along the row — an unmistakably western verb that reads as <i>collected</i>. Blocks detonate radially so they never read as a row.</div></div></li>
+<li><span class="ref">§6</span><div><div class="nh">No firearms</div><div class="nb"><span class="flag f-red">Excluded</span>Punishment as an aesthetic undoes fifty-five decisions. It also pushes the age rating to 9+ or 12+, restricts ad networks, and forfeits the family audience. Dynamite passes because it celebrates rather than threatens.</div></div></li>
+<li><span class="ref">D-42</span><div><div class="nh">Digits react instead of flashing red</div><div class="nb"><span class="flag f-ind">Signature</span>Same information as the red flash, delivered as character. Fires constantly, costs one animation, converts the sorest moment into the most charming one.</div></div></li>
+<li><span class="ref">D-47</span><div><div class="nh">Cascades chain at 90ms</div><div class="nb">Lasso, lasso, dynamite — brighter and a tone higher each step, Biscuit stamping on the third. 520ms total, a deliberate exception to the 400ms rule.</div></div></li>
+<li><span class="ref">D-48</span><div><div class="nh">Tints never stack</div><div class="nb">A cell in three completed units looks like a cell in one. Additive tinting darkens exactly as the board most needs to stay readable.</div></div></li>
+<li><span class="ref">§6</span><div><div class="nh">Particle budget</div><div class="nb">8 puffs per row, 12 sparks per block, 40 scraps at completion. 60 on screen maximum. Cascades reuse the pool rather than tripling it.</div></div></li>
+</ul>
+</div>
+</section>
+
+<section class="screen">
+<p class="num">Screen 09 · colour</p>
+<h2>Palette and state roles</h2>
+<p class="lede">The grid needs five reserved colours for state before decoration gets any. Every hue has one job. Values are canonical in <b>docs/DESIGN.md</b>.</p>
+<div class="split">
+<div style="width:302px">
+<div class="sw">
+<div><div class="chip" style="background:#F5EBD6"></div><div style="font-size:13px;font-weight:600">Bone</div><div class="hex">#F5EBD6 · surfaces</div></div>
+<div><div class="chip" style="background:#E4D4AE"></div><div style="font-size:13px;font-weight:600">Sand</div><div class="hex">#E4D4AE · background</div></div>
+<div><div class="chip" style="background:#F2B33D"></div><div style="font-size:13px;font-weight:600">Badge gold</div><div class="hex">#F2B33D · focus</div></div>
+<div><div class="chip" style="background:#4E9E62"></div><div style="font-size:13px;font-weight:600">Cactus green</div><div class="hex">#4E9E62 · completed</div></div>
+<div><div class="chip" style="background:#4A3F9E"></div><div style="font-size:13px;font-weight:600">Night indigo</div><div class="hex">#4A3F9E · candidates</div></div>
+<div><div class="chip" style="background:#2AA39A"></div><div style="font-size:13px;font-weight:600">Turquoise</div><div class="hex">#2AA39A · provisional</div></div>
+<div><div class="chip" style="background:#E05A2B"></div><div style="font-size:13px;font-weight:600">Sunset red</div><div class="hex">#E05A2B · errors</div></div>
+<div><div class="chip" style="background:#2E2438"></div><div style="font-size:13px;font-weight:600">Dusk ink</div><div class="hex">#2E2438 · outlines</div></div>
+</div>
+</div>
+<ul class="notes">
+<li><span class="ref">D-53</span><div><div class="nh">One hue, one job</div><div class="nb"><span class="flag f-ind">Rule</span>Five states need reserved colour before decoration gets any. Decoration borrows from this set, never adds to it.</div></div></li>
+<li><span class="ref">D-54</span><div><div class="nh">Two hues the brief did not ask for</div><div class="nb">Brown, yellow, orange and green cannot carry five states — too close in hue to separate on a dense grid. Turquoise and night indigo are authentically southwestern. The dusk-purple outline stops the warm hues collapsing into each other.</div></div></li>
+<li><span class="ref">D-55</span><div><div class="nh">Territories repaint surfaces, never states</div><div class="nb">A new territory may change bone, sand, and props. The six state colours are fixed across every season, so the grid is never relearned.</div></div></li>
+<li><span class="ref">§4</span><div><div class="nh">Depth shades are derived, not new</div><div class="nb">Every offset shadow is a darker value of its own hue. No shadow introduces a colour that is not already in the set.</div></div></li>
+<li><span class="ref">D-50</span><div><div class="nh">Colour is never the only signal</div><div class="nb">Corner marks on completion, position on notes, character animation on errors. The board stays legible with the hues stripped out.</div></div></li>
+</ul>
+</div>
+</section>
+
+<footer>
+<span>Doku Duty · draft 1.0</span><span>Nine screens · five characters</span><span>See docs/SPEC.md · docs/DECISIONS.md · docs/DESIGN.md · docs/ART-BRIEF.md</span>
+</footer>
+</div>
+<script>
+(function(){
+var sol=[[5,3,4,6,7,8,9,1,2],[6,7,2,1,9,5,3,4,8],[1,9,8,3,4,2,5,6,7],[8,5,9,7,6,1,4,2,3],[4,2,6,8,5,3,7,9,1],[7,1,3,9,2,4,8,5,6],[9,6,1,5,3,7,2,8,4],[2,8,7,4,1,9,6,3,5],[3,4,5,2,8,6,1,7,9]];
+var blank={"0,3":1,"1,6":1,"2,1":1,"3,8":1,"5,0":1,"6,5":1,"7,2":1,"8,7":1,"0,7":1,"3,3":1};
+var notes={"1,2":[2,4,7],"6,3":[1,3,8],"8,4":[2,5]};
+function bd(r,c){return 'border-right:'+((c%3===2&&c<8)?'2.5px solid #2E2438':'1px solid #DCCDA8')+';border-bottom:'+((r%3===2&&r<8)?'2.5px solid #2E2438':'1px solid #DCCDA8')+';';}
+var g=document.getElementById('g-play');
+for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+var d=document.createElement('div');d.className='cell';var k=r+','+c;
+var sel=(r===4&&c===4),done=(r===2),peer=(!sel&&(r===4||c===4));
+d.style.cssText='height:30px;font-size:16px;color:'+(sel?'#4A3405':'#2E2438')+';background:'+(sel?'#F2B33D':(done?'#CFE0BE':(peer?'#F2E9D6':'#FBF5E9')))+';'+bd(r,c);
+if(notes[k]){var m=document.createElement('div');m.className='mini';
+for(var n=1;n<=9;n++){var s=document.createElement('span');s.textContent=notes[k].indexOf(n)>-1?n:'';m.appendChild(s);}d.appendChild(m);}
+else d.textContent=blank[k]?'':sol[r][c];
+if(done&&c===8){var t=document.createElement('span');t.className='mark';t.textContent='\u25B2';d.appendChild(t);}
+g.appendChild(d);}
+function pad(el,active){for(var n=1;n<=9;n++){var b=document.createElement('div');b.className='key'+(n===active?' on':'');
+if(n===active){b.style.cssText='background:#E6DEFA;border-color:#4A3F9E;color:#2E2585;box-shadow:0 1px 0 #2F2670;transform:translateY(3px)';}
+b.textContent=n;el.appendChild(b);}
+var e=document.createElement('div');e.className='key';e.style.color='#8A7A5A';e.style.fontSize='17px';e.textContent='\u232B';el.appendChild(e);}
+pad(document.getElementById('p-play'),0);
+pad(document.getElementById('p-notes'),7);
+var cells=[{n:[2,7]},{n:[7,9]},{v:4},{n:[1,3,8]},{v:6},{n:[3,8]},{v:9},{n:[2,3]},{n:[2,3,8]},{v:5},{n:[1,7],p:[1]},{v:4},{n:[1,6]},{v:8},{n:[1,6,7]},{n:[2,3]},{v:9},{n:[2,3]},{n:[3,5]},{v:1},{n:[3,5,9],p:[9]},{v:8},{n:[2,4]},{n:[2,4]}];
+var gn=document.getElementById('g-notes');
+for(var i=0;i<cells.length;i++){var cc=cells[i],d2=document.createElement('div');d2.className='cell';
+var hit=cc.n&&cc.n.indexOf(7)>-1;
+d2.style.cssText='height:42px;font-size:17px;border-right:1px solid #DCCDA8;border-bottom:1px solid #DCCDA8;background:'+(hit?'#E6DEFA':'#FBF5E9')+';';
+if(cc.v)d2.textContent=cc.v;
+else{var m2=document.createElement('div');m2.className='mini';
+for(var n2=1;n2<=9;n2++){var s2=document.createElement('span'),on=cc.n.indexOf(n2)>-1;
+if(on&&cc.p&&cc.p.indexOf(n2)>-1)s2.className='prov';else if(on&&n2===7)s2.className='hot';
+s2.textContent=on?n2:'';m2.appendChild(s2);}d2.appendChild(m2);}
+gn.appendChild(d2);}
+var row=document.getElementById('rowdemo'),vals=[5,3,4,6,7,8,9,1,2];
+for(var i2=0;i2<9;i2++){var dl=Math.abs(i2-4)*0.018;
+var d3=document.createElement('div');
+d3.style.cssText='position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-weight:600;font-size:15px;color:#2E2438;border-right:'+(i2<8?'1px solid #DCCDA8':'none')+';animation:ddCell 3s ease-out infinite;animation-delay:'+dl+'s;';
+d3.textContent=vals[i2];
+var p=document.createElement('span');
+p.style.cssText='position:absolute;top:2px;left:50%;margin-left:-4px;width:8px;height:8px;border-radius:50%;background:#C9B48C;animation:ddDust 3s ease-out infinite;animation-delay:'+(dl+0.02)+'s;';
+d3.appendChild(p);row.appendChild(d3);}
+var blk=document.getElementById('blockdemo'),bv=[[8,5,9],[4,2,6],[7,1,3]];
+for(var r3=0;r3<3;r3++)for(var q=0;q<3;q++){
+var dist=Math.max(Math.abs(r3-1),Math.abs(q-1)),dl2=dist*0.055;
+var d4=document.createElement('div');
+d4.style.cssText='position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-weight:600;font-size:16px;color:#2E2438;border-right:'+(q<2?'1px solid #DCCDA8':'none')+';border-bottom:'+(r3<2?'1px solid #DCCDA8':'none')+';animation:ddCell 3s ease-out infinite;animation-delay:'+dl2+'s;';
+d4.textContent=bv[r3][q];
+if(dist===1){var sp=document.createElement('span');sp.textContent='\u2726';
+sp.style.cssText='position:absolute;top:1px;right:2px;font-size:13px;color:#F2B33D;animation:ddSpark 3s ease-out infinite;animation-delay:'+(dl2+0.04)+'s;';d4.appendChild(sp);}
+blk.appendChild(d4);}
+})();
+</script>

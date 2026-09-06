@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pin the toolchain. An unpinned `stable` turns an unrelated Flutter release
+  # into a red build on a branch that changed nothing.
+  FLUTTER_VERSION: '3.44.4'
+
+jobs:
+  static-analysis:
+    name: Analyse and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: dart format
+        # --output=none, or the step rewrites the checkout instead of
+        # reporting on it, and passes on the second run of a dirty branch.
+        run: dart format --output=none --set-exit-if-changed .
+      - name: flutter analyze
+        run: flutter analyze
+
+  test:
+    name: Unit and widget tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+
+  android-build:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavour: [dev, staging, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Build ${{ matrix.flavour }}
+        run: >-
+          flutter build apk --debug
+          --flavor ${{ matrix.flavour }}
+          -t lib/main_${{ matrix.flavour }}.dart
+
+  ios-build:
+    name: iOS debug build
+    # macOS runners are billed at a higher rate (docs/TECH_STACK.md §3), so this
+    # builds one flavour rather than the matrix Android runs. Per-flavour Xcode
+    # configuration is covered by the unit tests and by the release lanes.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      # Plugins are integrated with Swift Package Manager, not CocoaPods, so
+      # there is no Pods directory to cache — this is the equivalent.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-
+      - run: flutter pub get
+      - name: Build dev
+        run: >-
+          flutter build ios --debug --no-codesign
+          --flavor dev -t lib/main_dev.dart

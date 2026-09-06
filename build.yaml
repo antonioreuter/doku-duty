@@ -1,0 +1,22 @@
+# Tells drift_dev where the database lives, which `make-migrations` needs to
+# produce schema snapshots and migration tests.
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # ISO-8601 text rather than drift's default unix seconds.
+          #
+          # Two reasons, both about sync. Seconds cannot order two writes made
+          # in the same second, and note state is written on every change
+          # (D-33) — a player marking a dense board makes several a second, so
+          # last-write-wins would be resolving ties by luck. And unix seconds
+          # carry no timezone, which matters the moment two devices in
+          # different zones compare stamps.
+          #
+          # Set at schema version 1 because changing it later is a data
+          # migration over live saved games, which is the thing this layer
+          # exists to avoid. Recorded as D-76.
+          store_date_time_values_as_text: true
+          databases:
+            app_database: lib/features/persistence/data/app_database.dart

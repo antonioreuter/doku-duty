@@ -1,0 +1,115 @@
+name: doku_duty
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+
+  # Local storage. Drift over SQLite rather than Isar — docs/TECH_STACK.md §6,
+  # re-verified at implementation time per §7: Isar's last stable is three years
+  # old, Drift ships weekly.
+  #
+  # Held on the 2.31.x line deliberately (D-77). From drift 2.32 the native
+  # sqlite is bundled by Dart build hooks instead of by sqlite3_flutter_libs,
+  # and on this Flutter the hook's output never reaches the APK — the app dies
+  # on `dlopen libsqlite3.so`. An on-device test caught it; no host test can,
+  # because the test host uses the OS's own sqlite. Revisit when the hook path
+  # packages correctly; until then this line is the one that ships.
+  drift: ^2.31.0
+  drift_flutter: ^0.2.8
+
+  # The package that actually puts libsqlite3.so in the APK and the .framework
+  # in the IPA. Direct rather than transitive so the pin is visible: it is the
+  # other half of D-77 and must move with drift, not on its own.
+  sqlite3_flutter_libs: ^0.5.0
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  go_router: ^18.0.1
+  sentry_flutter: ^9.29.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # On-device tests. Path resolution in the application-support directory and
+  # the bundled native sqlite cannot be exercised by a host test run.
+  integration_test:
+    sdk: flutter
+
+  # The pure-logic systems carry no Flutter import, so their tests use the
+  # plain test runner rather than flutter_test.
+  test: ^1.25.0
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
+
+  # Drift's code generation and its migration tooling. `drift_dev
+  # make-migrations` produces the schema snapshots and migration tests that
+  # protect saved games across an upgrade (D-33).
+  drift_dev: ^2.31.0
+  build_runner: ^2.4.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  fonts:
+    # Bundled, not fetched. `google_fonts` resolves at runtime by default, which
+    # full offline play forbids — the face must render on a fresh install in
+    # airplane mode. Three static weights, 380KB total, licence alongside.
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+
+  assets:
+    - assets/fonts/OFL.txt
+
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

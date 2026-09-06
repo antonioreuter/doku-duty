@@ -1,0 +1,334 @@
+# Doku Duty — implementation backlog
+
+Every item below is a proposed OpenSpec change. Create one with:
+
+```
+/opsx:propose <change-name>
+```
+
+Items are ordered by dependency. Milestones are checkpoints where something real is playable, not phase gates — work ahead where it makes sense.
+
+**Capabilities** (kebab-case, used consistently across all changes):
+
+`platform-shell` · `design-system` · `remote-config` · `puzzle-engine` · `grid-input` · `notes` · `mistake-model` · `completion-effects` · `rank-progression` · `stamps` · `perks` · `technique-tutorials` · `daily-challenge` · `season-map` · `trophy-cabinet` · `character-system` · `running-gags` · `deputy-avatar` · `ads` · `purchases` · `persistence` · `auth` · `cloud-sync` · `analytics` · `localization` · `accessibility`
+
+---
+
+## Milestone 0 — Foundation
+
+*Done when: a signed build installs on both platforms from CI and shows a themed empty screen.*
+
+### 1. `setup-mobile-foundation`
+**Capabilities:** `platform-shell`
+Flutter project, iOS and Android targets, flavours for dev/staging/prod, Riverpod, routing, `flutter analyze` and `dart format` in CI, Fastlane lanes for both stores, Sentry.
+**Blocks:** everything.
+**Watch for:** get the minimum OS versions and bundle identifiers right now — changing a bundle ID after store registration is painful.
+
+### 2. `add-design-system`
+**Capabilities:** `design-system`
+The eight colour tokens — six carrying state, two surfaces — as named tokens, typography scale, corner radii, stroke weights, haptic vocabulary, and a theme structure where seasons can repaint surfaces but not state colours (D-53 as amended by D-71, D-65, D-55).
+**Depends on:** 1.
+**Watch for:** enforce the "one colour, one job" rule in the token API itself, so a later change physically cannot introduce a ninth hue.
+
+### 3. `add-persistence-layer`
+**Capabilities:** `persistence`
+Drift schemas for puzzle packs, save state, notes, statistics, and settings. Write-on-every-change for note state (D-33). Survives app kill mid-puzzle. (`docs/TECH_STACK.md` §6 replaced Isar with Drift over SQLite; this line said Isar until `add-persistence-layer` corrected it.)
+**Depends on:** 1.
+**Watch for:** model manual and generated notes as distinguishable from day one (D-15) — retrofitting this means migrating saved games.
+
+---
+
+### 4. `add-remote-config`
+**Capabilities:** `remote-config`
+Versioned JSON on S3 behind CloudFront with a short TTL, a client fetch with cache and a baked-in fallback, and typed accessors. Carries the ad caps from D-24, season definitions, and any value that must change without a release.
+**Depends on:** 3.
+**Watch for:** this must land before `add-ads-integration`. The ad caps in D-24 — one interstitial per three nodes, six per session, ninety seconds apart — have to be server-tunable against retention data, and retrofitting that after the ad logic ships means touching every placement. The fallback must work fully offline; a missing config never blocks play.
+
+## Milestone 1 — A sudoku you can play
+
+*Done when: a player can solve a puzzle at any of six ranks, with full notes, offline, and it feels good.*
+
+### 5. `add-puzzle-engine`
+**Capabilities:** `puzzle-engine`
+Puzzle model, solver, uniqueness verification, technique-based grading, seeded packs, pack loading and top-up. Offline-first.
+**Depends on:** 3.
+**Watch for:** grading is the load-bearing system. A puzzle graded Marshal that only needs a hidden single destroys trust in the whole progression. Test the grader against a known-graded corpus.
+
+### 6. `add-grid-and-input`
+**Capabilities:** `grid-input`
+Custom-canvas grid render, cell selection, value entry, number pad, erase, undo at full depth, number-first input as a setting, peer highlighting.
+**Depends on:** 2, 5.
+**Watch for:** the sub-100ms latency budget is a product requirement, not an aspiration. Profile on a mid-tier Android device before this change is considered done.
+
+### 7. `add-notes`
+**Capabilities:** `notes`
+Nine candidates per cell in fixed positions, persistent notes toggle, long-press for the opposite mode, notes never counting as mistakes (D-09, D-10, D-14).
+**Depends on:** 6.
+**Watch for:** positional layout is the whole point. Notes that reflow when a candidate is removed are the hidden cause of an app feeling bad.
+
+### 8. `add-note-automation`
+**Capabilities:** `notes`
+Auto-cleanup on value placement, candidate highlighting, auto-notes fill, and single-action undo for each (D-12, D-13).
+**Depends on:** 7.
+**Watch for:** auto-cleanup is not optional. A setting to disable it would exist only to make the game worse.
+
+### 9. `add-provisional-notes`
+**Capabilities:** `notes`
+A second turquoise ink for hypotheses under test, and a one-action clear of all provisional marks (D-11).
+**Depends on:** 8.
+**Watch for:** this is a real differentiator — almost nobody ships it. Worth doing properly rather than as a colour toggle.
+
+### 10. `add-mistake-model`
+**Capabilities:** `mistake-model`
+Silent mistake recording, auto-check off by default, opt-in strict mode, and overwriting a correct cell never counting as a mistake (D-04, D-05).
+**Depends on:** 6.
+**Watch for:** the default matters more than the feature. If auto-check ships on, the product's whole positioning is gone.
+
+### 11. `add-completion-effects`
+**Capabilities:** `completion-effects`
+Row, column, and block completion effects; chained cascades at 90ms offsets; puzzle completion sequence; persistent non-additive completion tints with corner marks (D-46 … D-50, D-52).
+**Depends on:** 6, 2.
+**Watch for:** tints must not stack. A cell in three completed units looks identical to one in a single unit, or a nearly finished board turns to mud.
+
+---
+
+## Milestone 2 — A reason to come back
+
+*Done when: there is a season to progress through, a daily habit, and a permanent record.*
+
+### 12. `add-rank-progression`
+**Capabilities:** `rank-progression`
+Six ranks Greenhorn through Legend, mapped to required techniques; rank state; per-technique statistics (D-07).
+**Depends on:** 5, 10.
+
+### 13. `add-technique-tutorials`
+**Capabilities:** `technique-tutorials`
+Short interactive tutorial the first time a player meets a puzzle requiring a new technique. Skippable, replayable from the cabinet.
+**Depends on:** 12, 8.
+**Watch for:** the notes tutorial must land no later than Sheriff rank. Marshal upward is unplayable without notes.
+
+### 14. `add-daily-challenge`
+**Capabilities:** `daily-challenge`
+One puzzle per day, identical for all players, month-grid calendar, streak counter, one automatic free streak freeze per week (D-20). No interstitial, ever.
+**Depends on:** 5, 3.
+**Watch for:** the freeze must apply automatically. A freeze the player has to remember to use is a trap, not a safety net.
+
+### 15. `add-season-map`
+**Capabilities:** `season-map`
+42-node territory map, node types (puzzle, variant, chest, boss), front-loaded reward pacing, non-expiring nodes, unlimited free boss retries, season rotation (D-18, D-19, D-22).
+**Depends on:** 12, 3.
+**Watch for:** build seasons as data from the start. If season one is hard-coded, the six-week cadence dies in month two.
+
+### 16. `add-trophy-cabinet`
+**Capabilities:** `trophy-cabinet`
+Permanent trophies and medals, unearned seasonal awards shown as unfiled rather than hidden, lifetime and per-technique statistics (D-17, D-21).
+**Depends on:** 15, 14, 12.
+
+### 17. `add-puzzle-variants`
+**Capabilities:** `puzzle-engine`, `grid-input`
+One rule variant beyond classic for the season's variant nodes — killer recommended for v1.
+**Depends on:** 6, 15.
+**Watch for:** scope. One variant, properly. Not four.
+
+---
+
+### 18. `add-stamps`
+**Capabilities:** `stamps`
+The perk currency. Earning on daily completion, perfect solve, streak milestone, chest, and boss; a persisted balance that survives app kill; and the earn values in D-66. Never purchasable — no store surface of any kind.
+**Depends on:** 3, 14, 15.
+**Watch for:** the balance is save state, so it inherits constraint 9 — write on every change, never on a timer. A Stamp awarded and lost to a crash is worse than one never awarded.
+
+### 19. `add-perks`
+**Capabilities:** `perks`
+The assist catalogue and the hint meter (D-67): one free hint per puzzle, then Stamps or rewarded video. Hint, auto-notes charge, reveal a cell, scan a unit, digit sweep, solve a row.
+**Depends on:** 5, 7, 18.
+**Watch for:** running out of Stamps must never block play — no locked node, no ended attempt, no unsolvable grid. And digit sweep must stay distinct from free candidate highlighting; metering a feature that is already free is the failure mode here.
+
+## Milestone 3 — The reason it exists
+
+*Done when: the game is funny.*
+
+### 20. `add-character-system`
+**Capabilities:** `character-system`
+Rive rig, the four characters, reaction trigger table, character strip below the grid, silent idles after 20 seconds (D-58, D-59, D-60, D-40, D-44).
+**Depends on:** 6, 10, 11.
+**Watch for:** the character strip must never cover the grid, and idles must never make noise.
+
+### 21. `add-digit-reactions`
+**Capabilities:** `character-system`, `completion-effects`
+Digits reacting to duplicates in place of a conventional red flash (D-42).
+**Depends on:** 20, 10.
+**Watch for:** this is the single clearest expression of the product's positioning, and it costs one animation. Do not cut it for schedule.
+
+### 22. `add-running-gags`
+**Capabilities:** `running-gags`
+Ace's jailhouse tally (cosmetic only), telegram and newspaper loading screens, wanted-poster season portraits (D-61, D-62).
+**Depends on:** 20, 15.
+**Watch for:** the tally must never affect difficulty, rewards, or progression. The moment it carries consequence it breaks the non-punitive principle.
+
+### 23. `add-deputy-avatar`
+**Capabilities:** `deputy-avatar`
+Customisable player character — hats, moustaches, badges, kerchiefs — as flat layers on one rig, feeding the wanted-poster wall (D-63).
+**Depends on:** 20, 16.
+
+---
+
+## Milestone 4 — The business
+
+*Done when: the app can earn, and paying players are never let down.*
+
+### 24. `add-ads-integration`
+**Capabilities:** `ads`
+AdMob with mediation. Interstitial only after node completion, after celebration, after an explicit tap. Caps: one per three nodes, ninety seconds apart, six per session, never on chest, boss, or daily. Banners on map and cabinet only (D-24, D-25).
+**Depends on:** 15.
+**Watch for:** the caps are the feature. Ship the placement rules as testable logic, not as an ad-SDK configuration someone can quietly loosen later.
+
+### 25. `add-rewarded-video`
+**Capabilities:** `ads`
+Opt-in rewarded placements: a hint, an auto-notes charge, doubling a chest, one bonus daily chest (D-26).
+**Depends on:** 24, 8.
+
+### 26. `add-purchases-and-entitlements`
+**Capabilities:** `purchases`
+RevenueCat, StoreKit 2 and Play Billing, the Deputy Badge subscription with seven-day trial, one-time ad removal, restore purchases, and an automated test asserting zero ads under an active entitlement (D-27, D-28, D-29).
+**Depends on:** 24.
+**Watch for:** the no-ads test is a release blocker. Ads appearing after ad removal is the most trust-destroying failure in the category.
+
+### 27. `add-season-pass`
+**Capabilities:** `purchases`, `season-map`
+Parallel premium reward track on the same 42 nodes, offered at node 5, included free for subscribers. No gameplay advantage, no difficulty reduction (D-30).
+**Depends on:** 26, 15.
+
+### 28. `add-auth`
+**Capabilities:** `auth`
+Cognito user pools with Sign in with Apple and Google federation, and a guest tier that requires no account and loses nothing locally. Sign-in prompts at three moments only — after the first season completes, on subscription purchase, and in settings — never on first open, never blocking. Guest-to-account migration on first sign-in (`docs/TECH_STACK.md` §2a).
+**Depends on:** 3.
+**Watch for:** the migration is where this breaks. A player who signs in after three weeks of guest play must not find an empty cabinet. Never merge two saves silently — present both with rank, streak, and season progress and let the player choose — and never delete local state until the upload is confirmed. Sign in with Apple is mandatory on iOS if any other third-party sign-in is offered; submissions are rejected without it. Meta federation is a defensible cut.
+
+### 29. `add-cloud-sync`
+**Capabilities:** `cloud-sync`
+API Gateway + Lambda + DynamoDB save sync, free for any signed-in player and not a subscriber benefit (D-68). Debounced sync triggers, the merge semantics in `docs/TECH_STACK.md` §3b, and graceful offline degradation.
+**Depends on:** 28, 3.
+**Watch for:** last-write-wins is the wrong default. Counters take the maximum, sets union, and the **streak is recomputed from the unioned calendar rather than synced as a number** — that single rule removes most conflicts. In-progress puzzle state is device-local and never synced. Never block the grid on a network call.
+
+---
+
+## Milestone 5 — Ship quality
+
+*Can run in parallel with milestones 3 and 4. None of it is optional at launch.*
+
+### 30. `add-accessibility-settings`
+**Capabilities:** `accessibility`
+Reduce-effects setting, OS reduce-motion respected, completion tints toggleable, dynamic type, screen reader labels on the grid, colour-independent state signalling verified (D-50).
+**Depends on:** 11.
+
+### 31. `add-analytics`
+**Capabilities:** `analytics`
+Node completion by rank, notes usage by rank, hint usage by technique, interstitial-adjacent session ends, trial start and conversion, season pass offer views and conversions.
+**Depends on:** 15, 24, 26.
+**Watch for:** instrument interstitial-adjacent churn specifically. It is the number that proves or disproves the whole ad policy.
+
+### 32. `add-localization`
+**Capabilities:** `localization`
+Localisation infrastructure and the first language set. Character lines stay under six words; Biscuit needs none (D-02, D-59).
+**Depends on:** 20.
+
+### 33. `add-onboarding`
+**Capabilities:** `technique-tutorials`, `season-map`
+First-run experience: first puzzle inside 15 seconds, no account required, no paywall on first open.
+**Depends on:** 13, 15.
+
+### 34. `add-store-release-pipeline`
+**Capabilities:** `platform-shell`
+Store listings, screenshots, age ratings, privacy manifests, App Tracking Transparency, Play Data Safety, phased rollout, release checklist including the no-ads entitlement test.
+
+**Also inherits the hardware verification from change 1** (D-70). `setup-mobile-foundation` built and shipped all of this; none of it could be *verified* without a physical device, a Sentry account, or signing certificates, and holding change 1 open for that would have blocked all 33 other items:
+
+- Cold start on a mid-tier physical Android device, and on an iOS device, against the 2-second budget in `openspec/project.md`. An emulator cannot substitute — the same binary measured 931ms and 3189ms on one depending on host load
+- Orientation on a real iOS device: portrait-locked on iPhone, rotating on iPad
+- A real Sentry event from a `dev` build, arriving tagged `dev`
+- The iOS Fastlane lane producing a signed archive, with `match` and an App Store Connect API key
+- The accessibility check, once `add-design-system` has given it something to check
+
+**Depends on:** 26, 31.
+**Watch for:** the cold-start requirement archived into `openspec/specs/` from change 1 as intent, never as a measurement. It is the one requirement in the foundation with no evidence behind it, and this is where it gets some.
+
+---
+
+## Deliberately not in v1
+
+Recorded so they do not creep in:
+
+- Additional seasons beyond the first (content pipeline, not engineering)
+- Additional rule variants beyond one
+- Tournaments and leaderboards
+- A standalone Killer Sudoku app (target: launch +6 months, D-34)
+- Friends, social features, or sharing
+- Tablet-specific layouts beyond basic landscape support
+- Any *purchasable* currency, coin store, Stamp bundle, or gacha mechanic (D-23, D-66). Stamps themselves are in v1 and are earned only through play
+
+---
+
+## Working with mattpocock/skills
+
+Install once per repository:
+
+```
+npx skills add mattpocock/skills
+```
+
+Take at minimum `setup-matt-pocock-skills`, `grill-with-docs`, `handoff`, `tdd`,
+and `diagnose`. The skills are written into your repo as ordinary files you own
+and can edit — adjust them to match the conventions in `openspec/project.md`
+rather than working around them.
+
+### Where each skill sits in the loop
+
+| Stage | Tool | Output |
+|---|---|---|
+| Idea is still loose | `/grill-with-docs` | Decisions appended to `docs/DECISIONS.md`, glossary updated in `openspec/project.md` |
+| Decisions are settled | `/opsx:propose <name>` | `proposal.md`, `design.md`, `tasks.md`, delta specs |
+| Building | `/opsx:apply` + `/tdd` | Code and tests |
+| Something breaks | `/diagnose` | A cause, before any fix |
+| Session getting long | `/handoff` | A document pointing at the change directory |
+| Change is complete | `/opsx:verify` then `/opsx:archive` | Deltas merged into `openspec/specs/` |
+
+### The overlap to watch
+
+`grill-with-docs` maintains a documentation layer by default — `CONTEXT.md` and
+individual ADR files. This project already has both: `openspec/project.md` is
+the context document and `docs/DECISIONS.md` is the ADR log. `openspec/config.yaml`
+redirects the skill's output at the existing files.
+
+Check after your first grilling session that no `CONTEXT.md` or `adr/` directory
+appeared. If one did, the redirect is not landing — edit the installed skill
+file directly, since it lives in your repo and you own it.
+
+---
+
+## The lightweight workflow
+
+This project uses a custom schema, `doku-lite`, in `openspec/schemas/`. It
+produces three artifacts instead of four — `design.md` is gone, and its
+questions live inside the proposal template as three prompts you answer only
+where they apply.
+
+Per change:
+
+```
+/opsx:propose <name>     # proposal, specs, tasks in one pass
+/opsx:apply              # implement
+/opsx:archive            # merge deltas into openspec/specs/
+```
+
+Use `/opsx:ff` when you want fast-forward rather than step-by-step review.
+
+**Skip the specs artifact** for changes with no observable behaviour — set
+`skip_specs: true` in the change's `.openspec.yaml`. Refactors, dependency
+bumps, and CI work do not need requirements. Anything a player or another
+capability can observe does.
+
+**What was deliberately kept.** Delta specs stay, because archive is what
+builds durable truth under `openspec/specs/`. Drop them and that directory
+never populates, which removes the main reason to run OpenSpec at all on a
+solo project.

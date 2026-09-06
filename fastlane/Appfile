@@ -1,0 +1,8 @@
+# Identifiers are fixed by D-69. Keep these in step with FlavourConfig in
+# lib/features/platform_shell/domain/flavour.dart.
+app_identifier ENV['IOS_BUNDLE_IDENTIFIER'] || 'com.alreuter.dokuduty'
+package_name ENV['ANDROID_PACKAGE_NAME'] || 'com.alreuter.dokuduty'
+
+apple_id ENV['APPLE_ID']
+itc_team_id ENV['APP_STORE_CONNECT_TEAM_ID']
+team_id ENV['DEVELOPER_PORTAL_TEAM_ID']
