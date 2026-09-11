@@ -111,5 +111,9 @@ flutter:
   assets:
     - assets/fonts/OFL.txt
 
+    # The shipped puzzles (D-32). Listed as a file rather than a directory so
+    # the note beside it does not end up in the binary.
+    - assets/packs/frontier-1.json
+
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

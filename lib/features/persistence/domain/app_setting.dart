@@ -23,7 +23,14 @@ enum AppSetting {
   ///
   /// **Off.** The player has opted into nothing. Independent of the OS
   /// reduce-motion setting, which is read separately and is not stored here.
-  reduceEffects(defaultValue: false);
+  reduceEffects(defaultValue: false),
+
+  /// Lock a digit, then tap cells to place it (`docs/SPEC.md` §3.4).
+  ///
+  /// **Off.** Cell-first is the mode that needs no explaining, so it is what a
+  /// player meets first. Digit-first is for someone filling many of one digit,
+  /// which is a habit they arrive at rather than start with.
+  numberFirstInput(defaultValue: false);
 
   const AppSetting({required this.defaultValue});
 

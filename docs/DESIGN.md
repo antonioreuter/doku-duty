@@ -337,7 +337,11 @@ cheap seasonal variable, which is what makes nine territories a year affordable.
 
 ## 8. Grid layout
 
-- Minimum cell tap target 44pt
+- **44pt is the floor for controls, not for grid cells** (D-84). The grid takes
+  the width it is given and divides it by nine, so a cell is roughly 39pt on an
+  iPhone SE and 48pt on a Pro Max. Nine 44pt cells need 396pt before any gutter,
+  which most phones do not have. Every button, including every number-pad key,
+  still holds the 44pt minimum
 - Number pad is **five columns**, not nine. Nine keys in a row cannot carry the
   depth treatment and are worse for thumbs regardless.
 - Notes in a fixed 3×3 arrangement: 1 top-left, 5 centre, 9 bottom-right (D-10)

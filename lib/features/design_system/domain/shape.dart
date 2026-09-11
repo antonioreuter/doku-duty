@@ -71,7 +71,12 @@ abstract final class DokuTilt {
 }
 
 abstract final class DokuLayout {
-  /// `docs/DESIGN.md` §8. Below this a cell is not reliably tappable.
+  /// `docs/DESIGN.md` §8. The floor for **controls** — buttons, number-pad
+  /// keys, anything where a miss costs an action the player did not intend.
+  ///
+  /// Not a floor for grid cells (D-84): nine 44pt cells need 396pt of width,
+  /// which most phones do not have, and a mis-tapped cell costs a second tap
+  /// rather than a placed digit.
   static const double minimumTapTarget = 44.0;
 
   /// Five, not nine. Nine keys in a row cannot carry the depth treatment and

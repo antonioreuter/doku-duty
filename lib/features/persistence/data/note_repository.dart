@@ -64,6 +64,48 @@ class NoteRepository {
         .go();
   }
 
+  /// Write several cells' candidates in one commit.
+  ///
+  /// For an action that reaches many cells: **auto-cleanup** strips a placed
+  /// digit from twenty **peer**s, **auto-notes** marks up to eighty-one. Each
+  /// [cells] entry replaces that cell's candidates wholesale — a digit absent
+  /// from the set has its row deleted.
+  ///
+  /// **A transaction is not the batching constraint 9 forbids.** What that
+  /// constraint rules out is *deferral*: a buffer, a debounce, a flush on
+  /// backgrounding — anything that lets the app stop between the change and the
+  /// write. This commits with the action, in the same call, and its only effect
+  /// is that a kill part-way through leaves the board as it was rather than
+  /// half filled. Writing the cells one at a time would be strictly worse for
+  /// the same constraint, not better.
+  Future<void> putCells({
+    required String puzzleId,
+    required Map<int, Map<int, NoteOrigin>> cells,
+    NoteKind kind = NoteKind.settled,
+    DateTime? at,
+  }) {
+    final stamp = at ?? DateTime.now();
+    return _db.transaction(() async {
+      for (final cell in cells.entries) {
+        for (var digit = 1; digit <= 9; digit++) {
+          final origin = cell.value[digit];
+          if (origin == null) {
+            await remove(puzzleId: puzzleId, cell: cell.key, digit: digit);
+          } else {
+            await put(
+              puzzleId: puzzleId,
+              cell: cell.key,
+              digit: digit,
+              kind: kind,
+              origin: origin,
+              at: stamp,
+            );
+          }
+        }
+      }
+    });
+  }
+
   /// Clear every **provisional note** on a puzzle in one action (D-11).
   ///
   /// One statement, so the player's single tap is a single write. **Settled

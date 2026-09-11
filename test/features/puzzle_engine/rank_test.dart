@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import 'package:doku_duty/features/persistence/domain/rank.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
 void main() {
   // D-57 fixes both the names and the order. The order is what the progression

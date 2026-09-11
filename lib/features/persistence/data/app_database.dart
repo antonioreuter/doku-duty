@@ -5,12 +5,12 @@ import 'package:path_provider/path_provider.dart';
 import 'app_database.steps.dart';
 
 import '../domain/note_enums.dart';
-import '../domain/rank.dart';
-import '../domain/technique.dart';
+import '../../puzzle_engine/domain/rank.dart';
+import '../../puzzle_engine/domain/technique.dart';
 
 export '../domain/note_enums.dart';
-export '../domain/rank.dart';
-export '../domain/technique.dart';
+export '../../puzzle_engine/domain/rank.dart';
+export '../../puzzle_engine/domain/technique.dart';
 
 part 'app_database.g.dart';
 

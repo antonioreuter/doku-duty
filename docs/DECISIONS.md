@@ -850,3 +850,278 @@ someone who has no reason to look at where the database lives.
 **What breaks if reversed.** Nothing immediately. After release it is worse than
 nothing: the file would move, and a player upgrading would find an empty cabinet
 unless the change also migrated the old path. That is why it is set now.
+
+### D-79 · Backlog items inserted between two changes take a letter, not a renumber
+A change added between existing items 5 and 6 is numbered `5a`. Existing numbers
+never move.
+
+**Rationale.** `add-puzzle-generation` had to go between `add-puzzle-engine` and
+`add-grid-and-input`, and inserting it as a new 6 would have renumbered
+twenty-nine items. Numbers are cited from outside the backlog — the proposals
+say "change 19 is where a hint has to answer while a player waits", the code
+comments say "generation and grading are change 5's business", and
+`docs/TECH_STACK.md` refers to items by number too. A renumber silently makes
+every one of those references point at the wrong change, and nothing fails when
+it does.
+
+Letters are ugly and that is the point: `5a` reads as an insertion, which is what
+it is. The alternative — renumbering and then hunting every citation — is work
+proportional to the size of the backlog, repeated on every insertion.
+
+**What breaks if reversed.** Nothing visibly, which is the danger. Every
+cross-reference by number becomes wrong, and the first symptom is somebody
+implementing the wrong change.
+
+### D-80 · The engine's technique corpus is found by a throwaway search, and the tool is not kept
+The twelve corpus puzzles in
+`test/features/puzzle_engine/support/corpus.dart` were found by a script that
+generated solved grids, removed clues while the exhaustive uniqueness check still
+reported one solution, and kept the first puzzle whose hardest required technique
+was each of the twelve. The script was deleted once the corpus was baked in.
+
+**Rationale.** `add-puzzle-engine` deliberately ships no generator (its proposal
+says so, and `add-puzzle-generation` now owns that). But a corpus of twelve
+puzzles that *provably* require one named technique each cannot be recalled from
+memory and cannot be hand-built at that count. Finding them needs the same loop a
+generator uses, so the loop was written, used once, and removed rather than
+becoming a shipped capability nobody proposed.
+
+What survives is the evidence rather than the tool: each entry carries the exact
+deduction no easier technique can reach — the cells, the digits, its position in
+the solve — and `corpus_test.dart` re-derives every claim from scratch. It checks
+uniqueness by the exhaustive search, solves each entry with the ladder cut to its
+**rank**, and asserts it stalls with the technique withheld.
+
+**The circularity is real and bounded.** The corpus is found by the engine and
+checked by the engine, so a technique that is wrong in the same way twice would
+not be caught here. The one independent judgement in the loop is the exhaustive
+uniqueness check, which shares no code with the technique solver — the reason
+those two questions are answered separately in the first place (constraint 8).
+The isolation tests carry the rest of the weight: each technique is asserted to
+say *nothing* on a position it does not apply to, which is the direction the
+failure would come from.
+
+**What breaks if reversed.** Keeping the tool would have put a generator in the
+repo two changes before one was proposed, with no spec and no tests, and the
+first real pack would have been tempted out of it.
+
+### D-81 · Where test-first is not followed, a mutation pass stands in for it
+The twelve solving techniques were implemented before their tests, contrary to
+the test-first rule for the load-bearing pure-logic systems. Each technique was
+then mutated to deduce nothing, and its tests were required to fail. All twelve
+did.
+
+**Rationale.** Recorded rather than quietly skipped, because the rule exists for
+a specific reason: the puzzle engine is on the test-first list in
+`openspec/config.yaml`, and a technique that is subtly too eager grades puzzles
+*easier* than they are — a symptom nobody reports as a bug. What test-first buys
+there is the guarantee that the test can actually fail. Writing the tests
+afterwards forfeits that guarantee, and mutation testing buys it back directly:
+a test that still passes against a neutered implementation was never testing
+anything.
+
+This is not a licence to stop writing tests first. It is the repair when it has
+not happened, and it is weaker in one respect worth naming — test-first also
+shapes the interface around what a caller needs, and no mutation pass recovers
+that.
+
+**What breaks if reversed.** Nothing mechanical. The cost of dropping the
+mutation pass without the ordering is a suite that looks green and asserts
+nothing, which is worse than no suite at all, because it is trusted.
+
+### D-82 · A shipped puzzle carries at most forty clues
+No **pack** ships a puzzle with more than forty givens, at any **rank**.
+
+**Rationale.** The generator digs clues out of a solved grid one at a time and
+every intermediate is a uniquely solvable, honestly gradable puzzle — including
+the eighty-clue grid that is one full house from finished. Measurement during
+`add-puzzle-generation` found Greenhorn spanning 26 to 80 clues, which would have
+filled most of the shipped pack with grids nobody would call puzzles while
+passing every test then written. Nothing in the proposal or the tasks had named a
+floor, because the problem is invisible until the distribution is looked at.
+
+Forty is the top of the ordinary easy-sudoku range. A Greenhorn puzzle at 26 to
+40 clues still needs nothing harder than a full house or a naked single, so the
+gentlest rank stays gentle without becoming trivial.
+
+**Where it is applied matters.** The ceiling filters *selection*, not the dig, so
+a seed still names the same puzzle whatever a given run was selecting for. Moving
+it into the dig would silently change what every existing seed means, and the
+seed is what makes a shipped pack re-derivable.
+
+**What breaks if reversed.** Nothing mechanical — the pack would still be unique,
+still correctly graded, still pass the audit. It would just be full of grids a
+player finishes in four taps, and the first rank a new player meets would be the
+one that taught them the game is not worth playing.
+
+### D-83 · The engine's no-Flutter rule is scoped to `domain/`, and that is the layout
+Pure logic lives in `lib/features/<capability>/domain/` and carries no Flutter
+import. `data/` and `application/` may.
+
+**Rationale.** `add-puzzle-engine` asserted that *no* file under
+`lib/features/puzzle_engine/` imports Flutter, which was true while the capability
+was nothing but arithmetic. `add-puzzle-generation` had to read a bundled asset,
+and reading an asset needs Flutter's bundle. The alternative was putting
+puzzle-engine code inside the persistence feature, which trades a real rule for a
+misfiled capability.
+
+The rule that was worth keeping is the one about the pure core — the solver, the
+grader, the uniqueness check, the generator, and the pack format are unit-testable
+by the plain runner and cannot acquire a platform behaviour. All of them are under
+`domain/`, so scoping the assertion there loses nothing. This is also just the
+feature-first layout the project already used everywhere else; the original test
+was stricter than the convention by accident, not by design.
+
+The test now also names `pack.dart` and `generator.dart` individually, because a
+directory-scoped rule is defeated by moving a file out of the directory, and those
+two are what the offline tool runs outside a device.
+
+**What breaks if reversed.** Widening it back to the whole feature means the
+bundled pack cannot be read, and the first workaround anyone reaches for — a
+loader in another feature — puts content-loading in the persistence layer where
+nobody will look for it.
+
+### D-84 · The 44pt minimum is a control floor, not a grid-cell floor
+Amends `docs/DESIGN.md` §8, which stated it as a grid rule. The grid takes the
+width available and divides it by nine; buttons and number-pad keys keep the 44pt
+minimum absolutely.
+
+**Rationale.** Nine 44pt cells need 396 logical pixels of grid before any gutter,
+and most phones in the market do not have it: an iPhone SE gives 39pt cells with
+a 12pt gutter, a Pixel 7 gives 41pt, and only the largest handsets clear 44pt.
+The rule as written could not be met on the devices this ships to, and a rule
+nobody can meet is not followed carefully — it is ignored, and then so are the
+rules next to it.
+
+Holding 44pt absolutely would mean a grid wider than the viewport, scrolled or
+clipped. A sudoku grid the player cannot see all of is not a sudoku grid: the
+whole skill is scanning rows, columns, and blocks against each other, and that
+needs the board in one view more than it needs a comfortable target.
+
+The 44pt figure comes from Apple's guidance for discrete controls, where a miss
+costs an unintended action. A grid cell is different in kind — a mis-tap selects
+the neighbouring cell, is visible immediately, and is corrected by tapping again
+with nothing placed and nothing lost. The number pad is where a miss actually
+costs something, and that is where the floor is kept.
+
+**What breaks if reversed.** Restoring it as a grid rule makes the layout
+impossible on the most common devices, so it would be quietly broken everywhere
+instead of deliberately amended here.
+
+### D-85 · The widget tree may read the database, but never before the first frame
+Refines the rule `add-persistence-layer` established. The guarantee is about the
+first frame specifically, not about the widget tree for all time.
+
+**Rationale.** `appDatabaseProvider` was built lazily so that nothing on the path
+to a rendered screen opens the file, and `lazy_open_test` enforced it by pumping
+two frames and asserting the database was never constructed. That was exact while
+the home screen was an empty placeholder that read nothing.
+
+`add-grid-and-input` replaced it with the rank picker, which has to know which
+puzzle is next at each **rank** — and that lives in the database. The picker
+paints its six rows from `Rank.values`, which needs nothing, and reads the pack
+from a post-frame callback. That is the same discipline the config refresh
+follows, and it satisfies the rule as the provider's own doc comment states it:
+*"as long as nothing on the first-frame path watches this, opening the file
+happens after the app is already on screen."*
+
+The test now asserts both halves — zero opens on the first frame, exactly one
+after — rather than only the first. Pinning the second half matters as much: a
+future change that moves the read back onto the first frame fails the first
+assertion, and one that removes the read entirely fails the second, so neither
+can happen quietly.
+
+**What breaks if reversed.** Reading it again as "the widget tree never opens the
+database" makes any screen with content unbuildable, and the workaround anyone
+reaches for — loading content from `bootstrap` and pushing it down — puts
+content-fetching in the startup path, which is the thing the rule was protecting.
+
+### D-86 · Everything that reads the shipped pack awaits one shared install
+`packInstallationProvider` is a `FutureProvider` that installs the bundled
+**pack** exactly once. Every reader — the **rank** picker, the puzzle opener,
+and anything added later — awaits it before its first query. `bootstrap` starts
+it through that provider rather than calling the installer.
+
+**Rationale.** Found by running the app rather than by reading it. The install
+and the first screen both start after the first frame, deliberately, so neither
+sits on the cold-start path. Without a rendezvous they raced: the picker queried
+the six **rank**s with sequential awaits while the install transaction was still
+open, saw an empty table for the first two, reported *nothing left here for now*,
+and never asked again. On a fresh install, with three hundred puzzles in the
+binary, a new player was told the two easiest **rank**s had no content.
+
+Every test passed. They each seeded the database before pumping, so the ordering
+they were testing did not exist — which is the general lesson: a test that
+arranges its state up front cannot catch a defect in how that state arrives.
+
+**Why a rendezvous rather than a refresh.** Invalidating the reader when the
+install finishes would also work, and would leave the race in place with a
+repaint papered over it. Awaiting removes it: there is no window in which a
+reader can see a half-installed pack, so there is nothing to recover from.
+"Knowing nothing" and "knowing there is nothing" stay distinct, which is what the
+player-facing message depends on.
+
+**What breaks if reversed.** The same silent wrong answer, on first launch only,
+which is the launch that decides whether a player opens the app again. Any new
+reader of the pack that forgets to await this reintroduces it for itself —
+`test/features/grid_input/first_launch_test.dart` is what catches that, and it
+uses a deliberately slow **pack** source so the race fails every run rather than
+on an unlucky morning.
+
+
+### D-87 · Auto-notes unions with what is already marked; it never replaces it
+Filling every empty cell with its legal candidates adds what is missing and
+leaves what is there. A candidate the player marked keeps its slot and stays
+theirs, including one the fill would not have offered. A legal candidate the
+player had *eliminated* comes back.
+
+**Rationale.** The three options were union, replace, and fill-only-empty-cells,
+and each loses something. Replace is truest to the name and gives the cleanest
+board, but it discards hand-marked work — including a candidate the player put
+somewhere the fill disagrees with, which is exactly the thinking the technique
+ladder is meant to reward. Fill-only-empty-cells protects deliberate
+eliminations, but it returns a half-filled board: the player asked for a
+candidate grid and got a mixture, which is harder to read than either extreme
+and impossible to reason about, because a blank cell no longer means the same
+thing everywhere.
+
+Union loses one thing — eliminations the player had made by hand in a cell they
+went on to work in. That loss is bounded and visible: the returning candidate
+is in its slot where they can see it, and the whole fill is a single undo away.
+The other two options lose something the player cannot see, which is the worse
+kind of loss. "Every legal candidate" is what the action promises, so the fill
+has to be free to offer one back; making it cheap to reverse is what keeps that
+honest.
+
+**What breaks if reversed.** Under replace, a player who has spent twenty
+minutes eliminating candidates and then taps the fill out of curiosity loses all
+of it, and — because both boards look plausible — may not notice until the
+deductions stop working. Under fill-only-empty-cells, the fill silently does
+less than it says on a board that has been touched at all, which is every board
+worth filling.
+
+### D-88 · Candidate highlighting is derived, not a third piece of state
+The digit **candidate highlighting** lights cells for is the digit held in
+digit-first input, or failing that the digit in the selected cell. There is no
+separate "highlighted digit" the player sets and clears.
+
+**Rationale.** D-13 says "tapping a digit on the pad highlights every cell
+holding it", which reads literally only in digit-first input — in cell-first a
+digit tap places a value. The obvious repair is a sticky highlighted digit that a
+pad tap sets, but that is a third source of truth needing its own rules for when
+it clears: on a selection change, on a mode change, on an undo, on opening a
+puzzle. Each rule is a way to leave the wrong digit lit, and a board lit for a
+digit the player is no longer thinking about is worse than one lit for nothing.
+
+The two derived sources already clear themselves — a held digit is put down, a
+selection moves — so the feature has no lifecycle of its own to get wrong. It
+also reaches the same behaviour in cell-first for free: tapping a digit into a
+cell leaves that cell selected holding it, so it lights. Selecting a cell that
+already holds a digit lights it too, which is what every major sudoku app does
+and what players arrive expecting.
+
+**What breaks if reversed.** A fourth state field on the session, and the class
+of bug where the pad shows one thing and the grid lights another. The cost of
+this decision is that a cell-first player who wants to see every 7 must select a
+cell holding a 7 rather than tapping 7 on the pad — one extra tap, on the path
+players already use.

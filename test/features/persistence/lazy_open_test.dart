@@ -26,16 +26,23 @@ void main() {
         child: const DokuDutyApp(),
       ),
     );
-    await tester.pump();
-
-    // One eager `watch` anywhere on the startup path breaks this, and the
-    // symptom — a slower cold start on a cheap Android phone — is not something
-    // anyone notices in review.
+    // Asserted on the first frame, before pumping another. One eager `watch`
+    // anywhere on the startup path breaks this, and the symptom — a slower cold
+    // start on a cheap Android phone — is not something anyone notices in
+    // review.
     expect(
       opened,
       0,
       reason: 'the database was constructed while reaching the first frame',
     );
+
+    // A frame later it is allowed, and the rank picker does exactly that:
+    // `add-grid-and-input` reads which puzzle is next from a post-frame
+    // callback. Pinned rather than merely permitted, so moving that read back
+    // onto the first frame fails above rather than passing quietly here.
+    await tester.pump();
+    await tester.pump();
+    expect(opened, 1, reason: 'the pack is read once the app is on screen');
   });
 
   test('the provider is not built until it is read', () {

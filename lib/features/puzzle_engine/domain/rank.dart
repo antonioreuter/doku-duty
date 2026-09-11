@@ -3,12 +3,11 @@
 /// A rank is the hardest technique a puzzle requires, never its clue count
 /// (D-07). Nothing is graded by how many digits are given.
 ///
-/// **Placed here because persistence is the first capability that has to name
-/// it.** It is shared vocabulary rather than a persistence concept:
-/// `add-puzzle-engine` owns the grader that decides a puzzle's rank, and
-/// `add-rank-progression` owns the player's own rank. Either may relocate this
-/// file; what must not change is the order or the names, which are fixed by
-/// D-57 and appear in the glossary.
+/// Shared vocabulary, owned by the engine because the grader is what decides a
+/// puzzle's rank. It lived in the persistence layer only while persistence was
+/// the first capability that had to name it. The names are written into the
+/// database as text, so renaming one is a silent data migration; the order and
+/// the names are fixed by D-57 and appear in the glossary.
 ///
 /// Note the collision the glossary calls out: Sheriff and Deputy are ranks *and*
 /// characters, and the player is "the Deputy". In UI copy write "Sheriff rank"

@@ -50,15 +50,25 @@ Versioned JSON on S3 behind CloudFront with a short TTL, a client fetch with cac
 
 ### 5. `add-puzzle-engine`
 **Capabilities:** `puzzle-engine`
-Puzzle model, solver, uniqueness verification, technique-based grading, seeded packs, pack loading and top-up. Offline-first.
+Puzzle model, solver, uniqueness verification, technique-based grading. Offline-first.
 **Depends on:** 3.
 **Watch for:** grading is the load-bearing system. A puzzle graded Marshal that only needs a hidden single destroys trust in the whole progression. Test the grader against a known-graded corpus.
+**Note:** shipped as scoped, without a generator or a pack — see 5a.
+
+### 5a. `add-puzzle-generation`
+**Capabilities:** `puzzle-engine`
+Seeded generation on top of the engine's uniqueness check and grader, the first real shipped pack with puzzles at all six ranks, and pack loading and top-up. Without it there is nothing to play: change 6 can render a grid and change 7 can mark notes, but neither has content behind it, and Milestone 1's "a player can solve a puzzle at any of six ranks" is unreachable.
+**Depends on:** 5.
+**Watch for:** generation is a loop that proposes a grid, checks uniqueness, and grades it — all three already exist, so the risk is not the algorithm but the shipped pack. Every puzzle in it must pass the exhaustive uniqueness check (constraint 8), and the rank on the row must be the grader's answer rather than a generator parameter.
+
+*Numbered 5a rather than inserted as 6 deliberately: the proposal, the docs, and existing code comments all cite changes by number ("change 19 is where a hint...", "generation and grading are change 5's business"), and renumbering twenty-nine items would silently invalidate every one of them.*
 
 ### 6. `add-grid-and-input`
 **Capabilities:** `grid-input`
 Custom-canvas grid render, cell selection, value entry, number pad, erase, undo at full depth, number-first input as a setting, peer highlighting.
 **Depends on:** 2, 5.
 **Watch for:** the sub-100ms latency budget is a product requirement, not an aspiration. Profile on a mid-tier Android device before this change is considered done.
+**OUTSTANDING — the device profile above was never taken.** Implemented and archived with tap-to-repaint measured on the host, an Android emulator, and an iOS simulator only (`docs/PERFORMANCE.md`): median 285–464 µs against a 100 ms budget, on debug builds. No physical Android phone was available. The headroom is roughly 200×, so the budget is very likely met — but that is an inference, and the backlog asked for a measurement. **Take it on the first mid-tier Android phone that comes to hand**, with `flutter test integration_test/grid_latency_test.dart -d <device> --flavor dev`, and record the number. Until then, treat the latency claim for this capability as unverified on real hardware.
 
 ### 7. `add-notes`
 **Capabilities:** `notes`

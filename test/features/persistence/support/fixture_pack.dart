@@ -1,5 +1,5 @@
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
-import 'package:doku_duty/features/persistence/domain/rank.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
 /// A tiny pack for tests.
 ///

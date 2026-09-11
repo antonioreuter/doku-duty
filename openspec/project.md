@@ -71,11 +71,16 @@ Read them there before proposing or implementing anything.
 |---|---|
 | **Node** | One stop on the season map: a puzzle, a variant, a chest, or a boss |
 | **Season** | A six-week territory containing 42 nodes, then rotated out |
+| **Pack** | A versioned, immutable shipment of pre-generated puzzles, each carrying its solution, its rank, and its seed (D-32). A pack is content; a season is play. One pack can supply several seasons, and a pack version never installs backwards |
 | **Rank** | One of six difficulty tiers, from Greenhorn to Legend |
 | **Unit** | A row, column, or 3×3 block |
+| **Peer** | One of the twenty other cells a cell shares a unit with. A digit may appear at most once among a cell and its peers |
 | **Settled note** | A candidate the player has derived (indigo) |
 | **Provisional note** | A hypothesis under test (turquoise), clearable in one action |
+| **Generated note** | A candidate **auto-notes** marked rather than the player. Identical on screen to one marked by hand; the distinction exists for undo, **auto-cleanup**, and clearing (D-15) |
 | **Auto-cleanup** | Removing a placed value's candidate from its row, column, and block |
+| **Auto-notes** | The one action that marks every empty cell with each candidate its peers do not already hold as a value. Unions with what is already marked; never replaces it (D-87) |
+| **Candidate highlighting** | Lighting every cell that holds the held digit, or failing that the selected cell's digit, as a candidate or as a value. Derived rather than set by the player (D-88). Free and always on, unlike **digit sweep** (D-13) |
 | **Cabinet** | The permanent trophy and statistics screen |
 | **Strict mode** | Opt-in setting: immediate error flagging and a three-mistake limit |
 | **Stamp** | The perk currency. Earned in play only, never purchasable |

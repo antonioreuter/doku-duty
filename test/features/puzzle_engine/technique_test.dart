@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 
-import 'package:doku_duty/features/persistence/domain/rank.dart';
-import 'package:doku_duty/features/persistence/domain/technique.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
 
 void main() {
   // Transcribed from D-57. A puzzle graded Marshal that only needs a hidden

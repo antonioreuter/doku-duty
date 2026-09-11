@@ -58,3 +58,7 @@ key.properties
 fastlane/report.xml
 fastlane/README.md
 **/fastlane/report.xml
+
+# Golden-test failure artifacts. Written by `flutter test` beside the goldens
+# when a comparison fails; regenerating the golden makes them stale debris.
+**/test/**/failures/

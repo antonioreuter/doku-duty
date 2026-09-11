@@ -6,9 +6,10 @@ import 'rank.dart';
 /// (D-07). This table is the mapping that makes that statement mean something,
 /// and it is transcribed from D-57 rather than invented.
 ///
-/// `add-puzzle-engine` owns the grader that decides which of these a puzzle
-/// needs. Persistence only counts them, because `add-rank-progression` and
-/// `add-trophy-cabinet` both read per-technique statistics.
+/// The engine owns this table because the grader is what decides which of these
+/// a puzzle needs. Persistence only counts them, because `add-rank-progression`
+/// and `add-trophy-cabinet` both read per-technique statistics — and it stores
+/// the names as text, so renaming one is a silent data migration.
 enum Technique {
   fullHouse(Rank.greenhorn),
   nakedSingle(Rank.greenhorn),

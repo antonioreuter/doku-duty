@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/persistence/application/settings_providers.dart';
+import 'features/puzzle_engine/application/pack_providers.dart';
 import 'features/remote_config/application/config_refresh.dart';
 import 'features/platform_shell/application/crash_reporting.dart';
 import 'features/platform_shell/application/flavour_provider.dart';
@@ -48,5 +49,11 @@ Future<void> bootstrap(FlavourConfig config) async {
   // until this finishes — or if it never does.
   WidgetsBinding.instance.addPostFrameCallback((_) {
     unawaited(container.read(configRefresherProvider).run());
+    // Three hundred inserts on a fresh install, and nothing a player does waits
+    // on them. Same rule as the config refresh: after the frame, never before.
+    //
+    // Started through the provider rather than by calling the installer, so
+    // this and the first screen share one install instead of racing two.
+    unawaited(container.read(packInstallationProvider.future));
   });
 }
