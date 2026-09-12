@@ -1,3 +1,4 @@
+import '../../persistence/domain/note_enums.dart';
 import 'board.dart';
 
 /// A board and the edits that got it there, with what the last attempt did.
@@ -44,13 +45,22 @@ final class BoardHistory {
 
   HistoryStep erase(int cell) => _step(board.erase(cell));
 
-  /// Mark [digit] in [cell] if it is absent, remove it if it is there.
-  HistoryStep toggleNote(int cell, int digit) =>
-      _step(board.toggleNote(cell, digit));
+  /// Mark [digit] in [cell] in [ink], remove it, or change its ink (D-90).
+  HistoryStep toggleNote(
+    int cell,
+    int digit, {
+    NoteKind ink = NoteKind.settled,
+  }) => _step(board.toggleNote(cell, digit, ink: ink));
 
   /// **Auto-notes**: mark every empty cell with its legal candidates, as one
   /// step on the stack.
   HistoryStep fillNotes() => _step(board.fillNotes());
+
+  /// Remove every **provisional note**, as one step on the stack (D-11).
+  HistoryStep clearProvisional() => _step(board.clearProvisional());
+
+  /// **Promote** every **provisional note** to settled, as one step (D-91).
+  HistoryStep promoteProvisional() => _step(board.promoteProvisional());
 
   HistoryStep _step(BoardEdit edit) {
     if (edit is! EditApplied) {

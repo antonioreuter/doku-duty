@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 import '../../design_system/domain/palette.dart';
@@ -26,6 +28,7 @@ final class GridColours {
     required this.focusLine,
     required this.candidateFill,
     required this.settledNote,
+    required this.provisionalNote,
   });
 
   /// The grid as [palette] paints it.
@@ -43,6 +46,7 @@ final class GridColours {
     focusLine: DokuColours.badgeGold,
     candidateFill: PaletteToken.nightIndigo.paleColour!,
     settledNote: NoteInk.settled.token.colour,
+    provisionalNote: NoteInk.provisional.token.colour,
   );
 
   /// The default season's grid.
@@ -61,6 +65,7 @@ final class GridColours {
     // (constraint 4).
     candidateFill: PaletteToken.nightIndigo.paleColour!,
     settledNote: NoteInk.settled.token.colour,
+    provisionalNote: NoteInk.provisional.token.colour,
   );
 
   final Color cell;
@@ -77,9 +82,17 @@ final class GridColours {
   /// focus always wins where highlights compete.
   final Color candidateFill;
 
-  /// A **settled note**. One ink; the candidate's *position* carries its
-  /// identity, so colour is never the only signal (constraint 5).
+  /// A **settled note**. The candidate's *position* carries its identity, so
+  /// colour is never the only signal (constraint 5).
   final Color settledNote;
+
+  /// A **provisional note** — a hypothesis under test (D-11).
+  ///
+  /// Never drawn alone. The two note inks sit 1.33:1 apart in normal vision and
+  /// **1.07:1 under deuteranopia**, so for roughly one man in twelve they are
+  /// the same mark and this colour says nothing. The underline beside it is
+  /// what actually carries the distinction (D-73).
+  final Color provisionalNote;
 
   @override
   bool operator ==(Object other) =>
@@ -92,7 +105,8 @@ final class GridColours {
       other.focusFill == focusFill &&
       other.focusLine == focusLine &&
       other.candidateFill == candidateFill &&
-      other.settledNote == settledNote;
+      other.settledNote == settledNote &&
+      other.provisionalNote == provisionalNote;
 
   @override
   int get hashCode => Object.hash(
@@ -105,11 +119,12 @@ final class GridColours {
     focusLine,
     candidateFill,
     settledNote,
+    provisionalNote,
   );
 }
 
 /// Which of the three inks a glyph is drawn in.
-enum _InkKind { given, placed, note }
+enum _InkKind { given, placed, note, provisionalNote }
 
 /// Draws the board on one canvas (D-31).
 ///
@@ -148,13 +163,28 @@ class GridPainter extends CustomPainter {
   static const FontWeight givenWeight = FontWeight.w600;
   static const FontWeight placedWeight = FontWeight.w400;
 
+  /// The grid size the caches were laid out for.
+  ///
+  /// The cap depends on the cell, so a resize without a rebuild — a rotation,
+  /// a split-screen drag — has to throw the glyphs away rather than keep ones
+  /// measured against a box that no longer exists.
+  Size? _laidOutFor;
+
   final Map<int, TextPainter> _givenDigits = <int, TextPainter>{};
   final Map<int, TextPainter> _placedDigits = <int, TextPainter>{};
   final Map<int, TextPainter> _noteDigits = <int, TextPainter>{};
+  final Map<int, TextPainter> _provisionalDigits = <int, TextPainter>{};
 
   @override
   void paint(Canvas canvas, Size size) {
     final metrics = GridMetrics.fit(size);
+    if (_laidOutFor != size) {
+      _givenDigits.clear();
+      _placedDigits.clear();
+      _noteDigits.clear();
+      _provisionalDigits.clear();
+      _laidOutFor = size;
+    }
     _paintSurface(canvas, metrics);
     _paintHighlight(canvas, metrics);
     _paintFocus(canvas, metrics);
@@ -254,17 +284,78 @@ class GridPainter extends CustomPainter {
       final slot = rect.width / 3;
       for (final digit in notes.digits) {
         final position = NoteSet.slotOf(digit);
-        final painter = _digitPainter(_noteDigits, digit, kind: _InkKind.note);
+        final isProvisional = notes.isProvisional(digit);
+        final painter = isProvisional
+            ? _digitPainter(
+                _provisionalDigits,
+                digit,
+                kind: _InkKind.provisionalNote,
+                box: slot,
+              )
+            : _digitPainter(_noteDigits, digit, kind: _InkKind.note, box: slot);
         final centre = Offset(
           rect.left + (position.column + 0.5) * slot,
           rect.top + (position.row + 0.5) * slot,
         );
-        painter.paint(
-          canvas,
-          Offset(centre.dx - painter.width / 2, centre.dy - painter.height / 2),
+        final origin = Offset(
+          centre.dx - painter.width / 2,
+          centre.dy - painter.height / 2,
         );
+        painter.paint(canvas, origin);
+
+        if (isProvisional) {
+          _paintUnderline(
+            canvas,
+            painter,
+            origin,
+            Rect.fromLTWH(
+              rect.left + position.column * slot,
+              rect.top + position.row * slot,
+              slot,
+              slot,
+            ),
+          );
+        }
       }
     }
+  }
+
+  /// The rule that separates the two note inks without using colour (D-73).
+  ///
+  /// The hue cannot carry this on its own: dark enough to be legible at 11px,
+  /// `turquoise` lands 1.07:1 from `nightIndigo` under deuteranopia. The rule
+  /// is the signal, and constraint 5 is why it exists rather than a second,
+  /// lighter hue.
+  ///
+  /// Drawn *below* the glyph's baseline and clamped inside the candidate's own
+  /// third of the cell, so the digit occupies the slot its digit owns whichever
+  /// ink it is in and a re-inking moves nothing (D-10, constraint 3).
+  void _paintUnderline(
+    Canvas canvas,
+    TextPainter painter,
+    Offset origin,
+    Rect slotRect,
+  ) {
+    final y = math.min(
+      origin.dy + painter.height + provisionalUnderlineOffset,
+      slotRect.bottom - provisionalUnderlineWeight,
+    );
+    // Clamped to the slot in both directions, not only downward. At the largest
+    // dynamic type the glyph itself is wider than its slot — a defect that
+    // predates this change and belongs to the grid, not the rule — and an
+    // unclamped rule would follow it out and start reading as belonging to the
+    // candidate next door.
+    final left = math.max(origin.dx, slotRect.left);
+    final right = math.min(origin.dx + painter.width, slotRect.right);
+    if (right <= left) return;
+
+    canvas.drawLine(
+      Offset(left, y),
+      Offset(right, y),
+      Paint()
+        ..color = colours.provisionalNote
+        ..strokeWidth = provisionalUnderlineWeight,
+    );
   }
 
   void _paintDigits(Canvas canvas, GridMetrics metrics) {
@@ -272,10 +363,20 @@ class GridPainter extends CustomPainter {
       final digit = board.digitAt(cell);
       if (digit == Board.empty) continue;
 
-      final painter = board.isGiven(cell)
-          ? _digitPainter(_givenDigits, digit, kind: _InkKind.given)
-          : _digitPainter(_placedDigits, digit, kind: _InkKind.placed);
       final rect = metrics.cellRect(cell);
+      final painter = board.isGiven(cell)
+          ? _digitPainter(
+              _givenDigits,
+              digit,
+              kind: _InkKind.given,
+              box: rect.width,
+            )
+          : _digitPainter(
+              _placedDigits,
+              digit,
+              kind: _InkKind.placed,
+              box: rect.width,
+            );
       painter.paint(
         canvas,
         Offset(
@@ -290,30 +391,74 @@ class GridPainter extends CustomPainter {
   ///
   /// Weight carries the distinction on its own, so it survives without colour
   /// (constraint 5). The tone follows it rather than replacing it.
+  ///
+  /// **Capped to [box].** Dynamic type is respected everywhere
+  /// (`docs/DESIGN.md` §2) and nothing here pins a size — but a sudoku grid
+  /// cannot reflow, so the glyph grows with the setting only until it fills the
+  /// cell or the slot it sits in, and then stops (D-92).
   TextPainter _digitPainter(
     Map<int, TextPainter> cache,
     int digit, {
     required _InkKind kind,
+    required double box,
   }) => cache.putIfAbsent(digit, () {
-    final role = kind == _InkKind.note ? TypeRole.gridNote : TypeRole.gridValue;
-    return TextPainter(
-      text: TextSpan(
-        text: '$digit',
-        style: role
-            .scaled(textScale)
-            .copyWith(
-              color: switch (kind) {
-                _InkKind.given => colours.given,
-                _InkKind.placed => colours.placed,
-                _InkKind.note => colours.settledNote,
-              },
-              fontWeight: kind == _InkKind.given ? givenWeight : placedWeight,
-            ),
-      ),
+    final role = switch (kind) {
+      _InkKind.note || _InkKind.provisionalNote => TypeRole.gridNote,
+      _InkKind.given || _InkKind.placed => TypeRole.gridValue,
+    };
+    final style = role
+        .scaled(textScale)
+        .copyWith(
+          color: switch (kind) {
+            _InkKind.given => colours.given,
+            _InkKind.placed => colours.placed,
+            _InkKind.note => colours.settledNote,
+            _InkKind.provisionalNote => colours.provisionalNote,
+          },
+          fontWeight: kind == _InkKind.given ? givenWeight : placedWeight,
+        );
+
+    TextPainter laidOut(TextStyle style) => TextPainter(
+      text: TextSpan(text: '$digit', style: style),
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
     )..layout();
+
+    final painter = laidOut(style);
+
+    // Width is measured; height is the em box, not `painter.height`.
+    //
+    // A laid-out line is about 1.36em tall in Nunito and most of the extra is
+    // empty leading above and below the digit's ink — at the default scale a
+    // note's line box is already 15px in a 13.3px slot while the digit inside
+    // it sits comfortably. Capping on that number shrinks type that visibly
+    // fits. The em box bounds the ink from above (a digit has cap height and
+    // no descender, so its ink is always shorter than its em) without
+    // depending on any one face's metrics, which a tuned constant would
+    // (D-74).
+    final overflow = math.max(painter.width, style.fontSize!) / box;
+    if (overflow <= 1) return painter;
+
+    return laidOut(style.copyWith(fontSize: style.fontSize! / overflow));
   });
+
+  /// What a **settled note** glyph actually occupies: its measured width and
+  /// its em box. Tests only.
+  ///
+  /// The em rather than `TextPainter.height`, for the reason [_digitPainter]
+  /// caps on: the laid-out line is mostly empty leading, so its height is not
+  /// what a reader sees and not what has to fit.
+  @visibleForTesting
+  ({double width, double em}) debugNoteGlyphBox(int digit) =>
+      _boxOf(_noteDigits[digit]!);
+
+  /// The same, for a given's glyph. Tests only.
+  @visibleForTesting
+  ({double width, double em}) debugValueGlyphBox(int digit) =>
+      _boxOf(_givenDigits[digit]!);
+
+  ({double width, double em}) _boxOf(TextPainter painter) =>
+      (width: painter.width, em: (painter.text! as TextSpan).style!.fontSize!);
 
   void _paintFrame(Canvas canvas, GridMetrics metrics) {
     canvas.drawRRect(

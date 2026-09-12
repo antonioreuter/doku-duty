@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:doku_duty/features/design_system/domain/palette.dart';
 import 'package:doku_duty/features/design_system/presentation/doku_colours.dart';
+import 'package:doku_duty/features/design_system/domain/note_ink.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_metrics.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_painter.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
@@ -132,6 +134,7 @@ void main() {
           given: Color(0xFF000000),
           placed: Color(0xFF444444),
           candidateFill: Color(0xFFE6DEFA),
+          provisionalNote: Color(0xFF1B6661),
           focusFill: Color(0xFFFFEEBB),
           focusLine: Color(0xFFFFCC00),
           settledNote: Color(0xFF4A3F9E),
@@ -322,6 +325,258 @@ void main() {
         _painter(highlighted: 4).shouldRepaint(_painter(highlighted: 4)),
         isFalse,
       );
+    });
+  });
+
+  // D-11 and D-73. The second ink, and the underline that is the part a
+  // colour-blind player actually reads.
+  group('the provisional ink', () {
+    RecordingCanvas paint(Board board) {
+      final canvas = RecordingCanvas();
+      _painter(board: board).paint(canvas, const Size(360, 360));
+      return canvas;
+    }
+
+    Board noted(Map<int, List<int>> settled, Map<int, List<int>> provisional) {
+      var board = _board();
+      for (final entry in settled.entries) {
+        for (final digit in entry.value) {
+          board = (board.toggleNote(entry.key, digit) as EditApplied).board;
+        }
+      }
+      for (final entry in provisional.entries) {
+        for (final digit in entry.value) {
+          board =
+              (board.toggleNote(entry.key, digit, ink: NoteKind.provisional)
+                      as EditApplied)
+                  .board;
+        }
+      }
+      return board;
+    }
+
+    test('the two inks are two different colours', () {
+      final colours = GridColours.standard();
+      expect(colours.provisionalNote, PaletteToken.turquoise.colour);
+      expect(colours.provisionalNote, isNot(colours.settledNote));
+    });
+
+    test(
+      'a provisional candidate carries a rule and a settled one does not',
+      () {
+        final canvas = paint(
+          noted(
+            <int, List<int>>{
+              2: <int>[1],
+            },
+            <int, List<int>>{
+              2: <int>[9],
+            },
+          ),
+        );
+
+        final rules = canvas.linesIn(GridColours.standard().provisionalNote);
+        expect(
+          rules,
+          hasLength(1),
+          reason: 'one provisional candidate, one rule',
+        );
+      },
+    );
+
+    test('every provisional candidate gets its own rule', () {
+      final canvas = paint(
+        noted(const <int, List<int>>{}, <int, List<int>>{
+          2: <int>[1, 4, 9],
+          11: <int>[5],
+        }),
+      );
+
+      expect(
+        canvas.linesIn(GridColours.standard().provisionalNote),
+        hasLength(4),
+      );
+    });
+
+    test('a board with no provisional candidates draws no rules', () {
+      final canvas = paint(
+        noted(<int, List<int>>{
+          2: <int>[1, 4, 9],
+        }, const <int, List<int>>{}),
+      );
+
+      expect(canvas.linesIn(GridColours.standard().provisionalNote), isEmpty);
+    });
+
+    test('the rule is 1px, matching the cell hairline', () {
+      final canvas = paint(
+        noted(const <int, List<int>>{}, <int, List<int>>{
+          2: <int>[5],
+        }),
+      );
+
+      final rule = canvas.lines.singleWhere(
+        (line) =>
+            line.$3.toARGB32() ==
+            GridColours.standard().provisionalNote.toARGB32(),
+      );
+      expect(rule.$4, provisionalUnderlineWeight);
+    });
+
+    // Constraint 3. The rule sits below the baseline inside the note's own
+    // third of the cell, so the digit keeps the slot it would occupy either way
+    // and a cell full of mixed inks scans exactly like a cell full of one.
+    test('the rule stays inside the candidate own third of the cell', () {
+      final canvas = paint(
+        noted(const <int, List<int>>{}, <int, List<int>>{
+          40: <int>[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        }),
+      );
+
+      final metrics = GridMetrics.fit(const Size(360, 360));
+      final cell = metrics.cellRect(40);
+      final slot = cell.width / 3;
+
+      for (final rule in canvas.linesIn(
+        GridColours.standard().provisionalNote,
+      )) {
+        final slotColumn = ((rule.$1.dx - cell.left) / slot).floor();
+        final slotRow = ((rule.$1.dy - cell.top) / slot).floor();
+        final own = Rect.fromLTWH(
+          cell.left + slotColumn * slot,
+          cell.top + slotRow * slot,
+          slot,
+          slot,
+        );
+        expect(own.contains(rule.$1), isTrue, reason: 'rule start escaped');
+        expect(own.contains(rule.$2), isTrue, reason: 'rule end escaped');
+      }
+    });
+
+    test('the ink does not move the digit (constraint 3)', () {
+      final settled = paint(
+        noted(<int, List<int>>{
+          40: <int>[5],
+        }, const <int, List<int>>{}),
+      );
+      final provisional = paint(
+        noted(const <int, List<int>>{}, <int, List<int>>{
+          40: <int>[5],
+        }),
+      );
+
+      // The glyph is drawn at the same place either way; only the rule and the
+      // colour differ.
+      expect(settled.linesIn(GridColours.standard().provisionalNote), isEmpty);
+      expect(
+        provisional.linesIn(GridColours.standard().provisionalNote),
+        hasLength(1),
+      );
+    });
+
+    // **The test that matters.** D-73 measured the two inks at 1.07:1 under
+    // deuteranopia — the same mark, for roughly one man in twelve. So the
+    // distinction has to be provable with colour thrown away entirely.
+    test('the two inks differ with colour removed', () {
+      final settledOnly = paint(
+        noted(<int, List<int>>{
+          40: <int>[5],
+        }, const <int, List<int>>{}),
+      );
+      final provisionalOnly = paint(
+        noted(const <int, List<int>>{}, <int, List<int>>{
+          40: <int>[5],
+        }),
+      );
+
+      // Count the geometry, never the colour. If the underline were ever
+      // dropped in favour of hue alone, these two would be identical and this
+      // test is the only thing that would say so.
+      expect(
+        provisionalOnly.lines.length,
+        settledOnly.lines.length + 1,
+        reason: 'the second ink must add a mark, not only a colour',
+      );
+    });
+
+    test('changing only a candidate ink repaints', () {
+      final settled = noted(<int, List<int>>{
+        2: <int>[4],
+      }, const {});
+      final provisional = noted(const {}, <int, List<int>>{
+        2: <int>[4],
+      });
+
+      expect(
+        _painter(board: settled).shouldRepaint(_painter(board: provisional)),
+        isTrue,
+      );
+    });
+  });
+
+  // Dynamic type is respected everywhere (`docs/DESIGN.md` §2), but a sudoku
+  // grid cannot reflow: nine columns are nine columns. Left uncapped, a note
+  // overflows its slot at 1.5x and a value its cell at 2x — ordinary "Larger
+  // Text", not an accessibility extreme — and the board becomes an overlapping
+  // mess rather than a large one.
+  group('glyphs are capped to the box they sit in', () {
+    ({double width, double em}) noteGlyph(double scale) {
+      final painter = _painter(
+        board: (_board().toggleNote(40, 8) as EditApplied).board,
+        scale: scale,
+      );
+      final canvas = RecordingCanvas();
+      painter.paint(canvas, const Size(360, 360));
+      return painter.debugNoteGlyphBox(8);
+    }
+
+    ({double width, double em}) valueGlyph(double scale) {
+      final painter = _painter(scale: scale);
+      final canvas = RecordingCanvas();
+      painter.paint(canvas, const Size(360, 360));
+      return painter.debugValueGlyphBox(5);
+    }
+
+    test('a note never exceeds its slot, at any scale', () {
+      const slot = 40.0 / 3;
+      for (final scale in <double>[1, 1.5, 2, 3, 5]) {
+        final glyph = noteGlyph(scale);
+        expect(glyph.width, lessThanOrEqualTo(slot), reason: '${scale}x width');
+        expect(glyph.em, lessThanOrEqualTo(slot), reason: '${scale}x em');
+      }
+    });
+
+    test('a value never exceeds its cell, at any scale', () {
+      const cell = 40.0;
+      for (final scale in <double>[1, 1.5, 2, 3, 5]) {
+        final glyph = valueGlyph(scale);
+        expect(glyph.width, lessThanOrEqualTo(cell), reason: '${scale}x width');
+        expect(glyph.em, lessThanOrEqualTo(cell), reason: '${scale}x em');
+      }
+    });
+
+    // The cap is a ceiling, not a fixed size: dynamic type still does
+    // something for a player who asks for it.
+    test('type still grows until it stops fitting', () {
+      expect(valueGlyph(1.5).em, greaterThan(valueGlyph(1).em));
+      expect(noteGlyph(1.1).em, greaterThan(noteGlyph(1).em));
+    });
+
+    test('the default scale is untouched by the cap', () {
+      // 22px values and 11px notes already fit; capping must not shrink them.
+      expect(valueGlyph(1).em, closeTo(22, 0.01));
+      expect(noteGlyph(1).em, closeTo(11, 0.01));
+    });
+
+    test('a smaller grid caps sooner', () {
+      // The box is the cell, not a constant, so a narrow phone caps earlier
+      // than a tablet does.
+      final painter = _painter(scale: 3);
+      final canvas = RecordingCanvas();
+      painter.paint(canvas, const Size(180, 180));
+      final glyph = painter.debugValueGlyphBox(5);
+
+      expect(glyph.em, lessThanOrEqualTo(20.0));
     });
   });
 }

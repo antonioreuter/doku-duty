@@ -1,6 +1,7 @@
 import 'package:test/test.dart';
 
 import 'package:doku_duty/features/grid_input/domain/note_set.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 
 void main() {
   group('marking', () {
@@ -191,6 +192,216 @@ void main() {
       expect(mixed.length, 2);
       expect(mixed.isEmpty, isFalse);
       expect(NoteSet.none.isEmpty, isTrue);
+    });
+  });
+
+  // D-11. A second ink for a hypothesis under test. Presence, origin and ink
+  // are three independent facts about one candidate, packed into one value so
+  // there is no second structure to fall out of step with the first.
+  group('ink', () {
+    test('a candidate is settled unless it is marked otherwise', () {
+      final marked = NoteSet.none.toggle(4);
+      expect(marked.inkOf(4), NoteKind.settled);
+      expect(marked.isProvisional(4), isFalse);
+    });
+
+    test('a candidate can be marked provisional', () {
+      final marked = NoteSet.none.toggle(4, ink: NoteKind.provisional);
+      expect(marked.contains(4), isTrue);
+      expect(marked.inkOf(4), NoteKind.provisional);
+      expect(marked.isProvisional(4), isTrue);
+    });
+
+    test('a digit that is absent has no ink', () {
+      expect(NoteSet.none.inkOf(4), isNull);
+      expect(NoteSet.none.isProvisional(4), isFalse);
+    });
+
+    test('both inks sit in one cell', () {
+      final mixed = NoteSet.none
+          .toggle(1)
+          .toggle(4, ink: NoteKind.provisional)
+          .toggle(9);
+
+      expect(mixed.digits, <int>[1, 4, 9]);
+      expect(mixed.settled, <int>[1, 9]);
+      expect(mixed.provisional, <int>[4]);
+    });
+
+    test('presence, origin and ink are three independent facts', () {
+      final set = NoteSet.none
+          .withGenerated(4)
+          .toggle(4, ink: NoteKind.provisional);
+
+      expect(set.contains(4), isTrue);
+      expect(set.inkOf(4), NoteKind.provisional);
+      // D-15: which of the two first marked it is recorded independently of
+      // which ink it now carries.
+      expect(set.isGenerated(4), isTrue);
+    });
+
+    test('the slot is untouched by the ink (constraint 3)', () {
+      final settled = NoteSet.none.toggle(5);
+      final provisional = NoteSet.none.toggle(5, ink: NoteKind.provisional);
+
+      expect(NoteSet.slotOf(5), (row: 1, column: 1));
+      expect(settled.digits, provisional.digits);
+    });
+
+    test('length and isEmpty count candidates, not inks', () {
+      final mixed = NoteSet.none.toggle(1).toggle(4, ink: NoteKind.provisional);
+      expect(mixed.length, 2);
+      expect(mixed.isEmpty, isFalse);
+    });
+
+    test('two sets differing only in ink are not the same fact', () {
+      expect(
+        NoteSet.none.toggle(4, ink: NoteKind.provisional),
+        isNot(NoteSet.none.toggle(4)),
+      );
+    });
+  });
+
+  // D-90. One control, three outcomes: mark, remove, or change the ink.
+  group('re-inking', () {
+    test('marking in the ink it already carries removes it', () {
+      final settled = NoteSet.none.toggle(4);
+      expect(settled.toggle(4), NoteSet.none);
+
+      final provisional = NoteSet.none.toggle(4, ink: NoteKind.provisional);
+      expect(provisional.toggle(4, ink: NoteKind.provisional), NoteSet.none);
+    });
+
+    test('marking a settled candidate in the provisional ink converts it', () {
+      final converted = NoteSet.none
+          .toggle(4)
+          .toggle(4, ink: NoteKind.provisional);
+
+      expect(converted.contains(4), isTrue, reason: 'it must not be removed');
+      expect(converted.inkOf(4), NoteKind.provisional);
+    });
+
+    test('marking a provisional candidate in the settled ink converts it', () {
+      final converted = NoteSet.none
+          .toggle(4, ink: NoteKind.provisional)
+          .toggle(4);
+
+      expect(converted.contains(4), isTrue);
+      expect(converted.inkOf(4), NoteKind.settled);
+    });
+
+    test('converting twice returns to where it started', () {
+      final start = NoteSet.none.toggle(4);
+      final there = start.toggle(4, ink: NoteKind.provisional);
+      expect(there.toggle(4), start);
+    });
+
+    test('a digit is one ink or the other, never both', () {
+      final converted = NoteSet.none
+          .toggle(4)
+          .toggle(4, ink: NoteKind.provisional);
+
+      expect(converted.digits, <int>[4]);
+      expect(converted.provisional, <int>[4]);
+      expect(converted.settled, isEmpty);
+      expect(converted.length, 1);
+    });
+
+    test('converting one candidate disturbs no other', () {
+      var set = NoteSet.none;
+      for (final digit in const <int>[1, 4, 7, 9]) {
+        set = set.toggle(digit);
+      }
+      set = set.withGenerated(2);
+
+      final after = set.toggle(4, ink: NoteKind.provisional);
+
+      expect(after.digits, <int>[1, 2, 4, 7, 9]);
+      for (final digit in const <int>[1, 7, 9]) {
+        expect(after.inkOf(digit), NoteKind.settled, reason: 'digit $digit');
+      }
+      expect(after.inkOf(2), NoteKind.settled);
+      expect(after.isGenerated(2), isTrue, reason: 'origin must not move');
+    });
+
+    test('re-inking keeps the origin the fill recorded (D-15)', () {
+      final generated = NoteSet.none.withGenerated(4);
+      expect(generated.isGenerated(4), isTrue);
+
+      final converted = generated.toggle(4, ink: NoteKind.provisional);
+
+      expect(converted.inkOf(4), NoteKind.provisional);
+      expect(
+        converted.isGenerated(4),
+        isTrue,
+        reason:
+            'which ink it carries is a different question from who marked '
+            'it first',
+      );
+    });
+
+    test('removing a converted candidate takes its ink with it', () {
+      final gone = NoteSet.none
+          .toggle(4, ink: NoteKind.provisional)
+          .toggle(4, ink: NoteKind.provisional);
+
+      expect(gone, NoteSet.none);
+      expect(gone.inkOf(4), isNull);
+      expect(gone.isProvisional(4), isFalse);
+    });
+
+    test('a digit that is not marked cannot be re-inked', () {
+      expect(NoteSet.none.reInked(4, NoteKind.provisional), NoteSet.none);
+    });
+  });
+
+  // D-11 and D-91, at the level of one cell. The board-wide controls are built
+  // on these.
+  group('clearing and promoting a cell', () {
+    test('clearing removes provisional marks and keeps settled ones', () {
+      final mixed = NoteSet.none
+          .toggle(1)
+          .toggle(4, ink: NoteKind.provisional)
+          .toggle(9);
+
+      final cleared = mixed.clearedOfProvisional();
+
+      expect(cleared.digits, <int>[1, 9]);
+      expect(cleared.provisional, isEmpty);
+    });
+
+    test('clearing a cell with no provisional marks changes nothing', () {
+      final settled = NoteSet.of(const <int>[1, 4, 9]);
+      expect(settled.clearedOfProvisional(), settled);
+    });
+
+    test('promoting turns provisional marks settled and adds nothing', () {
+      final mixed = NoteSet.none
+          .toggle(1)
+          .toggle(4, ink: NoteKind.provisional)
+          .toggle(9, ink: NoteKind.provisional);
+
+      final promoted = mixed.promoted();
+
+      expect(promoted.digits, <int>[1, 4, 9]);
+      expect(promoted.provisional, isEmpty);
+      expect(promoted.settled, <int>[1, 4, 9]);
+    });
+
+    test('promoting keeps origins intact', () {
+      final set = NoteSet.none
+          .withGenerated(4)
+          .toggle(4, ink: NoteKind.provisional);
+
+      final promoted = set.promoted();
+
+      expect(promoted.inkOf(4), NoteKind.settled);
+      expect(promoted.isGenerated(4), isTrue);
+    });
+
+    test('promoting a cell with no provisional marks changes nothing', () {
+      final settled = NoteSet.of(const <int>[1, 4, 9]);
+      expect(settled.promoted(), settled);
     });
   });
 }

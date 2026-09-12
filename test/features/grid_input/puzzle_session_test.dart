@@ -2,6 +2,7 @@ import 'package:test/test.dart';
 
 import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/domain/puzzle_session.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 
 const String _clues =
@@ -252,6 +253,149 @@ void main() {
 
       expect(after.lockedDigit, isNull);
       expect(after.highlightedDigit, isNull);
+    });
+  });
+
+  // D-89. The ink is a second axis, not a third state on the notes toggle.
+  // Folding them into one control would leave long-press — "one entry in the
+  // opposite mode" — with no defined meaning, because the opposite of
+  // provisional is two things.
+  group('the ink axis', () {
+    test('a puzzle opens in the settled ink', () {
+      expect(_session().noteInk, NoteKind.settled);
+    });
+
+    test('the mode is still two-valued', () {
+      // If a third EntryKind ever appears, this is where it has to be argued
+      // for — the ink rides alongside the mode rather than inside it.
+      expect(EntryKind.values, <EntryKind>[EntryKind.value, EntryKind.note]);
+    });
+
+    test('changing the ink does not enter notes mode', () {
+      final after = _session().withNoteInk(NoteKind.provisional);
+
+      expect(after.noteInk, NoteKind.provisional);
+      expect(after.entryKind, EntryKind.value);
+    });
+
+    test('changing the ink does not leave notes mode', () {
+      final after = _session()
+          .withEntryKind(EntryKind.note)
+          .withNoteInk(NoteKind.provisional);
+
+      expect(after.entryKind, EntryKind.note);
+      expect(after.noteInk, NoteKind.provisional);
+    });
+
+    test('changing the mode does not change the ink', () {
+      final after = _session()
+          .withNoteInk(NoteKind.provisional)
+          .withEntryKind(EntryKind.note);
+
+      expect(after.noteInk, NoteKind.provisional);
+    });
+
+    test('notes mode writes in the ink in force', () {
+      final after = _session()
+          .withEntryKind(EntryKind.note)
+          .withNoteInk(NoteKind.provisional)
+          .tapCell(2)
+          .tapDigit(4);
+
+      expect(after.board.notesAt(2).inkOf(4), NoteKind.provisional);
+    });
+
+    test('several entries all take the ink in force', () {
+      var session = _session()
+          .withEntryKind(EntryKind.note)
+          .withNoteInk(NoteKind.provisional)
+          .tapCell(2);
+      for (final digit in const <int>[1, 4, 7]) {
+        session = session.tapDigit(digit);
+      }
+
+      expect(session.board.notesAt(2).provisional, <int>[1, 4, 7]);
+    });
+
+    // The one meaning long-press already has, unchanged: one entry in the
+    // opposite *mode*, written in whichever ink is in force.
+    test('a long-pressed digit in value mode uses the ink in force', () {
+      final after = _session()
+          .withNoteInk(NoteKind.provisional)
+          .tapCell(2)
+          .tapDigitLongPress(4);
+
+      expect(after.board.notesAt(2).inkOf(4), NoteKind.provisional);
+      expect(after.entryKind, EntryKind.value, reason: 'the mode is unchanged');
+      expect(after.noteInk, NoteKind.provisional, reason: 'so is the ink');
+    });
+
+    test('a long-pressed digit in notes mode still writes a value', () {
+      final after = _session()
+          .withEntryKind(EntryKind.note)
+          .withNoteInk(NoteKind.provisional)
+          .tapCell(2)
+          .tapDigitLongPress(4);
+
+      expect(after.board.digitAt(2), 4);
+    });
+
+    test('re-inking reaches the board through the pad', () {
+      final after = _session()
+          .withEntryKind(EntryKind.note)
+          .tapCell(2)
+          .tapDigit(4)
+          .withNoteInk(NoteKind.provisional)
+          .tapDigit(4);
+
+      expect(after.board.notesAt(2).contains(4), isTrue);
+      expect(after.board.notesAt(2).inkOf(4), NoteKind.provisional);
+    });
+
+    test('setting the ink it is already in changes nothing', () {
+      final session = _session();
+      expect(identical(session.withNoteInk(NoteKind.settled), session), isTrue);
+    });
+  });
+
+  group('the ink and a held digit', () {
+    test('sweeping marks in the ink in force', () {
+      final after = _session()
+          .withMode(InputMode.digitFirst)
+          .withEntryKind(EntryKind.note)
+          .withNoteInk(NoteKind.provisional)
+          .tapDigit(4)
+          .tapCell(2)
+          .tapCell(11);
+
+      expect(after.board.notesAt(2).inkOf(4), NoteKind.provisional);
+      expect(after.board.notesAt(11).inkOf(4), NoteKind.provisional);
+    });
+
+    test('sweeping a cell that holds it in the other ink converts it', () {
+      final after = _session()
+          .withMode(InputMode.digitFirst)
+          .withEntryKind(EntryKind.note)
+          .tapDigit(4)
+          .tapCell(2)
+          .withNoteInk(NoteKind.provisional)
+          .tapDigit(4)
+          .tapCell(2);
+
+      expect(after.board.notesAt(2).inkOf(4), NoteKind.provisional);
+    });
+
+    // A held digit means something different in the other ink, so carrying it
+    // across would write the wrong thing on the next tap — the reason the
+    // mode and the input-mode switches already put it down.
+    test('changing the ink puts down anything held', () {
+      final after = _session()
+          .withMode(InputMode.digitFirst)
+          .withEntryKind(EntryKind.note)
+          .tapDigit(4)
+          .withNoteInk(NoteKind.provisional);
+
+      expect(after.lockedDigit, isNull);
     });
   });
 }

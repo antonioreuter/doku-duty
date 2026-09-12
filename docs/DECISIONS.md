@@ -1125,3 +1125,43 @@ of bug where the pad shows one thing and the grid lights another. The cost of
 this decision is that a cell-first player who wants to see every 7 must select a
 cell holding a 7 rather than tapping 7 on the pad — one extra tap, on the path
 players already use.
+
+### D-92 · Grid glyphs grow with dynamic type until they fill their box, then stop
+A value's glyph is capped to its cell and a candidate's to its 3×3 slot. Type
+below the cap scales normally; above it the glyph holds at the largest size that
+fits. The cap is measured at layout — the glyph's width and its em box against
+the box it sits in — rather than set as a constant.
+
+**Rationale.** `docs/DESIGN.md` §2 says dynamic type is respected everywhere and
+nothing pins a size, and the grid took that literally: `TypeRole.scaled` multiplied
+and nothing clamped the result. A sudoku grid cannot honour that promise, because
+it cannot reflow — nine columns are nine columns at every text size, and the cell
+is the screen width divided by nine (D-84). Uncapped, a candidate's em box passes
+its slot at about 1.2× and a value's passes its cell at about 1.8×: ordinary
+"Larger Text" settings, not accessibility extremes. The result was not large text
+but unreadable text, digits overlapping their neighbours in every direction.
+
+Capping is a real compromise and worth naming as one: a player at 3× gets digits
+about as large as 1.8× would have given them, not three times the default. The
+alternative that actually serves them is magnification — the grid drawn larger
+than the viewport with pan — and that is a feature with its own gestures, state,
+and tests, which `add-accessibility-settings` (change 30) is where the backlog
+puts it. Until then the choice is between text that is smaller than asked for and
+text that cannot be read at all.
+
+**Why measured rather than a constant.** The ratio between a font size and the box
+its glyph fills is a property of the face. A factor tuned to Nunito would be
+silently wrong the day D-74 is revisited, and silently wrong here means text that
+overflows again with every test still green.
+
+**Why the em box and not the laid-out height.** A laid-out line in Nunito is about
+1.36em tall and most of the excess is empty leading: at the default scale a
+candidate's line box is already 15px inside a 13.3px slot while the digit itself
+sits comfortably. Capping on that number shrinks type that visibly fits. A digit
+has cap height and no descender, so its ink is always shorter than its em, which
+makes the em a bound that holds without depending on any one face's metrics.
+
+**What breaks if reversed.** The defect returns at the text size a large fraction
+of players actually use, and returns silently: the test that should have caught it
+asserted the *widget's* size and that no exception was thrown, both of which stayed
+true while every glyph inside it overflowed.

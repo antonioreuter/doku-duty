@@ -25,10 +25,29 @@ class RecordingCanvas implements Canvas {
       if (stroke.$2.toARGB32() == colour.toARGB32()) stroke.$1,
   ];
 
+  /// The lines drawn, with their colour and stroke width.
+  ///
+  /// The provisional underline is a line, not a rect — and it is the signal
+  /// that survives when colour does not (D-73), so a test has to be able to
+  /// count them.
+  final List<(Offset, Offset, Color, double)> lines =
+      <(Offset, Offset, Color, double)>[];
+
+  /// The lines drawn in [colour].
+  List<(Offset, Offset)> linesIn(Color colour) => <(Offset, Offset)>[
+    for (final line in lines)
+      if (line.$3.toARGB32() == colour.toARGB32()) (line.$1, line.$2),
+  ];
+
   @override
   void drawRect(Rect rect, Paint paint) {
     final entry = (rect, paint.color);
     (paint.style == PaintingStyle.stroke ? strokes : fills).add(entry);
+  }
+
+  @override
+  void drawLine(Offset from, Offset to, Paint paint) {
+    lines.add((from, to, paint.color, paint.strokeWidth));
   }
 
   @override

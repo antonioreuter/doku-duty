@@ -1,3 +1,4 @@
+import '../../persistence/domain/note_enums.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../../puzzle_engine/domain/grid_geometry.dart';
 import 'note_set.dart';
@@ -179,8 +180,11 @@ final class Board {
   /// Cells carrying at least one candidate.
   int get notedCount => _notes.length;
 
-  /// Mark [digit] in [cell] if it is absent, remove it if it is there.
-  BoardEdit toggleNote(int cell, int digit) {
+  /// Mark [digit] in [cell] in [ink], remove it, or change its ink.
+  ///
+  /// Which of the three happens is [NoteSet.toggle]'s rule (D-90): absent marks,
+  /// present in the same ink removes, present in the other ink converts.
+  BoardEdit toggleNote(int cell, int digit, {NoteKind ink = NoteKind.settled}) {
     if (isGiven(cell)) {
       return EditRefused(board: this, reason: EditRefusal.cellIsGiven);
     }
@@ -188,7 +192,7 @@ final class Board {
       return EditRefused(board: this, reason: EditRefusal.cellHasValue);
     }
     final before = _notes[cell] ?? NoteSet.none;
-    final after = before.toggle(digit);
+    final after = before.toggle(digit, ink: ink);
     return EditApplied(
       board: Board._(_givens, _placed, _withNotes(cell, after)),
       cell: cell,
@@ -342,6 +346,59 @@ final class Board {
       board: Board._(_givens, _placed, Map<int, NoteSet>.unmodifiable(notes)),
       // The fill is aimed at the board, not a cell. [EditApplied.cell] names
       // the cell a value moved in, and no value moved.
+      cell: changes.keys.first,
+      before: empty,
+      after: empty,
+      noteChanges: Map<int, NoteChange>.unmodifiable(changes),
+    );
+  }
+
+  /// Remove every **provisional note** on the board, leaving every **settled
+  /// note** exactly where it is (D-11).
+  ///
+  /// One action, so a failed line of reasoning is abandoned in a single tap —
+  /// and one [EditApplied], so a single undo brings the whole hypothesis back.
+  /// The separation is the entire point of the second ink: a player testing a
+  /// chain must be able to throw the test away without touching the work they
+  /// derived before it.
+  BoardEdit clearProvisional() =>
+      _reInkAll((notes) => notes.clearedOfProvisional());
+
+  /// Turn every **provisional note** into a **settled note** (D-91,
+  /// **promote**).
+  ///
+  /// The other half of a chain test. Nothing is added and nothing is removed —
+  /// only the ink changes — so a hypothesis that held up is kept in one action
+  /// rather than re-entered by hand, and the origins D-15 records survive it.
+  BoardEdit promoteProvisional() => _reInkAll((notes) => notes.promoted());
+
+  /// Apply [change] to every cell's candidates, as one edit.
+  ///
+  /// Refuses rather than pushing an empty step when nothing would change:
+  /// reaching for a control that has no work to do is an ordinary thing for a
+  /// player to do, and an undo that swallows a turn doing nothing is worse than
+  /// no undo at all.
+  BoardEdit _reInkAll(NoteSet Function(NoteSet notes) change) {
+    final changes = <int, NoteChange>{};
+    final notes = Map<int, NoteSet>.of(_notes);
+
+    for (final entry in _notes.entries) {
+      final after = change(entry.value);
+      if (after == entry.value) continue;
+      changes[entry.key] = NoteChange(before: entry.value, after: after);
+      if (after.isEmpty) {
+        notes.remove(entry.key);
+      } else {
+        notes[entry.key] = after;
+      }
+    }
+
+    if (changes.isEmpty) {
+      return EditRefused(board: this, reason: EditRefusal.noChange);
+    }
+    return EditApplied(
+      board: Board._(_givens, _placed, Map<int, NoteSet>.unmodifiable(notes)),
+      // Aimed at the board rather than a cell, as the fill is. No value moved.
       cell: changes.keys.first,
       before: empty,
       after: empty,

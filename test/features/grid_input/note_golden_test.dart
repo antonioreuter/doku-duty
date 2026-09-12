@@ -11,8 +11,12 @@ import 'package:doku_duty/features/design_system/presentation/doku_colours.dart'
 import 'package:doku_duty/features/design_system/domain/season_theme.dart';
 import 'package:doku_duty/features/design_system/presentation/doku_type.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_painter.dart';
+import 'package:doku_duty/features/grid_input/presentation/grid_metrics.dart';
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
+
+import 'support/recording_canvas.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 
 const String _clues =
@@ -28,6 +32,20 @@ Board _withNotes(Map<int, List<int>> notes) {
   for (final entry in notes.entries) {
     for (final digit in entry.value) {
       board = _applied(board.toggleNote(entry.key, digit));
+    }
+  }
+  return board;
+}
+
+/// A board carrying both inks, so the rule is drawn beside candidates without
+/// one.
+Board _withInks(Map<int, List<int>> settled, Map<int, List<int>> provisional) {
+  var board = _withNotes(settled);
+  for (final entry in provisional.entries) {
+    for (final digit in entry.value) {
+      board = _applied(
+        board.toggleNote(entry.key, digit, ink: NoteKind.provisional),
+      );
     }
   }
   return board;
@@ -212,19 +230,40 @@ void main() {
       expect(NoteInk.settled.token, PaletteToken.nightIndigo);
     });
 
-    test('the provisional ink is not used by this change', () {
-      final source = File(
-        'lib/features/grid_input/presentation/grid_painter.dart',
-      ).readAsStringSync();
-      expect(source, isNot(contains('provisional')));
-      expect(source, isNot(contains('turquoise')));
+    // Retired guard. Until `add-provisional-notes` this asserted the painter
+    // never touched the second ink, so that change would inherit a renderer
+    // with one. It now asserts the opposite half — both inks, both from
+    // tokens, and no third.
+    test('the provisional ink comes from its token', () {
+      expect(
+        GridColours.standard().provisionalNote,
+        NoteInk.provisional.token.colour,
+      );
+      expect(NoteInk.provisional.token, PaletteToken.turquoise);
+    });
+
+    test('there are two note inks and no third', () {
+      expect(NoteInk.values, hasLength(2));
+      final colours = GridColours.standard();
+      expect(colours.settledNote, isNot(colours.provisionalNote));
+    });
+
+    // Constraint 5, stated where the tokens are chosen rather than only where
+    // they are drawn: the underline is not decoration, it is the distinction.
+    test('only the provisional ink carries a rule', () {
+      expect(NoteInk.settled.isUnderlined, isFalse);
+      expect(NoteInk.provisional.isUnderlined, isTrue);
     });
   });
 
+  // This test is named for a guarantee it did not make. It asserted no
+  // exception and the *widget's* own size, both of which held while every
+  // glyph inside overflowed its slot from 1.5x — which is how that shipped.
+  // It now measures the glyphs (D-92).
   testWidgets('notes stay inside their cell at the largest type', (
     tester,
   ) async {
-    for (final scale in <double>[1, 2, 3]) {
+    for (final scale in <double>[1, 1.5, 2, 3]) {
       await tester.pumpWidget(
         MediaQuery(
           data: MediaQueryData(textScaler: TextScaler.linear(scale)),
@@ -239,6 +278,31 @@ void main() {
 
       expect(tester.takeException(), isNull, reason: 'at ${scale}x');
       expect(tester.getSize(find.byType(PuzzleGrid)), const Size(360, 360));
+
+      final painter = GridPainter(
+        board: _withNotes(<int, List<int>>{
+          40: <int>[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        }),
+        selectedCell: null,
+        textScale: scale,
+        colours: GridColours.standard(),
+      );
+      painter.paint(RecordingCanvas(), const Size(360, 360));
+
+      const slot = 40.0 / 3;
+      for (var digit = 1; digit <= 9; digit++) {
+        final glyph = painter.debugNoteGlyphBox(digit);
+        expect(
+          glyph.width,
+          lessThanOrEqualTo(slot),
+          reason: 'digit $digit at ${scale}x',
+        );
+        expect(
+          glyph.em,
+          lessThanOrEqualTo(slot),
+          reason: 'digit $digit at ${scale}x',
+        );
+      }
     }
   });
 
@@ -315,6 +379,167 @@ void main() {
       final colours = GridColours.standard();
       expect(colours.candidateFill, PaletteToken.nightIndigo.paleColour);
       expect(colours.candidateFill, isNot(NoteInk.provisional.token.colour));
+    });
+  });
+
+  // D-11 and D-73 rendered. The rule is 1px, 1.5px below the baseline, inside
+  // the candidate's own third of the cell.
+  group('the provisional ink', () {
+    testWidgets('a cell holding all nine in mixed inks', (tester) async {
+      final board = _withInks(
+        <int, List<int>>{
+          40: <int>[1, 3, 5, 7, 9],
+        },
+        <int, List<int>>{
+          40: <int>[2, 4, 6, 8],
+        },
+      );
+
+      await tester.pumpWidget(_host(board));
+      await expectLater(
+        find.byType(PuzzleGrid),
+        matchesGoldenFile('goldens/inks_mixed_full_cell.png'),
+      );
+    });
+
+    testWidgets('a board carrying both inks beside values', (tester) async {
+      var board = _withInks(
+        <int, List<int>>{
+          2: <int>[1, 4, 7],
+          11: <int>[3, 6],
+        },
+        <int, List<int>>{
+          21: <int>[2, 5, 8],
+          40: <int>[9],
+        },
+      );
+      board = _applied(board.place(23, 2));
+
+      await tester.pumpWidget(_host(board));
+      await expectLater(
+        find.byType(PuzzleGrid),
+        matchesGoldenFile('goldens/inks_board.png'),
+      );
+    });
+
+    // Deliberately not a golden. At 3x the whole grid overflows its cells —
+    // givens included — which predates this change and is untested for: the
+    // large-type test below only asserts no exception and the widget's own
+    // size, despite its name. A golden here would enshrine that as correct.
+    // What matters for *this* change is that the rule is still drawn, and
+    // still inside the candidate's own third.
+    test('the rule survives the largest dynamic type', () {
+      for (final scale in <double>[1, 2, 3]) {
+        final canvas = RecordingCanvas();
+        GridPainter(
+          board: _withInks(const <int, List<int>>{}, <int, List<int>>{
+            40: <int>[1, 5, 9],
+          }),
+          selectedCell: null,
+          textScale: scale,
+          colours: GridColours.standard(),
+        ).paint(canvas, const Size(360, 360));
+
+        final rules = canvas.linesIn(GridColours.standard().provisionalNote);
+        expect(rules, hasLength(3), reason: 'at ${scale}x');
+
+        final metrics = GridMetrics.fit(const Size(360, 360));
+        final cell = metrics.cellRect(40);
+        final slot = cell.width / 3;
+
+        // The guarantee is that a rule never *crosses* a slot boundary — if it
+        // did it would start reading as belonging to the candidate next door.
+        // Asserted as "both ends fall in the same third", which holds however
+        // wide the glyph above it has grown.
+        //
+        // Both ends are inset by a hair first. A rule exactly one slot wide
+        // sits *on* two boundaries, and which side of one it lands on is
+        // floating-point noise — 186.66666666666666 against the slot's own
+        // 186.66666666666669. Without the inset the test reports a crossing
+        // that is not there.
+        const nudge = 0.01;
+        int thirdOf(double offset) =>
+            ((offset - cell.left) / slot).clamp(0, 2.999).floor();
+
+        for (final rule in rules) {
+          expect(
+            rule.$1.dx,
+            greaterThanOrEqualTo(cell.left),
+            reason: '${scale}x',
+          );
+          expect(
+            rule.$2.dx,
+            lessThanOrEqualTo(cell.right),
+            reason: '${scale}x',
+          );
+          expect(
+            rule.$1.dy,
+            greaterThanOrEqualTo(cell.top),
+            reason: '${scale}x',
+          );
+          expect(
+            rule.$1.dy,
+            lessThanOrEqualTo(cell.bottom),
+            reason: '${scale}x',
+          );
+          expect(
+            thirdOf(rule.$2.dx - nudge),
+            thirdOf(rule.$1.dx + nudge),
+            reason: 'a rule crossed a slot boundary at ${scale}x',
+          );
+          expect(
+            rule.$2.dx - rule.$1.dx,
+            lessThanOrEqualTo(slot + 0.001),
+            reason: 'a rule is wider than its slot at ${scale}x',
+          );
+        }
+      }
+    });
+
+    // **The reflow test, re-run with the rule present.** `add-notes` proved a
+    // candidate does not move when another is removed. This proves it does not
+    // move when another is *re-inked* — the new way constraint 3 could break.
+    test('re-inking a candidate moves no other glyph', () async {
+      final before = _withInks(<int, List<int>>{
+        40: <int>[1, 2, 3, 4, 5, 6, 7, 8, 9],
+      }, const <int, List<int>>{});
+      final after = _applied(
+        before.toggleNote(40, 5, ink: NoteKind.provisional),
+      );
+
+      // The reference: the same nine candidates with the 5 marked provisional
+      // from the start. If re-inking reflowed, these two would differ.
+      final never = _withInks(
+        <int, List<int>>{
+          40: <int>[1, 2, 3, 4, 6, 7, 8, 9],
+        },
+        <int, List<int>>{
+          40: <int>[5],
+        },
+      );
+
+      expect(after.notesAt(40).digits, never.notesAt(40).digits);
+      expect(after.notesAt(40).provisional, never.notesAt(40).provisional);
+      expect(after.notesAt(40).settled, never.notesAt(40).settled);
+    });
+
+    testWidgets('re-inking draws the same board as marking it that way', (
+      tester,
+    ) async {
+      final reInked = _applied(
+        _withInks(
+          <int, List<int>>{
+            40: <int>[1, 2, 3, 4, 5, 6, 7, 8, 9],
+          },
+          const <int, List<int>>{},
+        ).toggleNote(40, 5, ink: NoteKind.provisional),
+      );
+
+      await tester.pumpWidget(_host(reInked));
+      await expectLater(
+        find.byType(PuzzleGrid),
+        matchesGoldenFile('goldens/inks_reinked.png'),
+      );
     });
   });
 }

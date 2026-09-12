@@ -1,3 +1,4 @@
+import '../../persistence/domain/note_enums.dart';
 import 'board.dart';
 import 'board_history.dart';
 
@@ -31,6 +32,7 @@ final class PuzzleSession {
     required this.history,
     required this.mode,
     required this.entryKind,
+    required this.noteInk,
     this.selectedCell,
     this.lockedDigit,
     this.lastEdit,
@@ -46,6 +48,10 @@ final class PuzzleSession {
     history: BoardHistory.start(board),
     mode: mode,
     entryKind: entryKind,
+    // A puzzle opens in the settled ink whatever ink the last one ended in.
+    // The provisional ink belongs to a line of reasoning, and that reasoning
+    // does not survive the puzzle it was about.
+    noteInk: NoteKind.settled,
   );
 
   final BoardHistory history;
@@ -56,6 +62,15 @@ final class PuzzleSession {
   /// A mode, not a modifier held per entry: players work in note-heavy bursts
   /// (`docs/SPEC.md` §3.4).
   final EntryKind entryKind;
+
+  /// Which ink a note entry is written in (D-11, D-89).
+  ///
+  /// A second axis rather than a third [EntryKind]. The two are independent —
+  /// changing one never changes the other — which is what keeps
+  /// [tapDigitLongPress] meaning exactly one thing: the opposite *mode*, in
+  /// whichever ink is in force. Folded into the mode there would be no single
+  /// opposite to go to.
+  final NoteKind noteInk;
 
   /// The cell the player last touched, or null.
   final int? selectedCell;
@@ -102,6 +117,7 @@ final class PuzzleSession {
     BoardHistory? history,
     InputMode? mode,
     EntryKind? entryKind,
+    NoteKind? noteInk,
     int? selectedCell,
     bool clearSelection = false,
     int? lockedDigit,
@@ -112,6 +128,7 @@ final class PuzzleSession {
       history: history ?? this.history,
       mode: mode ?? this.mode,
       entryKind: entryKind ?? this.entryKind,
+      noteInk: noteInk ?? this.noteInk,
       selectedCell: clearSelection ? null : (selectedCell ?? this.selectedCell),
       lockedDigit: clearLock ? null : (lockedDigit ?? this.lockedDigit),
       lastEdit: edit,
@@ -129,7 +146,7 @@ final class PuzzleSession {
         (Board.empty, _) => history.erase(cell),
         // Sweeping a digit across cells in notes mode toggles it in each, so
         // one sweep both marks and unmarks.
-        (_, EntryKind.note) => history.toggleNote(cell, held),
+        (_, EntryKind.note) => history.toggleNote(cell, held, ink: noteInk),
         (_, EntryKind.value) => history.place(cell, held),
       };
       return _with(history: step.history, selectedCell: cell, edit: step.edit);
@@ -169,7 +186,7 @@ final class PuzzleSession {
     final cell = selectedCell;
     if (cell == null) return _with();
     final step = kind == EntryKind.note
-        ? history.toggleNote(cell, digit)
+        ? history.toggleNote(cell, digit, ink: noteInk)
         : history.place(cell, digit);
     return _with(history: step.history, edit: step.edit);
   }
@@ -181,6 +198,17 @@ final class PuzzleSession {
   /// it across would write the wrong thing on the player's next tap.
   PuzzleSession withEntryKind(EntryKind kind) =>
       kind == entryKind ? this : _with(entryKind: kind, clearLock: true);
+
+  /// The player changed which ink a note entry writes.
+  ///
+  /// Anything held is put down, for the reason [withEntryKind] puts it down: a
+  /// digit held as a settled brush means something else as a provisional one,
+  /// and carrying it across would write the wrong ink on the next tap.
+  ///
+  /// The mode is untouched. Changing ink is not a way into or out of notes
+  /// mode (D-89).
+  PuzzleSession withNoteInk(NoteKind ink) =>
+      ink == noteInk ? this : _with(noteInk: ink, clearLock: true);
 
   /// The player pressed erase.
   PuzzleSession tapErase() {
@@ -201,6 +229,22 @@ final class PuzzleSession {
   /// a held digit and leaves both exactly as they were.
   PuzzleSession fillNotes() {
     final step = history.fillNotes();
+    return _with(history: step.history, edit: step.edit);
+  }
+
+  /// The player abandoned the line of reasoning (D-11).
+  ///
+  /// Aimed at the board, so it needs neither a selection nor a held digit — and
+  /// it disturbs neither, nor the mode, nor the ink. Clearing a hypothesis is
+  /// not a reason to put the brush down.
+  PuzzleSession clearProvisional() {
+    final step = history.clearProvisional();
+    return _with(history: step.history, edit: step.edit);
+  }
+
+  /// The player kept the line of reasoning (D-91, **promote**).
+  PuzzleSession promoteProvisional() {
+    final step = history.promoteProvisional();
     return _with(history: step.history, edit: step.edit);
   }
 
