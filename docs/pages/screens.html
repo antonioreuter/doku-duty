@@ -101,6 +101,17 @@ footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-fam
 <p class="sub">Nine screens define the product. Everything else is a variation on one of them. Annotations cite decision IDs argued in <b>docs/DECISIONS.md</b>; exact values are canonical in <b>docs/DESIGN.md</b>.</p>
 <div class="tagbadge">Draft 1.0 · final</div>
 </header>
+<div style="max-width:760px;margin:24px auto 0;padding:16px 20px;border:2px solid #E05A2B;border-radius:10px;background:#FBDDD6;color:#3D0D06;font-size:14px;line-height:1.55">
+<b>Partly superseded — read <code>docs/DECISIONS.md</code> first.</b>
+The prose on this page has been corrected to match the decisions in force, but
+<b>the artwork has not been redrawn.</b> Every figure still shows the
+five-character bureau cast, including <b>Ruby</b>, whom D-58 removed: the cast is
+the Sheriff, Ace, Biscuit (a burro, not a horse) and Number Four. The store
+screen in §7 is still presented by Ruby and no decision yet says who replaces
+her. Colours in the figures predate the D-65 rename and the D-71 recount.
+Treat the drawings as historical and the decision documents as canonical.
+</div>
+
 
 <section class="screen">
 <p class="num">Screen 01 · session spine</p>
@@ -114,7 +125,7 @@ footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-fam
 <div style="background:var(--red);border:3px solid var(--ink);border-radius:20px;padding:3px 12px;box-shadow:0 3px 0 var(--redD);font-size:14px;font-weight:600;color:#5C1409">7</div>
 </div>
 <div style="background:var(--goldP);padding:4px 0">
-<svg viewBox="0 0 276 332" style="width:100%;display:block" role="img"><title>Territory trail</title><desc>A winding trail linking nodes, with a cactus, a wagon, a water trough and Biscuit the horse alongside.</desc>
+<svg viewBox="0 0 276 332" style="width:100%;display:block" role="img"><title>Territory trail</title><desc>A winding trail linking nodes, with a cactus, a wagon, a water trough and Biscuit the burro alongside.</desc>
 <path d="M214 34 C154 56 122 66 76 88 C38 108 46 142 98 160 C162 182 180 200 152 230 C128 256 86 266 70 298" fill="none" stroke="#C9B48C" stroke-width="9" stroke-linecap="round" stroke-dasharray="2 20"/>
 <ellipse cx="236" cy="258" rx="22" ry="7" fill="#D9C9A6"/>
 <path d="M226 258 Q230 222 240 216 Q246 236 238 258 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="2.5"/>
@@ -370,7 +381,7 @@ footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-fam
 <p class="lede">Five characters, each holding a role the others do not. Expression lives in eyes and brows only — everything else is fixed, which is what makes the rig affordable across nine territories a year.</p>
 <div class="split">
 <div style="width:302px">
-<svg width="302" viewBox="0 0 380 600" role="img"><title>Doku Duty cast</title><desc>Five cartoon characters: the Sheriff, Ace the outlaw, Biscuit the horse, Number Four, and Ruby the proprietor.</desc>
+<svg width="302" viewBox="0 0 380 600" role="img"><title>Doku Duty cast</title><desc>Five cartoon characters: the Sheriff, Ace the outlaw, Biscuit the burro, Number Four, and Ruby the proprietor.</desc>
 <rect x="24" y="24" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="20" y="20" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
 <rect x="204" y="24" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="200" y="20" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
 <rect x="24" y="224" width="160" height="180" rx="16" fill="#C9B48C"/><rect x="20" y="220" width="160" height="180" rx="16" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
@@ -490,7 +501,7 @@ footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-fam
 <section class="screen">
 <p class="num">Screen 09 · colour</p>
 <h2>Palette and state roles</h2>
-<p class="lede">The grid needs five reserved colours for state before decoration gets any. Every hue has one job. Values are canonical in <b>docs/DESIGN.md</b>.</p>
+<p class="lede">The palette is eight tokens: six carry state &mdash; ink, focus, candidate, provisional, error, completion &mdash; and two are surfaces (D-53 as amended by D-71). Every hue has one job, and decoration draws from that set rather than adding a ninth. Values are canonical in <b>docs/DESIGN.md</b>.</p>
 <div class="split">
 <div style="width:302px">
 <div class="sw">
@@ -505,7 +516,7 @@ footer{margin:56px 0 0;padding-top:22px;border-top:3px solid var(--ink);font-fam
 </div>
 </div>
 <ul class="notes">
-<li><span class="ref">D-53</span><div><div class="nh">One hue, one job</div><div class="nb"><span class="flag f-ind">Rule</span>Five states need reserved colour before decoration gets any. Decoration borrows from this set, never adds to it.</div></div></li>
+<li><span class="ref">D-53</span><div><div class="nh">One hue, one job</div><div class="nb"><span class="flag f-ind">Rule</span>Six states need reserved colour, and two surfaces complete the eight (D-71). Decoration borrows from this set, never adds to it.</div></div></li>
 <li><span class="ref">D-54</span><div><div class="nh">Two hues the brief did not ask for</div><div class="nb">Brown, yellow, orange and green cannot carry five states — too close in hue to separate on a dense grid. Turquoise and night indigo are authentically southwestern. The dusk-purple outline stops the warm hues collapsing into each other.</div></div></li>
 <li><span class="ref">D-55</span><div><div class="nh">Territories repaint surfaces, never states</div><div class="nb">A new territory may change bone, sand, and props. The six state colours are fixed across every season, so the grid is never relearned.</div></div></li>
 <li><span class="ref">§4</span><div><div class="nh">Depth shades are derived, not new</div><div class="nb">Every offset shadow is a darker value of its own hue. No shadow introduces a colour that is not already in the set.</div></div></li>

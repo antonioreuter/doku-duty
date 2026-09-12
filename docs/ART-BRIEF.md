@@ -47,11 +47,18 @@ hostile, which is worse.
 Silhouette cues: bandana over the lower face, low hat brim, narrow eyes, a
 playing card always somewhere on him. Lean, angular, slightly hunched.
 
-### The Sheriff — the comic counterweight
+### The Sheriff — the authority
 
-Your grizzled boss. Absolutely certain and frequently wrong. Dispenses specific
-old-timer advice the player learns to ignore. His advice is never harmful —
-following it wastes a move, never a puzzle (D-39).
+Your grizzled boss. Dry, sparing, and hard to please: approval from him is
+grudging and therefore worth something (D-58). He notices a technique you have
+just learned and a return after days away, and says less about each than you
+would like.
+
+He does **not** give wrong advice. D-39 gave that gag to a character whose
+incompetence was the point; D-60 retired it rather than let it settle on an
+authority figure, where confident wrong advice reads as the *game* misleading
+the player. Hints are correct or absent — a character may be unhelpful in tone,
+never in content.
 
 Silhouette cues: enormous hat, enormous moustache, barrel chest, small bowed
 legs, thumbs hooked in a heavy belt. Star badge.
@@ -115,14 +122,15 @@ legs. Flat side-by-side shapes read as diagrams.
 | First mistake | Ace | Dry, marks the wall |
 | Third mistake | Ace | Almost pleased |
 | Solved with no mistakes | Ace | Openly disappointed |
-| Long pause | Sheriff | Unhelpful suggestion |
-| Technique unlocked | Sheriff | Claims credit |
-| Row or block complete | Biscuit | Hoof stamp, enthusiastic |
-| Provisional notes cleared | Biscuit | Sympathetic |
+| Long pause with no input | Sheriff | Says nothing, at length |
+| Cell marked with 7+ candidates | Ace | Remark on your confidence |
+| Technique unlocked | Sheriff | Grudging approval |
+| Row or unit complete | Biscuit | Delighted braying |
+| Provisional notes cleared | Biscuit | Sympathetic shrug |
 | Puzzle complete | Biscuit | Stamps the grid, confetti |
 | Objects to placement | Number Four | Brief, playful |
-| Boss defeated | Ace | Files a complaint |
-| Return after days away | Ace | Pointed remark about attendance |
+| Boss defeated | Ace | Swears revenge, formally |
+| Returning after days away | Sheriff | Pointed remark about attendance |
 
 Eight to ten loops per character covers all of this. If the pipeline cannot
 sustain reuse at this level, cut a character rather than compromising the

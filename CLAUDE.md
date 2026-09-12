@@ -3,10 +3,17 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: documentation only.** There is no Flutter project, no `lib/`,
-and no commits yet. The first change to implement is
-`openspec/changes/setup-mobile-foundation` — every other backlog item depends on
-it.
+**Current state: Milestone 1 is playable.** The Flutter project exists and nine
+changes are archived — foundation, design system, persistence, remote config,
+puzzle engine, generation, grid and input, notes, and note automation. A player
+can open a puzzle from a shipped pack at any of the six **rank**s, place values,
+mark notes in fixed positional slots, and rely on **auto-cleanup**, **candidate
+highlighting**, and **auto-notes**.
+
+`add-provisional-notes` (backlog item 9) is in progress. Run
+`openspec status --change add-provisional-notes` for where it stopped, and read
+its `tasks.md` — every task is ticked the moment it is done, so the file is the
+record of where to resume.
 
 ## Source of truth — read before proposing or implementing
 
@@ -83,8 +90,14 @@ easily broken by a reasonable-looking implementation:
 The glossary in `openspec/project.md` is canonical. Use these exact terms in
 proposals, specs, tasks, code identifiers, and test names:
 
-**node, season, rank, unit, settled note, provisional note, auto-cleanup,
-cabinet, strict mode**
+**node, season, rank, unit, peer, settled note, provisional note, generated
+note, auto-cleanup, auto-notes, candidate highlighting, cabinet, strict mode,
+stamp, perk, digit sweep**
+
+The list grows: `add-note-automation` added **auto-notes**, **candidate
+highlighting**, and **generated note**. Read `openspec/project.md` rather than
+this summary when it matters — a change that needs a new concept adds it there
+in the same change.
 
 Never write "box" for unit, "level" for node or rank, "pencil mark" for note, or
 "difficulty" where rank is meant. A change that needs a new concept adds it to
@@ -138,16 +151,24 @@ is not landing and the installed skill file needs editing.
 
 ## Known inconsistencies to resolve
 
-- **`docs/pages/screens.html` still says five reserved colours** (§ palette).
-  It is a generated mockup page that `docs/DESIGN.md` §9 already flags as
-  pre-rename and needing regeneration, so it was left alone when D-71 fixed the
-  count everywhere else. Regenerate it rather than hand-editing.
-- **`docs/ART-BRIEF.md` gives the Sheriff the retired wrong-advice gag.** It
-  describes him as "the comic counterweight … frequently wrong" and cites D-39,
-  and its animation table assigns him "Unhelpful suggestion" and "Claims
-  credit". D-60 retired that gag and D-58 makes him the boss who dispenses dry,
-  grudging approval. **These cannot both ship.** Resolve before any character
-  art is commissioned — this is the one open conflict in the documents.
-- **Two referenced files do not exist:** `docs/SETUP.md` (linked twice from
-  `README.md`) and `docs/pages/screens.html` (cited by `docs/SPEC.md` §0 and flagged in
-  `docs/DESIGN.md` as pre-rename and needing regeneration anyway).
+- **`docs/pages/screens.html` is a historical mockup.** Its prose has been
+  corrected to the decisions in force, and it now opens with a banner saying so
+  — but **the artwork was never redrawn**. Every figure still shows the
+  five-character bureau cast including Ruby, whom D-58 removed, and the §7 store
+  screen is still presented by her. There is no generator for this page: earlier
+  guidance here said to regenerate rather than hand-edit, and no such tool was
+  ever written, which is why the page stayed stale for so long. Either redraw
+  the figures or build the generator; do not trust the drawings meanwhile.
+- **Nobody presents the store.** D-58 removed Ruby and named no replacement, so
+  the store, the pass offer, and chest openings have no character attached. The
+  argument for giving monetisation a face is still in `docs/SPEC.md` §7 and still
+  good. Settle it before `add-purchases-and-entitlements` (change 26).
+- **The mid-tier Android latency profile has never been taken.** Recorded
+  against `add-grid-and-input` in `openspec/BACKLOG.md`: measured on the host, an
+  emulator, and a simulator only. Take it on the first physical phone that comes
+  to hand and record the number.
+
+Resolved, kept here only so they are not re-opened: the Sheriff's retired
+wrong-advice gag (D-39 → D-60) is gone from `docs/ART-BRIEF.md`, whose animation
+table now matches the bible and `docs/SPEC.md` §6; `docs/SETUP.md` and
+`docs/pages/screens.html` both exist.
