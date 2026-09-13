@@ -7,6 +7,7 @@ import '../../design_system/domain/haptics.dart';
 import '../../design_system/application/motion_settings.dart';
 import '../../design_system/presentation/haptic_service.dart';
 import '../../design_system/presentation/paper_grain.dart';
+import '../../persistence/domain/note_enums.dart';
 import '../application/grid_providers.dart';
 import '../application/puzzle_controller.dart';
 import '../domain/puzzle_session.dart';
@@ -116,6 +117,7 @@ class _PuzzleBodyState extends State<_PuzzleBody> {
                       ? session.lockedDigit
                       : null,
                   notesMode: session.entryKind == EntryKind.note,
+                  provisionalInk: session.noteInk == NoteKind.provisional,
                   reduceMotion: widget.reduceMotion,
                   onKey: _controller.tapKey,
                 ),

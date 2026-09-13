@@ -81,6 +81,7 @@ Read them there before proposing or implementing anything.
 | **Auto-cleanup** | Removing a placed value's candidate from its row, column, and block |
 | **Auto-notes** | The one action that marks every empty cell with each candidate its peers do not already hold as a value. Unions with what is already marked; never replaces it (D-87) |
 | **Candidate highlighting** | Lighting every cell that holds the held digit, or failing that the selected cell's digit, as a candidate or as a value. Derived rather than set by the player (D-88). Free and always on, unlike **digit sweep** (D-13) |
+| **Promote** | The one action that turns every **provisional note** on the board into a **settled note**, adding and removing nothing. The other way a chain test ends, beside the D-11 clear (D-91) |
 | **Cabinet** | The permanent trophy and statistics screen |
 | **Strict mode** | Opt-in setting: immediate error flagging and a three-mistake limit |
 | **Stamp** | The perk currency. Earned in play only, never purchasable |

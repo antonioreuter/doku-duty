@@ -87,7 +87,7 @@ void main() {
       'lib/features/persistence/data/note_repository.dart',
     ).readAsStringSync();
 
-    for (final method in <String>['put', 'remove', 'clearProvisional']) {
+    for (final method in <String>['put', 'remove', 'putCells']) {
       expect(
         RegExp('Future<void> $method').hasMatch(repository),
         isTrue,

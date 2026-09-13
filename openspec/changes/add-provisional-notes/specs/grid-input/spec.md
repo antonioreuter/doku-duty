@@ -56,3 +56,51 @@ result is not large text but digits overlapping their neighbours.
 - **WHEN** the grid is drawn at one size and then at another without being
   rebuilt
 - **THEN** the glyphs are measured against the new cell, not the old one
+
+### Requirement: A pad key grows with dynamic type only until its row is full
+
+The system MUST scale a number-pad key with the reader's text size, MUST stop
+growing it once its row fills the width the pad was given, MUST NOT draw any key
+below the 44pt minimum tap target, and MUST scale a key's glyph with the key
+rather than with the text size (D-93, D-84).
+
+The pad is five columns wide and cannot reflow. Left uncapped, five keys need
+480pt at 2× — an ordinary "Larger Text" setting — against a 393pt phone, and the
+row runs off the screen.
+
+#### Scenario: The default text size
+
+- **WHEN** the pad is drawn at the reader's default text size
+- **THEN** every key is the 44pt minimum and its glyph is drawn at its own size,
+  because both already fit
+
+#### Scenario: Text larger than the row allows
+
+- **WHEN** the reader's text size would make a row of five keys wider than the
+  pad
+- **THEN** each key is drawn at the largest size that fits that row, and no key
+  is drawn outside the pad
+
+#### Scenario: Type still does something
+
+- **WHEN** the reader raises their text size from the default by a small amount
+- **THEN** the keys are larger than they were, because the cap is a ceiling and
+  not a fixed size
+
+#### Scenario: A narrower pad caps sooner
+
+- **WHEN** the same text size is used on a pad drawn at half the width
+- **THEN** the keys cap at a smaller size, because the bound is the width the
+  pad was given rather than a constant
+
+#### Scenario: A pad too narrow for five keys
+
+- **WHEN** the pad is given less width than five keys at the 44pt minimum need
+- **THEN** the keys are still 44pt, because a key that cannot be hit is worse
+  than a row that has to be cut
+
+#### Scenario: The glyph does not outgrow its key
+
+- **WHEN** a key is capped
+- **THEN** its glyph is scaled by the size the key reached, so the key keeps the
+  proportions it has at the default text size

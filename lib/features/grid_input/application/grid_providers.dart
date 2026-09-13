@@ -81,12 +81,16 @@ final puzzleOpeningProvider = FutureProvider.family<PuzzleOpening?, String>((
   final notes = <int, NoteSet>{};
   for (final note in stored) {
     final set = notes[note.cell] ?? NoteSet.none;
-    // Origin comes back off the row. Rebuilding every candidate as manual
-    // would quietly make the fill's work the player's, and the distinction
-    // D-15 keeps would survive exactly one app kill.
-    notes[note.cell] = note.origin == NoteOrigin.generated
+    // Both facts come back off the row. Rebuilding every candidate as manual
+    // would quietly make the fill's work the player's, and rebuilding every
+    // one as settled would throw away the hypothesis the player left on the
+    // board — each distinction would survive exactly one app kill (D-15, D-11).
+    final marked = note.origin == NoteOrigin.generated
         ? set.withGenerated(note.digit)
         : set.with_(note.digit);
+    notes[note.cell] = note.kind == NoteKind.provisional
+        ? marked.reInked(note.digit, NoteKind.provisional)
+        : marked;
   }
 
   return PuzzleOpening(
@@ -162,22 +166,28 @@ final class RepositoryBoardSink implements BoardSink {
   /// is a deleted row and the other eight are untouched — constraint 3 made
   /// structural rather than careful.
   ///
-  /// Origin is written from the set rather than assumed: **auto-notes** marks
-  /// candidates the player did not, and taking one over by hand has to move
-  /// the row back to manual (D-15). The ink is always **settled** — the
-  /// turquoise is `add-provisional-notes`.
+  /// Ink and origin are both written from the set rather than assumed, and
+  /// they are independent: **auto-notes** marks candidates the player did not,
+  /// taking one over by hand moves the row back to manual (D-15), and either
+  /// origin can be carried into a hypothesis without that changing which of
+  /// the two first marked it (D-90).
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) {
     return _notes.putCells(
       puzzleId: puzzleId,
-      cells: <int, Map<int, NoteOrigin>>{
+      cells: <int, Map<int, NoteMark>>{
         for (final entry in byCell.entries)
-          entry.key: <int, NoteOrigin>{
+          entry.key: <int, NoteMark>{
             for (var digit = 1; digit <= 9; digit++)
               if (entry.value.contains(digit))
-                digit: entry.value.isGenerated(digit)
-                    ? NoteOrigin.generated
-                    : NoteOrigin.manual,
+                digit: (
+                  kind: entry.value.isProvisional(digit)
+                      ? NoteKind.provisional
+                      : NoteKind.settled,
+                  origin: entry.value.isGenerated(digit)
+                      ? NoteOrigin.generated
+                      : NoteOrigin.manual,
+                ),
           },
       },
     );

@@ -205,11 +205,31 @@ void main() {
       expect(source, isNot(contains('reduceMotion')));
       expect(source, isNot(contains('reduceEffects')));
     });
+
+    // The same reasoning for the second ink, and worth its own assertion
+    // because an ink is a *state*, not an animation: a player who asked for
+    // less motion did not ask to lose the difference between a derived
+    // candidate and a hypothesis (constraint 5, D-73).
+    //
+    // Structural rather than behavioural, like the test above it: neither the
+    // painter nor the grid takes a reduce-effects input at all, so there is no
+    // value to vary and no path by which the setting could reach the ink.
+    test('neither ink can see the setting, because nothing passes it one', () {
+      for (final path in const <String>[
+        'lib/features/grid_input/presentation/grid_painter.dart',
+        'lib/features/grid_input/presentation/puzzle_grid.dart',
+        'lib/features/design_system/domain/note_ink.dart',
+      ]) {
+        final source = File(path).readAsStringSync();
+        expect(source, isNot(contains('reduceMotion')), reason: path);
+        expect(source, isNot(contains('reduceEffects')), reason: path);
+      }
+    });
   });
 
   // Every key on the pad, so the glyph cannot creep back into an announcement
-  // one key at a time. The symbols here — ⌫, ↶, ✎, ⁙ — are decoration; read
-  // aloud they are noise at best and unreadable at worst.
+  // one key at a time. The symbols here — ⌫, ↶, ✎, ⁙, ~, ✕, ✓ — are
+  // decoration; read aloud they are noise at best and unreadable at worst.
   group('the pad announces names, never glyphs', () {
     testWidgets('each key reads as its label and is pressable', (tester) async {
       final handle = tester.ensureSemantics();
@@ -223,6 +243,9 @@ void main() {
         '↶': 'Undo',
         '✎': 'Notes',
         '⁙': 'Fill notes',
+        '~': 'Provisional ink',
+        '✕': 'Clear provisional notes',
+        '✓': 'Promote provisional notes',
       };
 
       for (final entry in expected.entries) {

@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/domain/board_history.dart';
 import 'package:doku_duty/features/grid_input/domain/note_set.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid_geometry.dart';
 
@@ -233,6 +234,82 @@ void main() {
 
       expect(board.digitAt(0), 5);
       expect(board.isGiven(0), isTrue);
+    });
+  });
+
+  // A placement disproves a hypothesis exactly as surely as it disproves a
+  // derived candidate, so **auto-cleanup** does not ask which ink it is in.
+  group('a hypothesis is cleaned like any other candidate', () {
+    /// Cell 2's empty **peer**s, half of them carrying the 4 as a hypothesis
+    /// and half as settled work.
+    ({Board board, List<int> settled, List<int> provisional}) mixedPeers() {
+      var board = _board();
+      final peers = _emptyPeersOf(board, 2);
+      final settled = <int>[];
+      final provisional = <int>[];
+      for (final (index, peer) in peers.indexed) {
+        final ink = index.isEven ? NoteKind.settled : NoteKind.provisional;
+        board = _applied(board.toggleNote(peer, 4, ink: ink));
+        (ink == NoteKind.settled ? settled : provisional).add(peer);
+      }
+      return (board: board, settled: settled, provisional: provisional);
+    }
+
+    test('a provisional candidate goes exactly as a settled one does', () {
+      final start = mixedPeers();
+      expect(start.provisional, isNotEmpty, reason: 'nothing to prove');
+
+      final after = _applied(start.board.place(2, 4));
+
+      for (final peer in <int>[...start.settled, ...start.provisional]) {
+        expect(after.notesAt(peer).contains(4), isFalse, reason: 'cell $peer');
+      }
+    });
+
+    test('the other candidates keep their own ink', () {
+      var board = _board();
+      final peer = _emptyPeersOf(board, 2).first;
+      board = _applied(board.toggleNote(peer, 4, ink: NoteKind.provisional));
+      board = _applied(board.toggleNote(peer, 6, ink: NoteKind.provisional));
+      board = _applied(board.toggleNote(peer, 8));
+
+      final after = _applied(board.place(2, 4));
+
+      expect(after.notesAt(peer).provisional, <int>[6]);
+      expect(after.notesAt(peer).settled, <int>[8]);
+    });
+
+    test('one undo restores each in its own ink', () {
+      final start = mixedPeers();
+      final history = BoardHistory.start(start.board);
+
+      final after = history.place(2, 4).history.undo();
+
+      for (final peer in start.settled) {
+        expect(after.board.notesAt(peer).settled, contains(4), reason: '$peer');
+      }
+      for (final peer in start.provisional) {
+        expect(
+          after.board.notesAt(peer).provisional,
+          contains(4),
+          reason: 'cell $peer came back settled — the ink was not restored',
+        );
+      }
+    });
+
+    test('a cleaned hypothesis is recorded like any other cleaning', () {
+      // Constraint 1 and D-14: the candidate simply goes. The edit records the
+      // same before-and-after for a hypothesis as for derived work, with
+      // nothing anywhere marking one of them wrong.
+      final start = mixedPeers();
+      final edit = start.board.place(2, 4) as EditApplied;
+
+      for (final peer in <int>[...start.settled, ...start.provisional]) {
+        final change = edit.noteChanges[peer];
+        expect(change, isNotNull, reason: 'cell $peer was not recorded');
+        expect(change!.before.contains(4), isTrue);
+        expect(change.after.contains(4), isFalse);
+      }
     });
   });
 }

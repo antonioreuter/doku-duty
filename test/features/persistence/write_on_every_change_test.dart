@@ -92,7 +92,12 @@ void main() {
         kind: NoteKind.provisional,
         origin: NoteOrigin.manual,
       );
-      await notes.clearProvisional('p1');
+      // The clearance is the cells the board now holds, written through the
+      // one path every multi-cell action uses (D-11).
+      await notes.putCells(
+        puzzleId: 'p1',
+        cells: <int, Map<int, NoteMark>>{0: <int, NoteMark>{}},
+      );
 
       expect(await readFromDisk(), isEmpty);
     });

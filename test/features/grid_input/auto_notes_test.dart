@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/domain/board_history.dart';
 import 'package:doku_duty/features/grid_input/domain/note_set.dart';
+import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid_geometry.dart';
 
@@ -191,6 +192,65 @@ void main() {
       // absence is asserted here so it cannot arrive by accident.
       final edit = _board().fillNotes();
       expect(edit, isA<EditApplied>());
+    });
+  });
+
+  // A fill states what is legal; it never states what the player is testing.
+  group('the fill and the second ink', () {
+    test('a hypothesis is left a hypothesis', () {
+      var board = _board();
+      board = _applied(board.toggleNote(2, 1, ink: NoteKind.provisional));
+      board = _applied(board.toggleNote(2, 4));
+
+      final filled = _applied(board.fillNotes());
+
+      expect(filled.notesAt(2).provisional, <int>[1]);
+      expect(filled.notesAt(2).settled, contains(4));
+      expect(
+        filled.notesAt(2).length,
+        greaterThan(2),
+        reason: 'the fill still added the candidates that were missing',
+      );
+    });
+
+    test('nothing the fill adds is provisional', () {
+      var board = _board();
+      board = _applied(board.toggleNote(40, 3, ink: NoteKind.provisional));
+
+      final filled = _applied(board.fillNotes());
+
+      for (var cell = 0; cell < 81; cell++) {
+        for (final digit in filled.notesAt(cell).provisional) {
+          expect(
+            (cell, digit),
+            (40, 3),
+            reason: 'the fill wrote the second ink in cell $cell',
+          );
+        }
+      }
+    });
+
+    test('a generated candidate re-inked by hand stays generated', () {
+      // D-15 and D-90 are separate questions: which of the two first marked
+      // it, and which ink it now carries.
+      var board = _applied(_board().fillNotes());
+      final digit = board.notesAt(2).digits.first;
+      expect(board.notesAt(2).isGenerated(digit), isTrue);
+
+      board = _applied(board.toggleNote(2, digit, ink: NoteKind.provisional));
+
+      expect(board.notesAt(2).isProvisional(digit), isTrue);
+      expect(board.notesAt(2).isGenerated(digit), isTrue);
+    });
+
+    test('the fill does not re-ink what it finds', () {
+      var board = _board();
+      board = _applied(board.toggleNote(11, 2, ink: NoteKind.provisional));
+      final before = board.notesAt(11);
+
+      final filled = _applied(board.fillNotes());
+
+      expect(filled.notesAt(11).provisional, before.provisional);
     });
   });
 }

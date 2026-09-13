@@ -256,6 +256,44 @@ void main() {
       expect(lit, hasLength(fives.length));
     });
 
+    // Highlighting answers where a digit already is, and a hypothesis is
+    // somewhere it is.
+    test('a cell holding the digit as a hypothesis is lit', () {
+      var board = _board();
+      board = (board.toggleNote(2, 4, ink: NoteKind.provisional) as EditApplied)
+          .board;
+      board = withNote(board, 11, 4);
+
+      final lit = paint(
+        board: board,
+        highlighted: 4,
+      ).filledWith(GridColours.standard().candidateFill);
+      final metrics = GridMetrics.fit(const Size(360, 360));
+
+      expect(lit, contains(metrics.cellRect(2)), reason: 'the hypothesis');
+      expect(lit, contains(metrics.cellRect(11)), reason: 'the settled note');
+    });
+
+    test('re-inking a candidate does not change what is lit', () {
+      var settledBoard = _board();
+      for (final cell in const <int>[2, 11, 40]) {
+        settledBoard = withNote(settledBoard, cell, 4);
+      }
+      var mixedBoard = settledBoard;
+      for (final cell in const <int>[2, 40]) {
+        mixedBoard =
+            (mixedBoard.toggleNote(cell, 4, ink: NoteKind.provisional)
+                    as EditApplied)
+                .board;
+      }
+
+      final fill = GridColours.standard().candidateFill;
+      expect(
+        paint(board: mixedBoard, highlighted: 4).filledWith(fill),
+        paint(board: settledBoard, highlighted: 4).filledWith(fill),
+      );
+    });
+
     test('no cell is lit when nothing is highlighted', () {
       var board = _board();
       board = withNote(board, 2, 4);

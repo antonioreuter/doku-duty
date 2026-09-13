@@ -452,6 +452,14 @@ class GridPainter extends CustomPainter {
   ({double width, double em}) debugNoteGlyphBox(int digit) =>
       _boxOf(_noteDigits[digit]!);
 
+  /// The same, for a **provisional note**'s glyph. Tests only.
+  ///
+  /// A separate cache from [debugNoteGlyphBox]'s: the two inks are laid out
+  /// independently, so a cap proved on one says nothing about the other.
+  @visibleForTesting
+  ({double width, double em}) debugProvisionalGlyphBox(int digit) =>
+      _boxOf(_provisionalDigits[digit]!);
+
   /// The same, for a given's glyph. Tests only.
   @visibleForTesting
   ({double width, double em}) debugValueGlyphBox(int digit) =>

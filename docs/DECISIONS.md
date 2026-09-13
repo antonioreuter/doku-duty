@@ -1126,6 +1126,80 @@ this decision is that a cell-first player who wants to see every 7 must select a
 cell holding a 7 rather than tapping 7 on the pad — one extra tap, on the path
 players already use.
 
+### D-89 · The ink is a second axis, not a third value on the notes toggle
+The notes toggle stays two-valued — value against note. Which ink note entry
+writes is a separate control the player changes independently, and every puzzle
+opens in the **settled note** ink whichever one the last puzzle ended in.
+
+**Rationale.** Folding the ink into the notes toggle gives one control three
+values: value, settled note, provisional note. That reads as a saving of one key
+until long-press is considered. Long-press means "one entry in the opposite
+mode" (`docs/SPEC.md` §3.4), and on a three-valued control the opposite of
+provisional is two things — settled and value — with no answer that is not
+arbitrary. The gesture would have to be dropped, given a rule nobody can
+predict, or made to cycle, and cycling on a long-press is the worst of the
+three.
+
+Two axes also match what the player is doing. Whether this entry is a value or a
+note is a question about *this tap*; which ink notes are written in is a
+question about *what they are working on*, and it survives across many taps. A
+control that mixes a per-tap choice with a per-session one has to be re-read
+before every entry.
+
+Opening in the settled ink rather than the ink the last puzzle ended in follows
+the same reasoning as D-11's clear: a hypothesis belongs to the grid that
+prompted it. Carrying the provisional ink into a fresh puzzle would have the
+player's first candidates arrive as a hypothesis about nothing.
+
+**What breaks if reversed.** Long-press loses its meaning, and a player who
+wants one note during a run of values has to make a trip to a control whose
+next value depends on where in the cycle they are.
+
+### D-90 · Marking a digit in the other ink converts it rather than removing it
+Three outcomes from one control: a digit absent from the cell is marked in the
+ink in force, a digit present in that same ink is removed, and a digit present
+in the *other* ink is re-inked rather than removed. The candidate never leaves
+the slot its digit owns.
+
+**Rationale.** The workflow the second ink exists for is deriving candidates and
+*then* testing one of them. A player who has settled candidates in a cell,
+switches to the provisional ink, and taps one of them means "take this into the
+hypothesis" — every time. Removal would make that common path two taps and a
+mode change, and would make the rarer path (removing a candidate while in the
+wrong ink) no cheaper than switching ink and tapping, which is what it already
+costs.
+
+Converting rather than removing-and-remarking also keeps the origin D-15
+records. Ink and origin are separate questions — which of the player and
+**auto-notes** first marked a candidate is not the same as which ink it now
+carries — and a remove would silently answer the first one wrong.
+
+**What breaks if reversed.** The path the feature was built for becomes the
+expensive one, and a **generated note** taken into a hypothesis becomes the
+player's own work in the store.
+
+### D-91 · Promote ships alongside clear, not after it
+One control turns every **provisional note** on the board into a **settled
+note** (**promote**), beside the D-11 control that clears them all. Both are one
+action and one undo.
+
+**Rationale.** A chain test ends one of two ways: the hypothesis contradicts
+something, or it holds. D-11 shipped the control for the first — one tap to
+abandon the line. Without **promote**, the half that *succeeds* is the slower
+half: the player must re-enter by hand every candidate they have just proved,
+in a cell-by-cell pass with nothing to check it against, which is exactly the
+tedium the second ink was meant to remove. The asymmetry would also teach a
+subtle lesson — that being right costs more than being wrong — in a product
+whose whole positioning is that it does not punish (constraint 1).
+
+It is one action rather than a per-cell confirmation because the player has
+already made the decision the moment they know the chain held. A promotion that
+asked cell by cell would be the same manual pass wearing a dialog.
+
+**What breaks if reversed.** The successful half of every chain test becomes
+hand work, and players stop writing hypotheses down for the same reason they
+did before the ink existed.
+
 ### D-92 · Grid glyphs grow with dynamic type until they fill their box, then stop
 A value's glyph is capped to its cell and a candidate's to its 3×3 slot. Type
 below the cap scales normally; above it the glyph holds at the largest size that
@@ -1165,3 +1239,35 @@ makes the em a bound that holds without depending on any one face's metrics.
 of players actually use, and returns silently: the test that should have caught it
 asserted the *widget's* size and that no exception was thrown, both of which stayed
 true while every glyph inside it overflowed.
+
+### D-93 · A pad key grows with dynamic type until its row is full, then stops
+A number-pad key's side is `44pt × the reader's text scale`, capped at the pad's
+width divided by its five columns. The 44pt floor outranks the cap: a pad too
+narrow to hold five 44pt keys keeps the 44pt keys and lets the row be cut. The
+glyph scales with the key rather than with the text size, so a capped key never
+holds an uncapped glyph.
+
+**Rationale.** D-92 capped the glyphs inside a grid cell; this is the same
+defect one layer out, and it was found the same way — by driving the OS's own
+text setting rather than a `TextScaler.linear` a test chose. A row of five keys
+cannot reflow any more than a row of nine cells can, and the key side was
+`44 × scale` with no ceiling: five keys need 370pt at 1.5×, **480pt at 2×**, and
+722pt at 3.1×, against a 393pt phone. 2× is an ordinary "Larger Text" setting,
+so the pad ran off the screen for a large fraction of players — silently, since
+every test until now supplied its own scaler and its own unbounded surface.
+
+**Why the floor outranks the cap.** `docs/DESIGN.md` §8 keeps 44pt for pad keys
+even though D-84 lifted it off grid cells, because this is where a miss costs a
+placed digit. Below about 260pt five 44pt keys do not fit, and the choice there
+is between a key that cannot reliably be hit and a row that is cut. The narrowest
+phone is 320pt, where the cap is 56pt and the floor is never reached — the cut
+row is a bound the pad is never actually laid out in.
+
+**Why the glyph follows the key.** A capped key holding a glyph still scaled by
+the raw text factor is the same overflow moved inside the button. Deriving the
+glyph's scale from the key's achieved side keeps the proportion the key has at
+the default size, so a key does not change shape as it caps.
+
+**What breaks if reversed.** The pad runs off the screen from 2× — and does it
+without an error a player could report, because what they see is a pad with keys
+missing rather than a pad that is too wide.

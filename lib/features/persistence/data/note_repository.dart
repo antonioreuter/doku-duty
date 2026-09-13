@@ -14,6 +14,12 @@ import 'app_database.dart';
 /// keystroke that caused it. A caller on the input path may start the write and
 /// carry on without awaiting it — the note is already on screen, and the future
 /// exists for tests and for callers that genuinely need to know (constraint 2).
+/// One stored candidate: the ink it is written in and who marked it.
+///
+/// The two travel together because they are two facts about the same row, and
+/// a write that carried only one of them would have to guess the other (D-15).
+typedef NoteMark = ({NoteKind kind, NoteOrigin origin});
+
 class NoteRepository {
   const NoteRepository(this._db);
 
@@ -69,7 +75,8 @@ class NoteRepository {
   /// For an action that reaches many cells: **auto-cleanup** strips a placed
   /// digit from twenty **peer**s, **auto-notes** marks up to eighty-one. Each
   /// [cells] entry replaces that cell's candidates wholesale — a digit absent
-  /// from the set has its row deleted.
+  /// from the set has its row deleted, and one whose [NoteMark] changed has its
+  /// row rewritten, which is how a re-inking reaches the store at all.
   ///
   /// **A transaction is not the batching constraint 9 forbids.** What that
   /// constraint rules out is *deferral*: a buffer, a debounce, a flush on
@@ -80,24 +87,23 @@ class NoteRepository {
   /// the same constraint, not better.
   Future<void> putCells({
     required String puzzleId,
-    required Map<int, Map<int, NoteOrigin>> cells,
-    NoteKind kind = NoteKind.settled,
+    required Map<int, Map<int, NoteMark>> cells,
     DateTime? at,
   }) {
     final stamp = at ?? DateTime.now();
     return _db.transaction(() async {
       for (final cell in cells.entries) {
         for (var digit = 1; digit <= 9; digit++) {
-          final origin = cell.value[digit];
-          if (origin == null) {
+          final mark = cell.value[digit];
+          if (mark == null) {
             await remove(puzzleId: puzzleId, cell: cell.key, digit: digit);
           } else {
             await put(
               puzzleId: puzzleId,
               cell: cell.key,
               digit: digit,
-              kind: kind,
-              origin: origin,
+              kind: mark.kind,
+              origin: mark.origin,
               at: stamp,
             );
           }
@@ -106,19 +112,21 @@ class NoteRepository {
     });
   }
 
-  /// Clear every **provisional note** on a puzzle in one action (D-11).
-  ///
-  /// One statement, so the player's single tap is a single write. **Settled
-  /// notes** are untouched — that separation is the entire point of the second
-  /// ink.
-  Future<void> clearProvisional(String puzzleId) {
-    return (_db.delete(_db.notes)..where(
-          (n) =>
-              n.puzzleId.equals(puzzleId) &
-              n.kind.equalsValue(NoteKind.provisional),
-        ))
-        .go();
-  }
+  // `clearProvisional` stood here from `add-persistence-layer` until
+  // `add-provisional-notes`, which is the change that finally had a caller for
+  // it — and found it could not have one. It deleted every provisional row in
+  // one statement, which is cheaper than [putCells] and wrong for this app:
+  //
+  // - Every note write derives from a diff of the board before and after
+  //   (`PuzzleController._persist`), because undo restores candidates with no
+  //   edit describing them. A clearance routed through a direct delete would
+  //   still be followed by that diff, so the action would be written twice.
+  // - Nothing reverses a delete statement. Undo puts the cleared candidates
+  //   back on the board, and only the diff path carries them to the store.
+  //
+  // D-11's one-action clear is unchanged; it goes through [putCells] with
+  // every other multi-cell action. Do not reintroduce a second write path into
+  // note rows — two paths into one table is how they come to disagree.
 
   /// Every note on a puzzle.
   Future<List<Note>> notesFor(String puzzleId) {

@@ -31,13 +31,26 @@ void main() {
     // D-11. The one-action clear is what makes a second ink worth having: a
     // player tests a hypothesis, and abandoning it must cost one tap, not
     // nine erasures.
+    //
+    // It reaches the store the way every other multi-cell action does — as the
+    // cells the board now holds, through [NoteRepository.putCells]. The direct
+    // delete statement that used to live here was removed by
+    // `add-provisional-notes`; the note in its place says why.
+    const settled = (kind: NoteKind.settled, origin: NoteOrigin.manual);
+
     test('removes every provisional note and no settled note', () async {
       await put(0, 1);
       await put(0, 2, kind: NoteKind.provisional);
       await put(10, 3, kind: NoteKind.provisional);
       await put(10, 4);
 
-      await notes.clearProvisional('p1');
+      await notes.putCells(
+        puzzleId: 'p1',
+        cells: <int, Map<int, NoteMark>>{
+          0: <int, NoteMark>{1: settled},
+          10: <int, NoteMark>{4: settled},
+        },
+      );
 
       final remaining = await notes.notesFor('p1');
       expect(remaining.map((n) => n.digit).toSet(), <int>{1, 4});
@@ -54,17 +67,30 @@ void main() {
         origin: NoteOrigin.manual,
       );
 
-      await notes.clearProvisional('p1');
+      await notes.putCells(
+        puzzleId: 'p1',
+        cells: <int, Map<int, NoteMark>>{0: <int, NoteMark>{}},
+      );
 
       expect(await notes.notesFor('p1'), isEmpty);
       expect(await notes.notesFor('p2'), hasLength(1));
     });
 
-    test('is a no-op when there are no provisional marks', () async {
-      await put(0, 1);
-      await notes.clearProvisional('p1');
-      expect(await notes.notesFor('p1'), hasLength(1));
-    });
+    test(
+      'a board with nothing provisional is written back unchanged',
+      () async {
+        await put(0, 1);
+
+        await notes.putCells(
+          puzzleId: 'p1',
+          cells: <int, Map<int, NoteMark>>{
+            0: <int, NoteMark>{1: settled},
+          },
+        );
+
+        expect(await notes.notesFor('p1'), hasLength(1));
+      },
+    );
   });
 
   group('provenance', () {

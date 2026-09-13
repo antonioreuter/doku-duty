@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../design_system/domain/haptics.dart';
 import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
+import '../../persistence/domain/note_enums.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
@@ -84,6 +85,17 @@ class PuzzleController extends ChangeNotifier {
     NotesToggleKey() => _state.withEntryKind(
       _state.entryKind == EntryKind.value ? EntryKind.note : EntryKind.value,
     ),
+    // The other axis, and the same shape: it changes what the next digit
+    // writes, touches no cell, and so is neither saved nor undone (D-89).
+    InkToggleKey() => _state.withNoteInk(
+      _state.noteInk == NoteKind.settled
+          ? NoteKind.provisional
+          : NoteKind.settled,
+    ),
+    // Aimed at the board like the fill, so neither needs a selection nor a
+    // held digit.
+    ClearProvisionalKey() => _state.clearProvisional(),
+    PromoteProvisionalKey() => _state.promoteProvisional(),
   });
 
   /// Change what a digit press writes.
@@ -96,6 +108,15 @@ class PuzzleController extends ChangeNotifier {
 
   /// **Auto-notes**: mark every empty cell with its legal candidates.
   void fillNotes() => _apply(_state.fillNotes());
+
+  /// Remove every **provisional note** on the board (D-11).
+  ///
+  /// Board-wide like [fillNotes], and written the same way: one edit, so one
+  /// commit and one undo step.
+  void clearProvisional() => _apply(_state.clearProvisional());
+
+  /// Turn every **provisional note** settled (D-91, **promote**).
+  void promoteProvisional() => _apply(_state.promoteProvisional());
 
   void setMode(InputMode mode) {
     final next = _state.withMode(mode);

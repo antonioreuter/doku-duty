@@ -1,11 +1,16 @@
 import 'package:test/test.dart';
 
+import 'package:doku_duty/features/design_system/domain/haptics.dart';
+import 'package:doku_duty/features/grid_input/application/puzzle_controller.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/domain/board_history.dart';
 import 'package:doku_duty/features/grid_input/domain/note_set.dart';
 import 'package:doku_duty/features/grid_input/domain/puzzle_session.dart';
+import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
+import 'package:doku_duty/features/persistence/data/pack_repository.dart';
 import 'package:doku_duty/features/persistence/domain/note_enums.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
@@ -270,4 +275,98 @@ void main() {
       expect(after.tapUndo().board.notesAt(21).provisional, <int>[2, 5]);
     });
   });
+
+  // The pad's three keys reach the session, and nothing else does the work
+  // twice. The keys themselves are `notes_pad_test.dart`; this is the wiring.
+  group('the pad keys reach the board', () {
+    const puzzle = StoredPuzzle(
+      id: 'q1',
+      clues: _clues,
+      solution:
+          '534678912672195348198342567859761423426853791713924856961537284287419635345286179',
+      rank: Rank.deputy,
+      seed: 1,
+    );
+
+    ({PuzzleController controller, List<DokuHaptic> haptics}) controllerOn(
+      Board board,
+    ) {
+      final haptics = <DokuHaptic>[];
+      return (
+        controller: PuzzleController(
+          puzzle: puzzle,
+          sink: _NullSink(),
+          initial: PuzzleSession.start(board: board, mode: InputMode.cellFirst),
+          fireHaptic: haptics.add,
+        ),
+        haptics: haptics,
+      );
+    }
+
+    test('the ink toggle changes the ink and nothing else', () {
+      final on = controllerOn(_board());
+      final controller = on.controller;
+      expect(controller.state.noteInk, NoteKind.settled);
+
+      controller.tapKey(const InkToggleKey());
+      expect(controller.state.noteInk, NoteKind.provisional);
+      expect(controller.state.entryKind, EntryKind.value);
+      expect(controller.state.canUndo, isFalse, reason: 'it touched no cell');
+
+      controller.tapKey(const InkToggleKey());
+      expect(controller.state.noteInk, NoteKind.settled);
+    });
+
+    test('the clear key clears, and the promote key promotes', () {
+      final clearing = controllerOn(_mixed()).controller;
+      clearing.tapKey(const ClearProvisionalKey());
+      expect(clearing.state.board.notesAt(21).digits, isEmpty);
+      expect(clearing.state.board.notesAt(2).settled, <int>[1, 4]);
+
+      final promoting = controllerOn(_mixed()).controller;
+      promoting.tapKey(const PromoteProvisionalKey());
+      expect(promoting.state.board.notesAt(21).settled, <int>[2, 5]);
+      expect(promoting.state.board.notesAt(21).provisional, isEmpty);
+    });
+
+    test('each fires the haptic the other board-level actions fire', () {
+      for (final key in const <PadKey>[
+        ClearProvisionalKey(),
+        PromoteProvisionalKey(),
+      ]) {
+        final on = controllerOn(_mixed());
+        on.controller.tapKey(key);
+        expect(on.haptics, <DokuHaptic>[DokuHaptic.selectionTick]);
+      }
+
+      // The ink toggle changes no cell, so it is silent — exactly as the notes
+      // toggle is.
+      final toggling = controllerOn(_board());
+      toggling.controller.tapKey(const InkToggleKey());
+      toggling.controller.tapKey(const NotesToggleKey());
+      expect(toggling.haptics, isEmpty);
+    });
+
+    test('neither needs a selection nor a held digit', () {
+      final on = controllerOn(_mixed());
+      expect(on.controller.state.selectedCell, isNull);
+
+      on.controller.tapKey(const ClearProvisionalKey());
+
+      expect(on.controller.state.board.notesAt(21).digits, isEmpty);
+    });
+  });
+}
+
+/// The board sink is not what these tests are about — storage is
+/// `note_storage_test.dart`.
+final class _NullSink implements BoardSink {
+  @override
+  Future<void> write(String puzzleId, Board board) async {}
+
+  @override
+  Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}
+
+  @override
+  Future<void> complete(String puzzleId) async {}
 }
