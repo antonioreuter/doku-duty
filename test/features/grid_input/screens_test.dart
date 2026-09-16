@@ -15,6 +15,8 @@ import 'package:doku_duty/features/persistence/application/settings_providers.da
 import 'package:doku_duty/features/persistence/data/app_database.dart'
     hide Pack;
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
+import 'package:doku_duty/features/persistence/data/puzzle_save_repository.dart';
+import 'package:doku_duty/features/persistence/data/statistics_repository.dart';
 import 'package:doku_duty/features/persistence/data/settings_repository.dart';
 import 'package:doku_duty/features/persistence/domain/app_setting.dart';
 import 'package:doku_duty/features/platform_shell/presentation/app.dart';
@@ -526,6 +528,35 @@ void main() {
       expect(find.byKey(const ValueKey<String>('attempt-ended')), findsNothing);
     });
 
+    testWidgets('leaving changes no other puzzle', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy, Rank.sheriff});
+      addTearDown(db.close);
+
+      final before = await PuzzleSaveRepository(db).all();
+
+      await failIt(tester, db);
+      await tester.tap(find.byKey(const ValueKey<String>('attempt-leave')));
+      await tester.pumpAndSettle();
+
+      final after = await PuzzleSaveRepository(db).all();
+      // Only the puzzle that was played has a save; the other rank is
+      // untouched, and nothing was recorded as solved.
+      expect(
+        after.map((save) => save.puzzleId).toSet(),
+        <String>{'q-deputy'},
+        reason: 'a failed attempt reaches one puzzle and no other',
+      );
+      expect(before, isEmpty);
+      expect(
+        await PackRepository(db).nextUnsolved(Rank.sheriff),
+        isNotNull,
+        reason: 'the other rank still has its puzzle to offer',
+      );
+      final lifetime = await StatisticsRepository(db).lifetime();
+      expect(lifetime.puzzlesSolved, 0);
+      expect(lifetime.perfectSolves, 0);
+    });
+
     // 5.4: leaving changes nothing but where the player is.
     testWidgets('leaving returns to the picker with the puzzle unsolved', (
       tester,
@@ -541,6 +572,73 @@ void main() {
       // Still offered, because a failed attempt is not a solve.
       expect(find.byKey(const ValueKey<String>('rank-deputy')), findsOneWidget);
       expect(await PackRepository(db).nextUnsolved(Rank.deputy), isNotNull);
+    });
+  });
+
+  // The seam the two halves of D-94 meet at. Each half was tested alone —
+  // the settings row writes, the session reacts — and neither proved that a
+  // switch a player actually flips reaches a puzzle already on screen.
+  group('the strict mode switch reaches a live puzzle', () {
+    Future<void> openPuzzle(WidgetTester tester, AppDatabase db) async {
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> toggleStrictMode(WidgetTester tester) async {
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('setting-strictMode')),
+      );
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('turning it on mid-session starts the count', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await openPuzzle(tester, db);
+      expect(find.textContaining('mistakes left'), findsNothing);
+
+      await toggleStrictMode(tester);
+
+      expect(
+        find.text('3 mistakes left'),
+        findsOneWidget,
+        reason: 'the switch must reach the session, not only the database',
+      );
+    });
+
+    testWidgets('and it is stored as well as published', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await openPuzzle(tester, db);
+      await toggleStrictMode(tester);
+
+      expect(await SettingsRepository(db).read(AppSetting.strictMode), isTrue);
+    });
+
+    testWidgets('turning it off again stops the flagging', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+      await SettingsRepository(db).write(AppSetting.strictMode, value: true);
+
+      await openPuzzle(tester, db);
+      expect(find.text('3 mistakes left'), findsOneWidget);
+
+      await toggleStrictMode(tester);
+
+      expect(find.textContaining('mistakes left'), findsNothing);
+      expect(await SettingsRepository(db).read(AppSetting.strictMode), isFalse);
     });
   });
 }

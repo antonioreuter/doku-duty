@@ -11,8 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// consequential default in the product, because the whole positioning is that
 /// the player finds their own errors (constraint 1).
 ///
-/// Storage lives in `persistence`, the way **reduce effects** does, so neither
-/// feature has to import the other.
+/// Storage lives in `persistence`, the way **reduce effects** does: the
+/// persisted subclass is declared there and applied at the composition root.
+/// The dependency runs one way — `persistence` imports this, and this knows
+/// nothing about a database — so the mistake model stays testable without one.
 class StrictMode extends Notifier<bool> {
   @override
   bool build() => false;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
+import '../../mistake_model/application/strict_mode.dart';
 import '../../persistence/domain/app_setting.dart';
 import '../application/grid_providers.dart';
 
@@ -77,7 +78,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onChanged: values == null
                         ? null
                         : (value) async {
-                            await repository.write(entry.key, value: value);
+                            // A setting something holds in memory goes through
+                            // its notifier, which publishes the change *and*
+                            // stores it. Writing the row alone would leave a
+                            // puzzle already on screen reading the value it
+                            // hydrated with, so the switch would appear to work
+                            // and take effect only on the next launch.
+                            if (entry.key == AppSetting.strictMode) {
+                              ref.read(strictModeProvider.notifier).set(value);
+                            } else {
+                              await repository.write(entry.key, value: value);
+                            }
                             // The input mode is read from this setting, so the
                             // next puzzle opens in the mode just chosen.
                             ref.invalidate(inputModeProvider);

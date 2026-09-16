@@ -17,8 +17,9 @@ fact needed: `inspectPlacement` returns `agreesWithSolution` and
   solution is counted, and nothing on screen changes (D-04). Auto-check stays
   off — the grid still refuses to say which digit is wrong, because finding it
   is the game (D-04).
-- **Counted per wrong placement**, so the same wrong digit placed twice counts
-  twice. The tally is what the player did, not which cells ended up wrong.
+- **Counted per wrong placement**, so the same wrong digit put down twice counts
+  twice — while a press that places nothing counts nothing. The tally is what
+  the player did, not which cells ended up wrong.
 - **Overwriting an already-correct cell never counts**, in either mode (D-05).
   That is a mis-tap, not a wrong answer.
 - **Notes never count**, in either mode, whatever the solution says (D-14). No
@@ -29,11 +30,14 @@ fact needed: `inspectPlacement` returns `agreesWithSolution` and
   settles against, and a stored setting nothing reads is worse than none.
 - **The third mistake locks the board** and offers the same puzzle from the
   start. Input stops, the attempt is recorded as failed, and the player chooses
-  a fresh start or the map.
+  a fresh start or the map. Ending latches: turning strict mode off afterwards
+  is not a way back into a run that is over.
 - **The count is part of the save**, written with the placement that caused it
   (D-33), so it survives an app kill and a reopen mid-puzzle.
-- **`wasPerfect` is computed rather than supplied**, so `perfectSolves` finally
-  counts something real.
+- **`wasPerfect` stops being something a caller can invent.** `recordSolve`
+  takes the **attempt** instead, so perfection is read from the tally. Actually
+  recording finished puzzles stays out of scope — it needs the technique set
+  only the grader can supply.
 - **Glossary:** **mistake** and **attempt** join `openspec/project.md`.
 
 ## Constraints
@@ -89,8 +93,11 @@ the settings table, and `LifetimeStats.perfectSolves` all exist.
 - **Telling the player which cell is wrong when strict mode is off.** That is
   the hint engine and `add-perks` (change 19), and it is the one thing D-04
   exists to prevent.
-- **The cabinet's per-technique breakdown.** This change writes the numbers;
-  displaying them is `add-cabinet`.
+- **The cabinet's per-technique breakdown.** Both the writing and the display
+  are later changes; this one only makes the perfect-solve answer derivable.
+- **Calling `recordSolve` when a puzzle is finished.** Nothing here wires
+  statistics to completion: that needs the techniques a puzzle required, which
+  is the grader's answer and `add-rank-progression`'s change.
 - **A mistake affecting rank progression, streaks, or a season node's state.**
   Change 12 onward decides what a failed attempt means to the map.
 - **Any timer behaviour.** The timer is display-only and fails nothing (D-06).

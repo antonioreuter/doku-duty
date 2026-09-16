@@ -69,14 +69,22 @@ turn flagging on without turning **strict mode** on (D-04).
 ### Requirement: A mistake is one wrong placement
 
 The system MUST count each placement that disagrees with the solution
-separately, MUST count the same wrong digit placed twice as two **mistake**s,
-and MUST NOT reduce the count when the cell is later corrected.
+separately — so the same wrong digit put down twice is two **mistake**s — MUST
+NOT count a press that places nothing, and MUST NOT reduce the count when the
+cell is later corrected.
 
-#### Scenario: The same wrong digit twice
+#### Scenario: The same wrong digit, put down twice
 
-- **WHEN** the player places the same wrong digit in the same cell twice
+- **WHEN** the player places a wrong digit, replaces it, and then places that
+  same wrong digit again
 - **THEN** two **mistake**s are recorded, because the tally is what the player
   did and not which cells ended up wrong
+
+#### Scenario: Pressing the digit already in the cell
+
+- **WHEN** the player presses the digit the cell already holds
+- **THEN** nothing is placed and nothing is recorded — a press that changes no
+  cell is not a placement, and a tally that rose on it would be counting taps
 
 #### Scenario: Two wrong digits in one cell
 
@@ -163,9 +171,22 @@ behaviours together — immediate flagging and the three-**mistake** cap (D-04).
 
 #### Scenario: Turning it off mid-puzzle
 
-- **WHEN** the player turns **strict mode** off during a puzzle
+- **WHEN** the player turns **strict mode** off during a puzzle that is still in
+  play
 - **THEN** flagging stops and the cap no longer applies, because leaving a mode
   the player chose must be as available as entering it
+
+#### Scenario: Turning it off after the attempt has ended
+
+- **WHEN** the player turns **strict mode** off on a puzzle whose **attempt**
+  has already ended
+- **THEN** the board stays locked, because the switch governs what happens next
+  and is not a way to continue a run that is over (D-95)
+
+#### Scenario: The switch reaches a puzzle already on screen
+
+- **WHEN** the player changes **strict mode** while a puzzle is open
+- **THEN** it takes effect on that puzzle, not only on the next one opened
 
 ### Requirement: A flagged cell is readable without colour
 
@@ -219,6 +240,12 @@ sell, or advertise one.
 - **THEN** nothing offers a revive, an extra **mistake**, a Stamp price, or a
   video to watch — the mode's stakes are the reason the player turned it on
 
+#### Scenario: An ended attempt cannot be un-ended
+
+- **WHEN** the player looks for any way back into an **attempt** that has
+  ended — including turning **strict mode** off
+- **THEN** there is none; starting the puzzle again is the only route onward
+
 #### Scenario: Only strict mode ends anything
 
 - **WHEN** a third **mistake** is recorded with **strict mode** off
@@ -258,23 +285,31 @@ being backgrounded (D-33, constraint 9).
 - **THEN** the digit is on screen without waiting for the write, and the next
   tap is accepted immediately (constraint 2)
 
-### Requirement: A solve with no mistakes is recorded as perfect
+### Requirement: Perfection is decided by the attempt, not by its caller
 
-The system MUST record whether a completed puzzle was solved with no
-**mistake**s, and MUST derive that from the **mistake**s actually recorded
-rather than from anything the caller supplies.
+The system MUST derive whether a puzzle was solved without a **mistake** from
+the **attempt**'s own count, and MUST NOT accept that judgement from a caller
+as a separate value.
 
-#### Scenario: A clean solve
+What is then *done* with it — raising a lifetime perfect-solve counter, paying
+Stamps, showing it in the cabinet — belongs to the change that wires statistics
+to finished puzzles. That change also needs the set of techniques a puzzle
+required, which only the grader can supply, so recording a solve is not
+something this capability can complete on its own.
 
-- **WHEN** a puzzle is completed with no **mistake** recorded
-- **THEN** it is recorded as a perfect solve
+#### Scenario: A clean run
 
-#### Scenario: A solve with a mistake in it
+- **WHEN** an **attempt** has no **mistake** recorded against it
+- **THEN** it reports itself as perfect
 
-- **WHEN** a puzzle is completed after one or more **mistake**s
-- **THEN** it is recorded as a solve and not as a perfect one
+#### Scenario: A run with a mistake in it
 
-#### Scenario: A failed attempt is not a solve
+- **WHEN** an **attempt** has one or more **mistake**s recorded against it
+- **THEN** it does not report itself as perfect, even if every wrong digit was
+  corrected before the puzzle was finished
 
-- **WHEN** an **attempt** ends at the third **mistake** in **strict mode**
-- **THEN** nothing is recorded as a solve, perfect or otherwise
+#### Scenario: Nothing can claim perfection on an attempt's behalf
+
+- **WHEN** a finished puzzle is recorded
+- **THEN** whether it was perfect is read from the **attempt**, so no caller can
+  supply an answer the tally disagrees with

@@ -168,88 +168,79 @@ void main() {
     });
   });
 
-  // D-94: leaving the mode must be as available as entering it, and it takes
-  // effect at once rather than at the next puzzle.
-  group('turning stakes off lifts the cap', () {
-    test('an ended attempt is playable again the moment stakes go', () {
+  // D-94 says leaving the mode must be as available as entering it — but the
+  // switch governs what happens *next*. D-95 refused "continue without stakes"
+  // as a way out of an attempt that has ended, and a setting is not a loophole
+  // back into it.
+  group('turning stakes off does not un-end an attempt', () {
+    test('an ended attempt stays ended', () {
       final ended = _toTheLimit(_session());
       expect(ended.isOver, isTrue);
 
       final relaxed = ended.withStrictMode(false);
 
-      expect(relaxed.isOver, isFalse);
-      expect(relaxed.mistakesRemaining, isNull);
-      expect(relaxed.flaggedCells, isEmpty);
+      expect(
+        relaxed.isOver,
+        isTrue,
+        reason: 'the switch does not reach back into a run that is over',
+      );
+      expect(
+        relaxed.mistakesRemaining,
+        isNull,
+        reason: 'no cap outside stakes',
+      );
+      expect(
+        relaxed.flaggedCells,
+        isEmpty,
+        reason: 'flagging is for what next',
+      );
     });
 
-    test('and the board it was locked with is still there', () {
-      final relaxed = _toTheLimit(_session()).withStrictMode(false);
-
-      expect(relaxed.board.digitAt(2), 9);
-      expect(relaxed.attempt.mistakes, Attempt.strictLimit);
-    });
-
-    test('edits are accepted again', () {
+    test('and it still accepts nothing', () {
       final relaxed = _toTheLimit(_session()).withStrictMode(false);
       final after = relaxed.tapCell(6).tapDigit(9);
 
-      expect(after.board.digitAt(6), 9, reason: 'cell 6 solution is 9');
-      expect(after.attempt.mistakes, Attempt.strictLimit, reason: 'and right');
+      expect(after.board, relaxed.board);
     });
 
-    test('turning them back on ends it again, on the same tally', () {
-      final relaxed = _toTheLimit(_session()).withStrictMode(false);
+    test('starting again is the way out, and it works', () {
+      final restarted = _toTheLimit(
+        _session(),
+      ).withStrictMode(false).restarted();
 
-      expect(relaxed.withStrictMode(true).isOver, isTrue);
-    });
-  });
-
-  // A failed **attempt** is not a solve, perfect or otherwise. There is no
-  // route from an ended attempt to a completed board, because there is no
-  // route from an ended attempt to any board change at all.
-  group('an ended attempt is not a solve', () {
-    test('the board cannot be completed once it is over', () {
-      var ended = _toTheLimit(_session());
-      expect(ended.isOver, isTrue);
-
-      // Try to fill the whole grid correctly anyway.
-      for (var cell = 0; cell < 81; cell++) {
-        ended = ended.tapCell(cell).tapDigit(_gridOf(_solution).digitAt(cell));
-      }
-
-      expect(ended.board.isComplete, isFalse);
+      expect(restarted.isOver, isFalse);
+      expect(restarted.attempt.mistakes, 0);
+      expect(restarted.tapCell(6).tapDigit(9).board.digitAt(6), 9);
     });
 
-    test('and it is not perfect either', () {
-      expect(_toTheLimit(_session()).attempt.isPerfect, isFalse);
+    // The cap itself does lift for a run that had *not* ended: a player who
+    // leaves the mode with two mistakes against them is no longer counting
+    // down to anything.
+    test('a run short of the limit loses its cap and its flags', () {
+      final two = _toTheLimit(_session(), mistakes: 2);
+
+      final relaxed = two.withStrictMode(false);
+
+      expect(relaxed.isOver, isFalse);
+      expect(relaxed.mistakesRemaining, isNull);
+      expect(relaxed.flaggedCells, isEmpty);
+      expect(relaxed.tapCell(6).tapDigit(1).board.digitAt(6), 1);
     });
 
-    test('a clean solve is perfect', () {
-      var session = _session();
-      for (var cell = 0; cell < 81; cell++) {
-        if (session.board.isGiven(cell)) continue;
-        session = session
-            .tapCell(cell)
-            .tapDigit(_gridOf(_solution).digitAt(cell));
-      }
+    test('and turning them back on restores both', () {
+      final two = _toTheLimit(_session(), mistakes: 2).withStrictMode(false);
+      final strict = two.withStrictMode(true);
 
-      expect(session.board.isComplete, isTrue);
-      expect(session.attempt.isPerfect, isTrue);
-      expect(session.isOver, isFalse);
+      expect(strict.mistakesRemaining, 1);
+      expect(strict.flaggedCells, isNotEmpty);
+      expect(strict.isOver, isFalse);
     });
 
-    test('a solve with a mistake in it is a solve and not perfect', () {
-      var session = _session().tapCell(2).tapDigit(9);
-      for (var cell = 0; cell < 81; cell++) {
-        if (session.board.isGiven(cell)) continue;
-        session = session
-            .tapCell(cell)
-            .tapDigit(_gridOf(_solution).digitAt(cell));
-      }
+    test('three made outside stakes end it the moment stakes go on', () {
+      final loose = _toTheLimit(_session(strict: false));
+      expect(loose.isOver, isFalse);
 
-      expect(session.board.isComplete, isTrue);
-      expect(session.attempt.isPerfect, isFalse);
-      expect(session.attempt.mistakes, 1);
+      expect(loose.withStrictMode(true).isOver, isTrue);
     });
   });
 
@@ -261,6 +252,9 @@ void main() {
       'lib/features/mistake_model/domain/mistake.dart',
       'lib/features/mistake_model/application/strict_mode.dart',
       'lib/features/grid_input/domain/puzzle_session.dart',
+      // The screen is the only surface that could actually carry an offer, so
+      // leaving it out was leaving out the thing being guarded against.
+      'lib/features/grid_input/presentation/puzzle_screen.dart',
     ]) {
       final source = File(path).readAsStringSync().toLowerCase();
       for (final forbidden in const <String>[

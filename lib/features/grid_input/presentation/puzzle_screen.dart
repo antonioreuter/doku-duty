@@ -48,9 +48,11 @@ class PuzzleScreen extends ConsumerWidget {
               : _PuzzleBody(
                   opening: data,
                   sink: ref.watch(boardSinkProvider),
-                  // Read rather than watched: the session carries the mode
-                  // from here on, so that turning it off mid-puzzle goes
-                  // through one path and not two.
+                  // Watched, so the stored choice arriving after the first
+                  // frame (D-85) and a mid-puzzle toggle both rebuild this and
+                  // reach `didUpdateWidget`. The session is what carries the
+                  // mode from there on, so the flagging and the cap move
+                  // together through one path rather than two.
                   isStrict: ref.watch(strictModeProvider),
                   // A player who asked for less motion asked for less of all
                   // of it — the pad stops animating and the haptic goes quiet.

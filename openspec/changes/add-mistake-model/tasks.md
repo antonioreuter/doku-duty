@@ -121,7 +121,11 @@ that turns those two booleans into a count, and nothing else.
   rather than supplied by the caller — `StatisticsRepository.recordSolve` has
   taken it as a bool nobody could compute since `add-persistence-layer`
 - [x] 7.2 Failing test: a solve with no **mistake** raises `perfectSolves`; one
-  with a **mistake** raises the solve counter and not that one
+  with a **mistake** raises the solve counter and not that one. *(Tested at the
+  repository, which is as far as this change reaches: nothing calls
+  `recordSolve` on completion, and wiring that needs the technique set only the
+  grader supplies. The spec requirement was narrowed to match — see the review
+  note below.)*
 - [x] 7.3 Failing test: an **attempt** ended at the third **mistake** records no
   solve at all, perfect or otherwise
 
@@ -179,3 +183,29 @@ default scale. Both settings were put back afterwards.
   overrides nothing and reads what the OS reports — at iOS's largest
   accessibility size and Android's maximum font scale. The guard refuses to
   pass at the default scale, so neither run is vacuous (D-92, D-93)
+
+## Review notes
+
+A two-axis review over the diff (standards and spec) before archiving found
+seven things. Five were fixed in place: the **strict mode** switch not reaching
+a live session, turning stakes off un-ending an ended **attempt**, a spec
+scenario the board contradicted, task 5.4's untested half, and a no-revive scan
+that skipped the one surface able to carry an offer. Two comments that said the
+opposite of their code were corrected.
+
+One finding was rejected with evidence: a Flutter import in
+`mistake_model/application/` does not breach the no-Flutter rule in
+`openspec/config.yaml`, because `puzzle_engine` — named in the same rule — has
+the same shape, and both capabilities' `domain/` directories are Flutter-free.
+The rule is domain-scoped in practice.
+
+One was closed by narrowing the spec rather than the code: recording a finished
+puzzle needs the techniques it required, which only the grader supplies, so the
+perfect-solve requirement now covers what this capability can actually answer —
+that perfection is read from the **attempt** and cannot be supplied by a caller.
+
+Left as judgement calls: `if (isOver) return this;` opening eight
+`PuzzleSession` methods (a ninth could forget it), a bare `int mistakes`
+threaded where `Attempt` could travel, and `reduceEffects` having the same
+settings-screen staleness that **strict mode** just had fixed — pre-existing,
+and worth its own change.

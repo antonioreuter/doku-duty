@@ -37,6 +37,7 @@ final class PuzzleSession {
     required this.solution,
     required this.attempt,
     required this.isStrict,
+    required this.hasEnded,
     required this.mode,
     required this.entryKind,
     required this.noteInk,
@@ -59,6 +60,9 @@ final class PuzzleSession {
     solution: solution,
     attempt: attempt,
     isStrict: isStrict,
+    // An attempt resumed on or past the limit is already over: a kill is not a
+    // way back into one (D-95).
+    hasEnded: isStrict && attempt.hasReachedStrictLimit,
     mode: mode,
     entryKind: entryKind,
     // A puzzle opens in the settled ink whatever ink the last one ended in.
@@ -83,6 +87,16 @@ final class PuzzleSession {
 
   /// What has happened to the player in this run (D-96).
   final Attempt attempt;
+
+  /// Whether this **attempt** has already ended at the limit.
+  ///
+  /// Latched rather than derived, and that is the whole point. Deriving it from
+  /// `isStrict && attempt.hasReachedStrictLimit` made turning **strict mode**
+  /// off a way to carry on playing the board that had just ended — which is
+  /// precisely the "continue without stakes" option D-95 refused. The switch
+  /// governs what happens *next*; it does not reach back into a run that is
+  /// over.
+  final bool hasEnded;
 
   /// Whether the player has opted into stakes (D-04, D-94).
   ///
@@ -153,6 +167,7 @@ final class PuzzleSession {
     BoardHistory? history,
     Attempt? attempt,
     bool? isStrict,
+    bool? hasEnded,
     InputMode? mode,
     EntryKind? entryKind,
     NoteKind? noteInk,
@@ -167,6 +182,8 @@ final class PuzzleSession {
       solution: solution,
       attempt: attempt ?? this.attempt,
       isStrict: isStrict ?? this.isStrict,
+      // Only ever latches on. Nothing but starting again clears it.
+      hasEnded: hasEnded ?? this.hasEnded,
       mode: mode ?? this.mode,
       entryKind: entryKind ?? this.entryKind,
       noteInk: noteInk ?? this.noteInk,
@@ -196,6 +213,7 @@ final class PuzzleSession {
         return _with(
           history: placed.step.history,
           attempt: placed.attempt,
+          hasEnded: _endsOn(placed.attempt),
           selectedCell: cell,
           edit: placed.step.edit,
         );
@@ -245,9 +263,17 @@ final class PuzzleSession {
     return _with(
       history: placed.step.history,
       attempt: placed.attempt,
+      hasEnded: _endsOn(placed.attempt),
       edit: placed.step.edit,
     );
   }
+
+  /// Whether [next] takes this run past the **strict mode** limit.
+  ///
+  /// Read at the placement rather than asked of the session afterwards, so the
+  /// ending is pinned to the moment it happened.
+  bool _endsOn(Attempt next) =>
+      hasEnded || (isStrict && next.hasReachedStrictLimit);
 
   /// The one place a value is put on the board, for both input modes.
   ///
@@ -311,7 +337,7 @@ final class PuzzleSession {
   /// at all, not a larger one (constraint 1). While it is true the board is
   /// locked but *kept* — the player gets to look at what they did and decide
   /// (D-95).
-  bool get isOver => isStrict && attempt.hasReachedStrictLimit;
+  bool get isOver => hasEnded || (isStrict && attempt.hasReachedStrictLimit);
 
   /// How many **mistake**s the player has left, or null when stakes are off.
   ///

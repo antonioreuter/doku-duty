@@ -52,7 +52,9 @@ void main() {
   // The tally is what the player did, not which cells ended up wrong. Ace
   // chalks a mark on the wall for each one.
   group('a mistake is one wrong placement', () {
-    test('the same wrong digit twice counts twice', () {
+    // At this layer every report is a placement that landed; whether the board
+    // would refuse one is `Board`'s question, and the session's test covers it.
+    test('the same wrong digit reported twice counts twice', () {
       var attempt = Attempt.fresh.recording(report(clues, empty, wrong));
       final board = clues.withDigit(empty, wrong);
       attempt = attempt.recording(report(board, empty, wrong));
