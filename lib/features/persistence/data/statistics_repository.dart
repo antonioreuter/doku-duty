@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../mistake_model/domain/attempt.dart';
 import 'app_database.dart';
 
 /// Lifetime and per-technique counters.
@@ -16,11 +17,18 @@ class StatisticsRepository {
   ///
   /// One transaction, so a crash between the lifetime counter and the technique
   /// counters cannot leave them disagreeing about the same puzzle.
+  ///
+  /// Takes the **attempt** rather than a `wasPerfect` flag. The flag stood here
+  /// from `add-persistence-layer` until `add-mistake-model`, and in all that
+  /// time nothing could compute it — which meant any caller could have passed
+  /// whichever answer it liked. Perfection is a fact about the run, so the run
+  /// is what this is given, and the one place that decides is [Attempt].
   Future<void> recordSolve({
     required Set<Technique> techniquesRequired,
     required Duration timeTaken,
-    required bool wasPerfect,
+    required Attempt attempt,
   }) {
+    final wasPerfect = attempt.isPerfect;
     return _db.transaction(() async {
       final current = await lifetime();
       await _db

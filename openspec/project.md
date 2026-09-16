@@ -83,7 +83,9 @@ Read them there before proposing or implementing anything.
 | **Candidate highlighting** | Lighting every cell that holds the held digit, or failing that the selected cell's digit, as a candidate or as a value. Derived rather than set by the player (D-88). Free and always on, unlike **digit sweep** (D-13) |
 | **Promote** | The one action that turns every **provisional note** on the board into a **settled note**, adding and removing nothing. The other way a chain test ends, beside the D-11 clear (D-91) |
 | **Cabinet** | The permanent trophy and statistics screen |
-| **Strict mode** | Opt-in setting: immediate error flagging and a three-mistake limit |
+| **Mistake** | A placement that disagrees with the puzzle's solution. Counted per placement, never per cell, and never lowered by a correction, an erase, or an undo (D-96). Overwriting an already-correct cell is exempt (D-05), and no note is ever one (D-14) |
+| **Attempt** | One run at a puzzle, and the **mistake**s recorded during it. Ends at the third in **strict mode** (D-95); starting again is the only route back to zero |
+| **Strict mode** | Opt-in setting, off until the player turns it on: immediate error flagging *and* a three-**mistake** limit, together in one switch (D-04, D-94) |
 | **Stamp** | The perk currency. Earned in play only, never purchasable |
 | **Perk** | An assist bought with Stamps — hint, reveal a cell, scan a unit, digit sweep, solve a row, auto-notes charge |
 | **Digit sweep** | The perk that reveals every remaining cell where a chosen digit belongs. Distinct from free candidate highlighting |

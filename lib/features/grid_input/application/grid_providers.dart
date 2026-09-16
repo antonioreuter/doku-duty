@@ -102,6 +102,9 @@ final puzzleOpeningProvider = FutureProvider.family<PuzzleOpening?, String>((
       seed: row.seed,
     ),
     placedValues: save == null ? null : _encode(save.placedValues),
+    // A resumed puzzle carries its tally, so a player two into a **strict
+    // mode** **attempt** is still two into it (D-96).
+    mistakes: save?.mistakes ?? 0,
     notes: notes,
     mode: await ref.watch(inputModeProvider.future),
   );
@@ -123,6 +126,7 @@ final class PuzzleOpening {
     required this.placedValues,
     required this.mode,
     this.notes = const <int, NoteSet>{},
+    this.mistakes = 0,
   });
 
   final StoredPuzzle puzzle;
@@ -130,6 +134,9 @@ final class PuzzleOpening {
 
   /// The candidates the player left, by cell.
   final Map<int, NoteSet> notes;
+
+  /// **Mistake**s already recorded against this **attempt**.
+  final int mistakes;
 
   final InputMode mode;
 }
@@ -142,13 +149,18 @@ final class RepositoryBoardSink implements BoardSink {
   final NoteRepository _notes;
 
   @override
-  Future<void> write(String puzzleId, Board board) => _saves.save(
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) => _saves.save(
     puzzleId: puzzleId,
     placedValues: <int, int>{
       for (var cell = 0; cell < 81; cell++)
         if (!board.isGiven(cell) && board.digitAt(cell) != Board.empty)
           cell: board.digitAt(cell),
     },
+    mistakes: mistakes,
     // The timer is display-only and nothing in this change advances it (D-06),
     // so zero is the truth today.
     //

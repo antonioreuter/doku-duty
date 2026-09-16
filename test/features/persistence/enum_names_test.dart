@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
 import 'package:doku_duty/features/persistence/data/statistics_repository.dart';
@@ -78,7 +79,7 @@ void main() {
         await stats.recordSolve(
           techniquesRequired: <Technique>{technique},
           timeTaken: const Duration(minutes: 1),
-          wasPerfect: true,
+          attempt: Attempt.fresh,
         );
       }
 

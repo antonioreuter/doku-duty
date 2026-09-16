@@ -16,6 +16,8 @@ const String _solution =
 Grid _grid(String source) => (Grid.parse(source) as ValidGrid).grid;
 
 PuzzleSession _session() => PuzzleSession.start(
+  solution: (Grid.parse(_solution) as ValidGrid).grid,
+
   board: Board.forPuzzle(givens: _grid(_clues)),
   entryKind: EntryKind.note,
 );

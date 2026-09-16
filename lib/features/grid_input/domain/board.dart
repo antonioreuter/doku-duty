@@ -110,6 +110,13 @@ final class Board {
     const <int, NoteSet>{},
   );
 
+  /// This puzzle as it was first opened: the same givens, nothing placed, no
+  /// notes.
+  ///
+  /// The board a restart hands back. It keeps the givens rather than rebuilding
+  /// from a string, so a restart cannot disagree with the puzzle it restarts.
+  Board asFirstOpened() => Board.forPuzzle(givens: _givens);
+
   /// A board rebuilt from a save.
   ///
   /// A placement that lands on a given is dropped rather than honoured: a save

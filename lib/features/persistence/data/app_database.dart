@@ -211,6 +211,18 @@ class PuzzleSaves extends Table {
   /// §2a's "show both saves and let the player pick" needs to name them.
   TextColumn get deviceOrigin => text().withDefault(const Constant(''))();
 
+  /// **Mistake**s recorded against this **attempt** (D-96).
+  ///
+  /// Defaults to zero, which is also what a save written before
+  /// `add-mistake-model` reads as — the only honest answer, since the
+  /// placements that made it were never inspected.
+  ///
+  /// On the save row rather than a table of its own: it is one number per
+  /// puzzle in progress, it is written by the same action that writes the
+  /// board, and a second table would be a second thing to keep in step with
+  /// the first (constraint 9).
+  IntColumn get mistakes => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{puzzleId};
 }
@@ -315,6 +327,13 @@ class AppDatabase extends _$AppDatabase {
       from1To2: (m, schema) async {
         await m.createTable(schema.configCache);
       },
+      // Version 3 adds the **mistake** tally to a save. One column with a
+      // default, so every existing save keeps its board, its notes and its
+      // elapsed time and simply reads as zero — which task 6.3 asserts rather
+      // than assumes.
+      from2To3: (m, schema) async {
+        await m.addColumn(schema.puzzleSaves, schema.puzzleSaves.mistakes);
+      },
     ),
   );
 
@@ -345,5 +364,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 }

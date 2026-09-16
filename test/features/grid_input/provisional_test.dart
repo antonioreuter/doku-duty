@@ -14,6 +14,8 @@ import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+const String _solution =
+    '534678912672195348198342567859761423426853791713924856961537284287419635345286179';
 
 Board _board() =>
     Board.forPuzzle(givens: (Grid.parse(_clues) as ValidGrid).grid);
@@ -237,7 +239,10 @@ void main() {
   // Both are aimed at the board, not at a cell, so neither needs a selection
   // nor a held digit to be usable.
   group('reaching them from the session', () {
-    PuzzleSession session() => PuzzleSession.start(board: _mixed());
+    PuzzleSession session() => PuzzleSession.start(
+      solution: (Grid.parse(_solution) as ValidGrid).grid,
+      board: _mixed(),
+    );
 
     test('clearing needs no selection', () {
       final after = session().clearProvisional();
@@ -296,7 +301,11 @@ void main() {
         controller: PuzzleController(
           puzzle: puzzle,
           sink: _NullSink(),
-          initial: PuzzleSession.start(board: board, mode: InputMode.cellFirst),
+          initial: PuzzleSession.start(
+            solution: (Grid.parse(_solution) as ValidGrid).grid,
+            board: board,
+            mode: InputMode.cellFirst,
+          ),
           fireHaptic: haptics.add,
         ),
         haptics: haptics,
@@ -362,7 +371,11 @@ void main() {
 /// `note_storage_test.dart`.
 final class _NullSink implements BoardSink {
   @override
-  Future<void> write(String puzzleId, Board board) async {}
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async {}
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}

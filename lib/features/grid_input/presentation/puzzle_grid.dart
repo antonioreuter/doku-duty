@@ -15,6 +15,7 @@ class PuzzleGrid extends StatelessWidget {
     required this.onCellTapped,
     this.selectedCell,
     this.highlightedDigit,
+    this.flaggedCells = const <int>{},
     this.colours,
     super.key,
   });
@@ -26,6 +27,9 @@ class PuzzleGrid extends StatelessWidget {
 
   /// The digit **candidate highlighting** is lighting cells for, or null.
   final int? highlightedDigit;
+
+  /// The cells **strict mode** has flagged, or empty when stakes are off.
+  final Set<int> flaggedCells;
 
   /// Called with the cell under the tap. A tap outside the grid calls nothing.
   final ValueChanged<int> onCellTapped;
@@ -58,6 +62,7 @@ class PuzzleGrid extends StatelessWidget {
               board: board,
               selectedCell: selectedCell,
               highlightedDigit: highlightedDigit,
+              flaggedCells: flaggedCells,
               textScale: textScale,
               colours: resolved,
             ),

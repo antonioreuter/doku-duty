@@ -214,6 +214,32 @@ void main() {
     // Structural rather than behavioural, like the test above it: neither the
     // painter nor the grid takes a reduce-effects input at all, so there is no
     // value to vary and no path by which the setting could reach the ink.
+    // The same again for the **mistake** flag and the remaining count. Both are
+    // *states*, not animations: a player who asked for less motion did not ask
+    // to stop being told which digit is wrong in a mode they turned on.
+    test('the flag and the count cannot see the setting either', () {
+      final painter = File(
+        'lib/features/grid_input/presentation/grid_painter.dart',
+      ).readAsStringSync();
+      // The painter draws the flag fill and the strike, and takes no
+      // reduce-effects input at all.
+      expect(painter, contains('flaggedFill'));
+      expect(painter, contains('_paintStrikes'));
+      expect(painter, isNot(contains('reduceMotion')));
+
+      // The count is a Text in the screen's own column, not something the
+      // motion settings reach.
+      final screen = File(
+        'lib/features/grid_input/presentation/puzzle_screen.dart',
+      ).readAsStringSync();
+      final countRow = screen.substring(
+        screen.indexOf('mistakes-remaining'),
+        screen.indexOf('mistakes-remaining') + 400,
+      );
+      expect(countRow, isNot(contains('reduceMotion')));
+      expect(countRow, isNot(contains('Animated')));
+    });
+
     test('neither ink can see the setting, because nothing passes it one', () {
       for (final path in const <String>[
         'lib/features/grid_input/presentation/grid_painter.dart',

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/widgets.dart';
 
 import '../../design_system/domain/palette.dart';
@@ -27,6 +28,8 @@ final class GridColours {
     required this.focusFill,
     required this.focusLine,
     required this.candidateFill,
+    required this.flaggedFill,
+    required this.errorMark,
     required this.settledNote,
     required this.provisionalNote,
   });
@@ -45,6 +48,8 @@ final class GridColours {
     focusFill: PaletteToken.badgeGold.paleColour!,
     focusLine: DokuColours.badgeGold,
     candidateFill: PaletteToken.nightIndigo.paleColour!,
+    flaggedFill: PaletteToken.sunsetRed.paleColour!,
+    errorMark: DokuColours.sunsetRed,
     settledNote: NoteInk.settled.token.colour,
     provisionalNote: NoteInk.provisional.token.colour,
   );
@@ -64,6 +69,10 @@ final class GridColours {
     // `docs/DESIGN.md` §2 already names for it — not a ninth hue
     // (constraint 4).
     candidateFill: PaletteToken.nightIndigo.paleColour!,
+    // The tint `docs/DESIGN.md` §2 already names for a flagged cell, and the
+    // error token beside it — not a ninth hue (constraint 4).
+    flaggedFill: PaletteToken.sunsetRed.paleColour!,
+    errorMark: DokuColours.sunsetRed,
     settledNote: NoteInk.settled.token.colour,
     provisionalNote: NoteInk.provisional.token.colour,
   );
@@ -81,6 +90,20 @@ final class GridColours {
   /// Sits below [focusFill] in the D-49 priority order: the player's current
   /// focus always wins where highlights compete.
   final Color candidateFill;
+
+  /// The cell behind a value **strict mode** has flagged as disagreeing with
+  /// the solution.
+  ///
+  /// Sits *below* [candidateFill] and [focusFill] in the D-49 priority order:
+  /// selection, then **candidate highlighting**, then this.
+  final Color flaggedFill;
+
+  /// The strike drawn through a flagged value.
+  ///
+  /// Never the only signal. The fill beside it says the same thing in colour,
+  /// and this says it in geometry — a player who cannot separate the error hue
+  /// from the ink reads the strike (constraint 5).
+  final Color errorMark;
 
   /// A **settled note**. The candidate's *position* carries its identity, so
   /// colour is never the only signal (constraint 5).
@@ -105,6 +128,8 @@ final class GridColours {
       other.focusFill == focusFill &&
       other.focusLine == focusLine &&
       other.candidateFill == candidateFill &&
+      other.flaggedFill == flaggedFill &&
+      other.errorMark == errorMark &&
       other.settledNote == settledNote &&
       other.provisionalNote == provisionalNote;
 
@@ -118,6 +143,8 @@ final class GridColours {
     focusFill,
     focusLine,
     candidateFill,
+    flaggedFill,
+    errorMark,
     settledNote,
     provisionalNote,
   );
@@ -140,6 +167,7 @@ class GridPainter extends CustomPainter {
     required this.textScale,
     required this.colours,
     this.highlightedDigit,
+    this.flaggedCells = const <int>{},
   });
 
   final Board board;
@@ -153,6 +181,14 @@ class GridPainter extends CustomPainter {
   /// shows where a digit already is, which is what makes a pointing pair
   /// visible rather than deduced by squinting (D-13).
   final int? highlightedDigit;
+
+  /// The cells **strict mode** has flagged as disagreeing with the solution.
+  ///
+  /// Empty whenever stakes are off, which is what makes a wrong digit look
+  /// exactly like a right one by default (D-04). The painter is told which
+  /// cells rather than the solution: what a digit *should* be is not something
+  /// the renderer is allowed to know.
+  final Set<int> flaggedCells;
 
   final double textScale;
   final GridColours colours;
@@ -186,11 +222,13 @@ class GridPainter extends CustomPainter {
       _laidOutFor = size;
     }
     _paintSurface(canvas, metrics);
+    _paintFlags(canvas, metrics);
     _paintHighlight(canvas, metrics);
     _paintFocus(canvas, metrics);
     _paintLines(canvas, metrics);
     _paintNotes(canvas, metrics);
     _paintDigits(canvas, metrics);
+    _paintStrikes(canvas, metrics);
     _paintFrame(canvas, metrics);
   }
 
@@ -202,6 +240,44 @@ class GridPainter extends CustomPainter {
       ),
       Paint()..color = colours.cell,
     );
+  }
+
+  /// The cells **strict mode** has flagged.
+  ///
+  /// Painted before the highlight and the focus so both land on top of it:
+  /// selection, then **candidate highlighting**, then this (D-49). A player
+  /// moving around the board sees where they are before they see what is
+  /// wrong, which is the right way round — the flag is not going anywhere.
+  void _paintFlags(Canvas canvas, GridMetrics metrics) {
+    if (flaggedCells.isEmpty) return;
+
+    final fill = Paint()..color = colours.flaggedFill;
+    for (final cell in flaggedCells) {
+      canvas.drawRect(metrics.cellRect(cell), fill);
+    }
+  }
+
+  /// A strike through each flagged value.
+  ///
+  /// **This is the signal, and the colour is the convenience** (constraint 5).
+  /// Painted after the digits so it lies over the glyph, and sized from the
+  /// cell rather than from a constant so it holds at every text size (D-92).
+  void _paintStrikes(Canvas canvas, GridMetrics metrics) {
+    if (flaggedCells.isEmpty) return;
+
+    final stroke = Paint()
+      ..color = colours.errorMark
+      ..strokeWidth = DokuStroke.interiorDetail
+      ..strokeCap = StrokeCap.round;
+    for (final cell in flaggedCells) {
+      final rect = metrics.cellRect(cell);
+      final inset = rect.width / 4;
+      canvas.drawLine(
+        Offset(rect.left + inset, rect.center.dy),
+        Offset(rect.right - inset, rect.center.dy),
+        stroke,
+      );
+    }
   }
 
   /// Every cell holding [highlightedDigit], as a candidate or as a value.
@@ -490,6 +566,7 @@ class GridPainter extends CustomPainter {
       old.board != board ||
       old.selectedCell != selectedCell ||
       old.highlightedDigit != highlightedDigit ||
+      !setEquals(old.flaggedCells, flaggedCells) ||
       old.textScale != textScale ||
       old.colours != colours;
 }

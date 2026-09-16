@@ -8,6 +8,7 @@ import 'generated/schema.dart';
 
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -231,4 +232,163 @@ void main() {
       },
     );
   });
+
+  // The migration that carries live player progress across `add-mistake-model`.
+  // A save reaching v3 must keep its board, its notes, its elapsed time and its
+  // statistics, and read as zero **mistake**s — the only honest answer, because
+  // the placements that made it were never inspected.
+  test(
+    'migration from v2 to v3 keeps every save and adds a zero tally',
+    () async {
+      final stamp = DateTime.utc(2026, 9, 14, 9);
+      const grid =
+          '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+      final oldPuzzleSavesData = <v2.PuzzleSavesData>[
+        v2.PuzzleSavesData(
+          puzzleId: 'p1',
+          placedValues: grid,
+          elapsedMs: 742000,
+          isComplete: false,
+          updatedAt: stamp,
+          pendingUpload: true,
+          deviceOrigin: 'test-device',
+        ),
+      ];
+      final expectedNewPuzzleSavesData = <v3.PuzzleSavesData>[
+        v3.PuzzleSavesData(
+          puzzleId: 'p1',
+          placedValues: grid,
+          elapsedMs: 742000,
+          isComplete: false,
+          updatedAt: stamp,
+          pendingUpload: true,
+          deviceOrigin: 'test-device',
+          mistakes: 0,
+        ),
+      ];
+
+      final oldNotesData = <v2.NotesData>[
+        v2.NotesData(
+          puzzleId: 'p1',
+          cell: 40,
+          digit: 7,
+          kind: 'settled',
+          origin: 'generated',
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+        v2.NotesData(
+          puzzleId: 'p1',
+          cell: 41,
+          digit: 2,
+          kind: 'provisional',
+          origin: 'manual',
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+      final expectedNewNotesData = <v3.NotesData>[
+        v3.NotesData(
+          puzzleId: 'p1',
+          cell: 40,
+          digit: 7,
+          kind: 'settled',
+          origin: 'generated',
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+        v3.NotesData(
+          puzzleId: 'p1',
+          cell: 41,
+          digit: 2,
+          kind: 'provisional',
+          origin: 'manual',
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+
+      final oldLifetimeStatsData = <v2.LifetimeStatsData>[
+        v2.LifetimeStatsData(
+          id: 0,
+          puzzlesSolved: 41,
+          perfectSolves: 12,
+          totalPlayMs: 9000000,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+      final expectedNewLifetimeStatsData = <v3.LifetimeStatsData>[
+        v3.LifetimeStatsData(
+          id: 0,
+          puzzlesSolved: 41,
+          perfectSolves: 12,
+          totalPlayMs: 9000000,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+
+      // A player who had turned the retired auto-check on. The row survives the
+      // migration untouched and is simply never read again (D-94).
+      final oldSettingsData = <v2.SettingsData>[
+        v2.SettingsData(
+          key: 'autoCheck',
+          boolValue: true,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+        v2.SettingsData(
+          key: 'strictMode',
+          boolValue: true,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+      final expectedNewSettingsData = <v3.SettingsData>[
+        v3.SettingsData(
+          key: 'autoCheck',
+          boolValue: true,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+        v3.SettingsData(
+          key: 'strictMode',
+          boolValue: true,
+          updatedAt: stamp,
+          pendingUpload: true,
+        ),
+      ];
+
+      await verifier.testWithDataIntegrity(
+        oldVersion: 2,
+        newVersion: 3,
+        createOld: v2.DatabaseAtV2.new,
+        createNew: v3.DatabaseAtV3.new,
+        openTestedDatabase: AppDatabase.new,
+        createItems: (batch, oldDb) {
+          batch.insertAll(oldDb.notes, oldNotesData);
+          batch.insertAll(oldDb.puzzleSaves, oldPuzzleSavesData);
+          batch.insertAll(oldDb.lifetimeStats, oldLifetimeStatsData);
+          batch.insertAll(oldDb.settings, oldSettingsData);
+        },
+        validateItems: (newDb) async {
+          expect(
+            expectedNewPuzzleSavesData,
+            await newDb.select(newDb.puzzleSaves).get(),
+          );
+          expect(expectedNewNotesData, await newDb.select(newDb.notes).get());
+          expect(
+            expectedNewLifetimeStatsData,
+            await newDb.select(newDb.lifetimeStats).get(),
+          );
+          expect(
+            expectedNewSettingsData,
+            await newDb.select(newDb.settings).get(),
+          );
+        },
+      );
+    },
+  );
 }

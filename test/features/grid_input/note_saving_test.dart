@@ -34,7 +34,11 @@ class _Sink implements BoardSink {
   ];
 
   @override
-  Future<void> write(String puzzleId, Board board) async => order.add('board');
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async => order.add('board');
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {
@@ -334,7 +338,11 @@ void main() {
 /// A sink whose note write always fails.
 class _FailingSink implements BoardSink {
   @override
-  Future<void> write(String puzzleId, Board board) async {}
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async {}
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {

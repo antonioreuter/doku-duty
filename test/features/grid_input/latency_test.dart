@@ -30,7 +30,11 @@ const _puzzle = StoredPuzzle(
 
 class _NullSink implements BoardSink {
   @override
-  Future<void> write(String puzzleId, Board board) async {}
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async {}
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}

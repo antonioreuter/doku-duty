@@ -30,6 +30,7 @@ Future<void> bootstrap(FlavourConfig config) async {
       // Settings come from storage in the real app. The override lives here
       // rather than inside either feature so neither imports the other.
       persistedReduceEffectsOverride,
+      persistedStrictModeOverride,
     ],
   );
 

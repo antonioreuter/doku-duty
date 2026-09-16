@@ -29,7 +29,11 @@ class _RecordingSink implements BoardSink {
   final List<String> completed = <String>[];
 
   @override
-  Future<void> write(String puzzleId, Board board) async {
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async {
     writes.add(board.toPlacedValues());
   }
 
@@ -52,7 +56,11 @@ class _OrderedSink implements BoardSink {
   final List<String> order;
 
   @override
-  Future<void> write(String puzzleId, Board board) async => order.add('write');
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async => order.add('write');
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async =>
@@ -64,8 +72,11 @@ class _OrderedSink implements BoardSink {
 
 class _FailingSink implements BoardSink {
   @override
-  Future<void> write(String puzzleId, Board board) async =>
-      throw StateError('disk full');
+  Future<void> write(
+    String puzzleId,
+    Board board, {
+    required int mistakes,
+  }) async => throw StateError('disk full');
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async =>

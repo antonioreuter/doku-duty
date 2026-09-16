@@ -5,19 +5,21 @@
 /// the ten constraints are expressed as a default, and a default that is
 /// scattered is a default that drifts.
 enum AppSetting {
-  /// Immediate error flagging and a three-mistake limit.
-  ///
-  /// **Off.** Strict mode is opt-in, and turning it on is a deliberate act so
-  /// it never feels imposed (D-04, constraint 1).
-  strictMode(defaultValue: false),
-
-  /// Flagging a wrong digit as it is placed.
+  /// Immediate error flagging and a three-**mistake** limit, together.
   ///
   /// **Off.** This is the single most consequential default in the product: the
   /// whole positioning is that the player finds their own errors, which is the
-  /// actual skill sudoku teaches (D-04, constraint 1). Shipping this on would
-  /// make the app indistinguishable from every competitor.
-  autoCheck(defaultValue: false),
+  /// actual skill sudoku teaches (D-04, constraint 1). Shipping it on would
+  /// make the app indistinguishable from every competitor. Turning it on is a
+  /// deliberate act, so it never feels imposed.
+  ///
+  /// One switch carrying both behaviours, not two (D-94). `autoCheck` stood
+  /// beside this from `add-persistence-layer` until `add-mistake-model` retired
+  /// it: flagging without a cap and a cap without flagging are both halves of a
+  /// thing nobody asked for, and a stored setting nothing reads is worse than
+  /// none. A row left on disk under the old key is inert — [AppSetting.values]
+  /// is what `readAll` maps, so a key no setting owns is simply not returned.
+  strictMode(defaultValue: false),
 
   /// The in-app switch that silences tokenised motion.
   ///

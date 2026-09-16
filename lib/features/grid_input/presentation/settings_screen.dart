@@ -8,10 +8,11 @@ import '../application/grid_providers.dart';
 
 /// Every stored setting, and nothing that is not stored.
 ///
-/// A row here is a promise that the switch does something. Auto-check and
-/// strict mode are stored and read by nothing yet — `add-mistake-model` is what
-/// makes them work — so they are shown as not yet implemented rather than as
-/// working switches. A row that lies is worse than a row that is absent.
+/// A row here is a promise that the switch does something, which is why each
+/// one carries whether anything acts on it yet: a row that lies is worse than a
+/// row that is absent. **Strict mode** stopped lying in `add-mistake-model`,
+/// and auto-check stopped existing in the same change — one switch carries both
+/// behaviours now (D-94).
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -28,17 +29,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
       detail: 'Silences animation. Independent of the system setting.',
       live: true,
     ),
-    AppSetting.autoCheck: (
-      title: 'Auto-check',
-      detail: 'Flags a wrong digit as it is placed. Arrives with mistakes.',
-      live: false,
-    ),
+    // Both effects named before it is turned on: the only failure state in the
+    // product should never be a surprise.
     AppSetting.strictMode: (
       title: 'Strict mode',
       detail:
-          'Immediate flagging and a three-mistake limit. Arrives with '
+          'Flags a wrong digit as you place it, and ends the puzzle at three '
           'mistakes.',
-      live: false,
+      live: true,
     ),
   };
 

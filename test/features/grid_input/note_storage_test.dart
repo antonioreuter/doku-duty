@@ -35,8 +35,8 @@ final class _CountingSink implements BoardSink {
   int noteCommits = 0;
 
   @override
-  Future<void> write(String puzzleId, Board board) =>
-      _inner.write(puzzleId, board);
+  Future<void> write(String puzzleId, Board board, {required int mistakes}) =>
+      _inner.write(puzzleId, board, mistakes: mistakes);
 
   @override
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) {
@@ -369,7 +369,11 @@ void main() {
                     as EditApplied)
                 .board;
       }
-      return PuzzleSession.start(board: board, mode: InputMode.cellFirst);
+      return PuzzleSession.start(
+        solution: (Grid.parse(_solution) as ValidGrid).grid,
+        board: board,
+        mode: InputMode.cellFirst,
+      );
     }
 
     setUp(() async {
@@ -439,7 +443,7 @@ void main() {
     final board = boardWith(<int, List<int>>{
       2: <int>[3, 6],
     });
-    await sink.write('q1', board);
+    await sink.write('q1', board, mistakes: 0);
     await sink.writeNotes('q1', <int, NoteSet>{2: board.notesAt(2)});
 
     final saves = await PuzzleSaveRepository(db).all();

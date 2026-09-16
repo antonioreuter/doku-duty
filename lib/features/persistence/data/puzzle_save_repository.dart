@@ -8,6 +8,7 @@ class ResumableSave {
     required this.puzzleId,
     required this.placedValues,
     required this.elapsed,
+    this.mistakes = 0,
   });
 
   final String puzzleId;
@@ -16,6 +17,12 @@ class ResumableSave {
   final Map<int, int> placedValues;
 
   final Duration elapsed;
+
+  /// **Mistake**s recorded against the **attempt** so far (D-96).
+  ///
+  /// Zero for a save written before this was stored, which is the only honest
+  /// answer: those placements were never inspected.
+  final int mistakes;
 }
 
 /// Reads and writes the state of a puzzle in progress.
@@ -35,6 +42,7 @@ class PuzzleSaveRepository {
     required String puzzleId,
     required Map<int, int> placedValues,
     required Duration elapsed,
+    int mistakes = 0,
     DateTime? at,
   }) {
     return _db
@@ -44,6 +52,9 @@ class PuzzleSaveRepository {
             puzzleId: puzzleId,
             placedValues: _encode(placedValues),
             elapsedMs: Value(elapsed.inMilliseconds),
+            // Written with the placement that changed it, in the same
+            // statement as the board it belongs to (D-33, constraint 9).
+            mistakes: Value(mistakes),
             updatedAt: Value(at ?? DateTime.now()),
             pendingUpload: const Value(true),
           ),
@@ -141,6 +152,7 @@ class PuzzleSaveRepository {
     puzzleId: row.puzzleId,
     placedValues: _decode(row.placedValues),
     elapsed: Duration(milliseconds: row.elapsedMs),
+    mistakes: row.mistakes,
   );
 
   static String _encode(Map<int, int> values) {

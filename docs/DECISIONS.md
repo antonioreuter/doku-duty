@@ -1271,3 +1271,82 @@ the default size, so a key does not change shape as it caps.
 **What breaks if reversed.** The pad runs off the screen from 2× — and does it
 without an error a player could report, because what they see is a pad with keys
 missing rather than a pad that is too wide.
+
+### D-94 · Strict mode is one switch, and auto-check is retired
+The player has one opt-in setting, **strict mode**, and it carries both
+behaviours D-04 names: a wrong digit is flagged as it is placed, and the third
+**mistake** ends the **attempt**. There is no separate auto-check. The
+`AppSetting.autoCheck` key that stood beside it from `add-persistence-layer` is
+removed; a row left on disk under that key is inert.
+
+**Rationale.** D-04 already describes one thing — "strict mode, which flags
+errors immediately and caps mistakes at three" — but the storage layer shipped
+two keys, and two keys is a promise of four states. Two of them are incoherent:
+a cap with no flagging tells a player they have failed without ever telling them
+why, and flagging with no cap is the competitor behaviour this product exists to
+be unlike, one tap away from every new player who goes looking through settings.
+
+The half-state that *sounds* reasonable — flagging without stakes — is the one
+worth refusing deliberately. It is the most requested sudoku feature and the
+most corrosive: a player who can see their errors stops looking for them, and
+looking for them is the skill the six-**rank** technique ladder is built to
+teach. Anyone who wants that trade can have it, and takes the three-**mistake**
+cap with it, which is exactly the deliberate act D-04 asks for.
+
+A stored setting nothing reads is worse than no setting at all. It survives
+sync, appears in exports, and reads to the next developer as a feature that was
+finished.
+
+**What breaks if reversed.** Two settings, four states, two of which need their
+own copy, their own tests, and their own answer to "what does long-press do" —
+and the most dangerous default in the product becomes reachable without the
+thing that makes it a deliberate choice.
+
+### D-95 · The third mistake locks the board and offers a fresh start
+In **strict mode** the third **mistake** ends the **attempt**: input stops, the
+board stays on screen, and the player is offered the same puzzle from the start
+or a route back to the map. The **attempt** cannot be continued, and nothing
+sells a way back into it.
+
+**Rationale.** Three options were real. Returning straight to the map is
+cleanest to build and worst to receive — a player forty minutes into a Marshal
+grid is shown a map and never gets to see what went wrong. Letting them drop
+**strict mode** and keep the board is the kindest and makes the cap advisory,
+which removes the stakes the player deliberately turned on; a limit that
+dissolves when reached is not a limit, and the mode's only reason to exist is
+that it is real.
+
+Locking and keeping the board is the middle, and the middle is right here: the
+failure is honest, and the player still gets to look at the position, find their
+own error, and decide. Constraint 1 is not violated by a failure state the
+player switched on themselves — it is violated by one they did not.
+
+**Why nothing is sold at that moment.** A player who has just lost forty minutes
+is the most monetisable person in the app, which is exactly why this product
+does not monetise them (D-24's spirit, constraint 6). Selling a revive turns the
+only failure state into a funnel and turns **strict mode** from a difficulty
+option into a purchase prompt.
+
+**What breaks if reversed.** Either the mode stops meaning anything, or the
+player loses their board without being allowed to look at it.
+
+### D-96 · A mistake is one wrong placement, and the count never falls
+Each placement that disagrees with the solution counts, so the same wrong digit
+put down twice counts twice. Correcting the cell, erasing it, and undoing the
+placement all leave the count where it was. The only route back to zero is
+starting the puzzle again.
+
+**Rationale.** The alternative — one wrong *cell*, counted once — is kinder to a
+player fumbling one hard cell, and it makes the number stop matching what the
+player saw happen. Ace chalks a mark on the wall for each wrong answer; a tally
+that quietly merged them would be describing a different game from the one on
+screen.
+
+A count undo could walk back is the more serious version of the same problem. It
+would be trivially gameable — place, see nothing happen, undo, try again — and
+"solved with no **mistake**s" would come to mean "solved with no **mistake**s
+still visible", which is a different and much easier achievement to buy Stamps
+with. Undo reverses the board. It does not reverse what happened.
+
+**What breaks if reversed.** The perfect-solve reward stops measuring anything,
+and in **strict mode** undo becomes a way to play with no limit at all.

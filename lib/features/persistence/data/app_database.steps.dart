@@ -547,8 +547,184 @@ i1.GeneratedColumn<DateTime> _column_31(String aliasedName) =>
       false,
       type: i1.DriftSqlType.dateTime,
     );
+
+final class Schema3 extends i0.VersionedSchema {
+  Schema3({required super.database}) : super(version: 3);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    notes,
+    puzzleSaves,
+    packs,
+    puzzles,
+    solvedPuzzles,
+    lifetimeStats,
+    techniqueStats,
+    settings,
+    configCache,
+  ];
+  late final Shape0 notes = Shape0(
+    source: i0.VersionedTable(
+      entityName: 'notes',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id, cell, digit)'],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_6,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape9 puzzleSaves = Shape9(
+    source: i0.VersionedTable(
+      entityName: 'puzzle_saves',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id)'],
+      columns: [
+        _column_0,
+        _column_7,
+        _column_8,
+        _column_9,
+        _column_5,
+        _column_6,
+        _column_10,
+        _column_32,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape2 packs = Shape2(
+    source: i0.VersionedTable(
+      entityName: 'packs',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(pack_id)'],
+      columns: [_column_11, _column_12, _column_13],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 puzzles = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'puzzles',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_14,
+        _column_15,
+        _column_16,
+        _column_17,
+        _column_18,
+        _column_19,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape4 solvedPuzzles = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'solved_puzzles',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id)'],
+      columns: [_column_0, _column_20, _column_5, _column_6],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape5 lifetimeStats = Shape5(
+    source: i0.VersionedTable(
+      entityName: 'lifetime_stats',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_21,
+        _column_22,
+        _column_23,
+        _column_24,
+        _column_5,
+        _column_6,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape6 techniqueStats = Shape6(
+    source: i0.VersionedTable(
+      entityName: 'technique_stats',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(technique)'],
+      columns: [_column_25, _column_26, _column_5, _column_6],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape7 settings = Shape7(
+    source: i0.VersionedTable(
+      entityName: 'settings',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY("key")'],
+      columns: [_column_27, _column_28, _column_5, _column_6],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape8 configCache = Shape8(
+    source: i0.VersionedTable(
+      entityName: 'config_cache',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [_column_21, _column_29, _column_30, _column_31],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+}
+
+class Shape9 extends i0.VersionedTable {
+  Shape9({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get puzzleId =>
+      columnsByName['puzzle_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get placedValues =>
+      columnsByName['placed_values']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get elapsedMs =>
+      columnsByName['elapsed_ms']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<bool> get isComplete =>
+      columnsByName['is_complete']! as i1.GeneratedColumn<bool>;
+  i1.GeneratedColumn<DateTime> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<DateTime>;
+  i1.GeneratedColumn<bool> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<bool>;
+  i1.GeneratedColumn<String> get deviceOrigin =>
+      columnsByName['device_origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get mistakes =>
+      columnsByName['mistakes']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<int> _column_32(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'mistakes',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      defaultValue: const Constant(0),
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -557,6 +733,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from1To2(migrator, schema);
         return 2;
+      case 2:
+        final schema = Schema3(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from2To3(migrator, schema);
+        return 3;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -565,6 +746,7 @@ i0.MigrationStepWithVersion migrationSteps({
 
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2),
+  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
 );

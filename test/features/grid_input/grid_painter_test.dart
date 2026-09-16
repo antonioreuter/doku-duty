@@ -23,11 +23,13 @@ GridPainter _painter({
   Board? board,
   int? selected,
   int? highlighted,
+  Set<int> flagged = const <int>{},
   double scale = 1,
 }) => GridPainter(
   board: board ?? _board(),
   selectedCell: selected,
   highlightedDigit: highlighted,
+  flaggedCells: flagged,
   textScale: scale,
   colours: GridColours.standard(),
 );
@@ -134,6 +136,8 @@ void main() {
           given: Color(0xFF000000),
           placed: Color(0xFF444444),
           candidateFill: Color(0xFFE6DEFA),
+          flaggedFill: Color(0xFFFBDDD6),
+          errorMark: Color(0xFFE05A2B),
           provisionalNote: Color(0xFF1B6661),
           focusFill: Color(0xFFFFEEBB),
           focusLine: Color(0xFFFFCC00),
@@ -615,6 +619,137 @@ void main() {
       final glyph = painter.debugValueGlyphBox(5);
 
       expect(glyph.em, lessThanOrEqualTo(20.0));
+    });
+  });
+  // **Strict mode** only. Nothing here can be reached with stakes off, because
+  // the session hands the painter an empty set (D-04).
+  group('a flagged cell', () {
+    RecordingCanvas paint({
+      Board? board,
+      int? selected,
+      int? highlighted,
+      Set<int> flagged = const <int>{},
+    }) {
+      final canvas = RecordingCanvas();
+      _painter(
+        board: board,
+        selected: selected,
+        highlighted: highlighted,
+        flagged: flagged,
+      ).paint(canvas, const Size(360, 360));
+      return canvas;
+    }
+
+    Board placed(int cell, int digit) =>
+        (_board().place(cell, digit) as EditApplied).board;
+
+    test('nothing is drawn for it when no cell is flagged', () {
+      final canvas = paint(board: placed(2, 7));
+      expect(
+        canvas.filledWith(GridColours.standard().flaggedFill),
+        isEmpty,
+        reason: 'a wrong digit looks exactly like a right one by default',
+      );
+    });
+
+    test('the cell carries the flag fill', () {
+      final canvas = paint(board: placed(2, 7), flagged: const <int>{2});
+      final metrics = GridMetrics.fit(const Size(360, 360));
+
+      expect(
+        canvas.filledWith(GridColours.standard().flaggedFill),
+        contains(metrics.cellRect(2)),
+      );
+    });
+
+    // **The test that matters** (constraint 5). `sunsetRed` against the ink is
+    // a colour difference, and a colour difference alone is not a signal — the
+    // strike is. If the strike were ever dropped in favour of the hue, these
+    // two paints would differ only in colour and this is the only test that
+    // would say so.
+    test('a flagged cell differs with colour removed', () {
+      final board = placed(2, 7);
+      final unflagged = paint(board: board);
+      final flagged = paint(board: board, flagged: const <int>{2});
+
+      expect(
+        flagged.lines.length,
+        unflagged.lines.length + 1,
+        reason: 'the flag must add a mark, not only a colour',
+      );
+    });
+
+    test('each flagged cell gets its own mark', () {
+      final board = (placed(2, 7).place(3, 1) as EditApplied).board;
+      final one = paint(board: board, flagged: const <int>{2});
+      final two = paint(board: board, flagged: const <int>{2, 3});
+
+      expect(two.lines.length, one.lines.length + 1);
+    });
+
+    test('the strike stays inside the cell it marks', () {
+      final canvas = paint(board: placed(2, 7), flagged: const <int>{2});
+      final rect = GridMetrics.fit(const Size(360, 360)).cellRect(2);
+
+      final strikes = canvas.lines.where(
+        (line) =>
+            rect.inflate(0.01).contains(line.$1) &&
+            rect.inflate(0.01).contains(line.$2),
+      );
+      expect(strikes, hasLength(1));
+    });
+
+    // D-49: selection, then **candidate highlighting**, then this.
+    test('selection is painted over the flag', () {
+      final canvas = paint(
+        board: placed(2, 7),
+        flagged: const <int>{2},
+        selected: 2,
+      );
+
+      final colours = GridColours.standard();
+      final flagAt = canvas.fills.indexWhere(
+        (fill) => fill.$2.toARGB32() == colours.flaggedFill.toARGB32(),
+      );
+      final focusAt = canvas.fills.indexWhere(
+        (fill) => fill.$2.toARGB32() == colours.focusFill.toARGB32(),
+      );
+
+      expect(flagAt, isNonNegative);
+      expect(focusAt, greaterThan(flagAt), reason: 'focus must land last');
+    });
+
+    test('candidate highlighting is painted over the flag', () {
+      final canvas = paint(
+        board: placed(2, 7),
+        flagged: const <int>{2},
+        highlighted: 7,
+      );
+
+      final colours = GridColours.standard();
+      final flagAt = canvas.fills.indexWhere(
+        (fill) => fill.$2.toARGB32() == colours.flaggedFill.toARGB32(),
+      );
+      final highlightAt = canvas.fills.indexWhere(
+        (fill) => fill.$2.toARGB32() == colours.candidateFill.toARGB32(),
+      );
+
+      expect(flagAt, isNonNegative);
+      expect(highlightAt, greaterThan(flagAt));
+    });
+
+    test('a changed flag set repaints', () {
+      expect(
+        _painter(flagged: const <int>{2}).shouldRepaint(_painter()),
+        isTrue,
+      );
+      expect(
+        _painter(
+          flagged: const <int>{2},
+        ).shouldRepaint(_painter(flagged: const <int>{2})),
+        isFalse,
+        reason: 'the same flags are not a reason to repaint',
+      );
     });
   });
 }

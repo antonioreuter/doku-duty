@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../design_system/domain/haptics.dart';
 import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
+import '../../mistake_model/domain/attempt.dart';
 import '../../persistence/domain/note_enums.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../domain/board.dart';
@@ -17,8 +18,13 @@ import '../presentation/number_pad.dart';
 /// and so the save path is one named thing rather than a repository call
 /// scattered through a widget.
 abstract interface class BoardSink {
-  /// Persist the whole board. Called after every change, never on a timer.
-  Future<void> write(String puzzleId, Board board);
+  /// Persist the whole board and the **attempt**'s tally. Called after every
+  /// change, never on a timer.
+  ///
+  /// The count travels with the board rather than separately: they change in
+  /// the same action, and two writes could leave a player's board and their
+  /// tally disagreeing after a kill between them (constraint 9).
+  Future<void> write(String puzzleId, Board board, {required int mistakes});
 
   /// Persist the candidates of every cell in [byCell], as they now stand.
   ///
@@ -118,6 +124,30 @@ class PuzzleController extends ChangeNotifier {
   /// Turn every **provisional note** settled (D-91, **promote**).
   void promoteProvisional() => _apply(_state.promoteProvisional());
 
+  /// The player turned stakes on or off, or their stored choice arrived.
+  ///
+  /// Not an edit: it changes no cell, so nothing is saved and nothing is
+  /// undone for it. It takes effect at once in both directions — the flagging
+  /// appears or goes, and the cap applies or lifts (D-94).
+  void setStrictMode(bool strict) {
+    final next = _state.withStrictMode(strict);
+    if (identical(next, _state)) return;
+    _state = next;
+    notifyListeners();
+  }
+
+  /// The player chose to start the puzzle again.
+  ///
+  /// The only route back to a zero tally (D-96). The cleared board is written
+  /// like any other change — a restart the store did not hear about would
+  /// hand the player their failed **attempt** back on the next launch.
+  void restart() {
+    final previous = _state;
+    _state = _state.restarted();
+    notifyListeners();
+    unawaited(_persist(previous.board, _state.board, _state.attempt.mistakes));
+  }
+
   void setMode(InputMode mode) {
     final next = _state.withMode(mode);
     if (identical(next, _state)) return;
@@ -138,7 +168,7 @@ class PuzzleController extends ChangeNotifier {
       fireHaptic?.call(DokuHaptic.selectionTick);
     }
     if (!changed) return;
-    unawaited(_persist(previous.board, next.board));
+    unawaited(_persist(previous.board, next.board, next.attempt.mistakes));
   }
 
   /// Every cell whose candidates differ between two boards, with what they
@@ -160,11 +190,11 @@ class PuzzleController extends ChangeNotifier {
   /// Written on every change, never on a timer — the discipline D-33 sets for
   /// notes, applied to values for the same reason: nobody gets a warning before
   /// the OS reclaims the process.
-  Future<void> _persist(Board before, Board board) async {
+  Future<void> _persist(Board before, Board board, int mistakes) async {
     try {
       final changed = _notesChangedBetween(before, board);
       if (changed.isNotEmpty) await sink.writeNotes(puzzle.id, changed);
-      await sink.write(puzzle.id, board);
+      await sink.write(puzzle.id, board, mistakes: mistakes);
       // Asked of the board that was written, not of the current state: writes
       // are in flight concurrently, and an earlier one resuming after the
       // puzzle was finished would report it finished a second time.
@@ -188,9 +218,16 @@ PuzzleSession sessionFor({
   required String? placedValues,
   required InputMode mode,
   Map<int, NoteSet> notes = const <int, NoteSet>{},
+  bool isStrict = false,
+  int mistakes = 0,
 }) {
   final givens = (Grid.parse(puzzle.clues) as ValidGrid).grid;
   return PuzzleSession.start(
+    // The pack carries the solution beside the clues (D-32), so the session
+    // that counts **mistake**s never has to ask the network for the answer.
+    solution: (Grid.parse(puzzle.solution) as ValidGrid).grid,
+    isStrict: isStrict,
+    attempt: Attempt(mistakes: mistakes),
     board: placedValues == null && notes.isEmpty
         ? Board.forPuzzle(givens: givens)
         : Board.restore(

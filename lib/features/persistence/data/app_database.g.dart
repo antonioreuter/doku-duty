@@ -591,6 +591,18 @@ class $PuzzleSavesTable extends PuzzleSaves
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _mistakesMeta = const VerificationMeta(
+    'mistakes',
+  );
+  @override
+  late final GeneratedColumn<int> mistakes = GeneratedColumn<int>(
+    'mistakes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     puzzleId,
@@ -600,6 +612,7 @@ class $PuzzleSavesTable extends PuzzleSaves
     updatedAt,
     pendingUpload,
     deviceOrigin,
+    mistakes,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -668,6 +681,12 @@ class $PuzzleSavesTable extends PuzzleSaves
         ),
       );
     }
+    if (data.containsKey('mistakes')) {
+      context.handle(
+        _mistakesMeta,
+        mistakes.isAcceptableOrUnknown(data['mistakes']!, _mistakesMeta),
+      );
+    }
     return context;
   }
 
@@ -705,6 +724,10 @@ class $PuzzleSavesTable extends PuzzleSaves
         DriftSqlType.string,
         data['${effectivePrefix}device_origin'],
       )!,
+      mistakes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mistakes'],
+      )!,
     );
   }
 
@@ -736,6 +759,18 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
   /// Which device this save came from. Unused until `add-cloud-sync`, where
   /// §2a's "show both saves and let the player pick" needs to name them.
   final String deviceOrigin;
+
+  /// **Mistake**s recorded against this **attempt** (D-96).
+  ///
+  /// Defaults to zero, which is also what a save written before
+  /// `add-mistake-model` reads as — the only honest answer, since the
+  /// placements that made it were never inspected.
+  ///
+  /// On the save row rather than a table of its own: it is one number per
+  /// puzzle in progress, it is written by the same action that writes the
+  /// board, and a second table would be a second thing to keep in step with
+  /// the first (constraint 9).
+  final int mistakes;
   const PuzzleSave({
     required this.puzzleId,
     required this.placedValues,
@@ -744,6 +779,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
     required this.updatedAt,
     required this.pendingUpload,
     required this.deviceOrigin,
+    required this.mistakes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -755,6 +791,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['pending_upload'] = Variable<bool>(pendingUpload);
     map['device_origin'] = Variable<String>(deviceOrigin);
+    map['mistakes'] = Variable<int>(mistakes);
     return map;
   }
 
@@ -767,6 +804,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
       updatedAt: Value(updatedAt),
       pendingUpload: Value(pendingUpload),
       deviceOrigin: Value(deviceOrigin),
+      mistakes: Value(mistakes),
     );
   }
 
@@ -783,6 +821,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
       deviceOrigin: serializer.fromJson<String>(json['deviceOrigin']),
+      mistakes: serializer.fromJson<int>(json['mistakes']),
     );
   }
   @override
@@ -796,6 +835,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'pendingUpload': serializer.toJson<bool>(pendingUpload),
       'deviceOrigin': serializer.toJson<String>(deviceOrigin),
+      'mistakes': serializer.toJson<int>(mistakes),
     };
   }
 
@@ -807,6 +847,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
     DateTime? updatedAt,
     bool? pendingUpload,
     String? deviceOrigin,
+    int? mistakes,
   }) => PuzzleSave(
     puzzleId: puzzleId ?? this.puzzleId,
     placedValues: placedValues ?? this.placedValues,
@@ -815,6 +856,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
     updatedAt: updatedAt ?? this.updatedAt,
     pendingUpload: pendingUpload ?? this.pendingUpload,
     deviceOrigin: deviceOrigin ?? this.deviceOrigin,
+    mistakes: mistakes ?? this.mistakes,
   );
   PuzzleSave copyWithCompanion(PuzzleSavesCompanion data) {
     return PuzzleSave(
@@ -833,6 +875,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
       deviceOrigin: data.deviceOrigin.present
           ? data.deviceOrigin.value
           : this.deviceOrigin,
+      mistakes: data.mistakes.present ? data.mistakes.value : this.mistakes,
     );
   }
 
@@ -845,7 +888,8 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
           ..write('isComplete: $isComplete, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('pendingUpload: $pendingUpload, ')
-          ..write('deviceOrigin: $deviceOrigin')
+          ..write('deviceOrigin: $deviceOrigin, ')
+          ..write('mistakes: $mistakes')
           ..write(')'))
         .toString();
   }
@@ -859,6 +903,7 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
     updatedAt,
     pendingUpload,
     deviceOrigin,
+    mistakes,
   );
   @override
   bool operator ==(Object other) =>
@@ -870,7 +915,8 @@ class PuzzleSave extends DataClass implements Insertable<PuzzleSave> {
           other.isComplete == this.isComplete &&
           other.updatedAt == this.updatedAt &&
           other.pendingUpload == this.pendingUpload &&
-          other.deviceOrigin == this.deviceOrigin);
+          other.deviceOrigin == this.deviceOrigin &&
+          other.mistakes == this.mistakes);
 }
 
 class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
@@ -881,6 +927,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
   final Value<DateTime> updatedAt;
   final Value<bool> pendingUpload;
   final Value<String> deviceOrigin;
+  final Value<int> mistakes;
   final Value<int> rowid;
   const PuzzleSavesCompanion({
     this.puzzleId = const Value.absent(),
@@ -890,6 +937,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
     this.updatedAt = const Value.absent(),
     this.pendingUpload = const Value.absent(),
     this.deviceOrigin = const Value.absent(),
+    this.mistakes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PuzzleSavesCompanion.insert({
@@ -900,6 +948,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
     this.updatedAt = const Value.absent(),
     this.pendingUpload = const Value.absent(),
     this.deviceOrigin = const Value.absent(),
+    this.mistakes = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : puzzleId = Value(puzzleId),
        placedValues = Value(placedValues);
@@ -911,6 +960,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
     Expression<DateTime>? updatedAt,
     Expression<bool>? pendingUpload,
     Expression<String>? deviceOrigin,
+    Expression<int>? mistakes,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -921,6 +971,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (pendingUpload != null) 'pending_upload': pendingUpload,
       if (deviceOrigin != null) 'device_origin': deviceOrigin,
+      if (mistakes != null) 'mistakes': mistakes,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -933,6 +984,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
     Value<DateTime>? updatedAt,
     Value<bool>? pendingUpload,
     Value<String>? deviceOrigin,
+    Value<int>? mistakes,
     Value<int>? rowid,
   }) {
     return PuzzleSavesCompanion(
@@ -943,6 +995,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
       updatedAt: updatedAt ?? this.updatedAt,
       pendingUpload: pendingUpload ?? this.pendingUpload,
       deviceOrigin: deviceOrigin ?? this.deviceOrigin,
+      mistakes: mistakes ?? this.mistakes,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -971,6 +1024,9 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
     if (deviceOrigin.present) {
       map['device_origin'] = Variable<String>(deviceOrigin.value);
     }
+    if (mistakes.present) {
+      map['mistakes'] = Variable<int>(mistakes.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -987,6 +1043,7 @@ class PuzzleSavesCompanion extends UpdateCompanion<PuzzleSave> {
           ..write('updatedAt: $updatedAt, ')
           ..write('pendingUpload: $pendingUpload, ')
           ..write('deviceOrigin: $deviceOrigin, ')
+          ..write('mistakes: $mistakes, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3655,6 +3712,7 @@ typedef $$PuzzleSavesTableCreateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<bool> pendingUpload,
       Value<String> deviceOrigin,
+      Value<int> mistakes,
       Value<int> rowid,
     });
 typedef $$PuzzleSavesTableUpdateCompanionBuilder =
@@ -3666,6 +3724,7 @@ typedef $$PuzzleSavesTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<bool> pendingUpload,
       Value<String> deviceOrigin,
+      Value<int> mistakes,
       Value<int> rowid,
     });
 
@@ -3710,6 +3769,11 @@ class $$PuzzleSavesTableFilterComposer
 
   ColumnFilters<String> get deviceOrigin => $composableBuilder(
     column: $table.deviceOrigin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mistakes => $composableBuilder(
+    column: $table.mistakes,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3757,6 +3821,11 @@ class $$PuzzleSavesTableOrderingComposer
     column: $table.deviceOrigin,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get mistakes => $composableBuilder(
+    column: $table.mistakes,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PuzzleSavesTableAnnotationComposer
@@ -3796,6 +3865,9 @@ class $$PuzzleSavesTableAnnotationComposer
     column: $table.deviceOrigin,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get mistakes =>
+      $composableBuilder(column: $table.mistakes, builder: (column) => column);
 }
 
 class $$PuzzleSavesTableTableManager
@@ -3836,6 +3908,7 @@ class $$PuzzleSavesTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> pendingUpload = const Value.absent(),
                 Value<String> deviceOrigin = const Value.absent(),
+                Value<int> mistakes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PuzzleSavesCompanion(
                 puzzleId: puzzleId,
@@ -3845,6 +3918,7 @@ class $$PuzzleSavesTableTableManager
                 updatedAt: updatedAt,
                 pendingUpload: pendingUpload,
                 deviceOrigin: deviceOrigin,
+                mistakes: mistakes,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3856,6 +3930,7 @@ class $$PuzzleSavesTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> pendingUpload = const Value.absent(),
                 Value<String> deviceOrigin = const Value.absent(),
+                Value<int> mistakes = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PuzzleSavesCompanion.insert(
                 puzzleId: puzzleId,
@@ -3865,6 +3940,7 @@ class $$PuzzleSavesTableTableManager
                 updatedAt: updatedAt,
                 pendingUpload: pendingUpload,
                 deviceOrigin: deviceOrigin,
+                mistakes: mistakes,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

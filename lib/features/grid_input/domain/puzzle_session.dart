@@ -1,4 +1,8 @@
 import '../../persistence/domain/note_enums.dart';
+import '../../mistake_model/domain/attempt.dart';
+import '../../puzzle_engine/domain/grid.dart';
+import '../../puzzle_engine/domain/grid_geometry.dart';
+import '../../puzzle_engine/domain/placement.dart';
 import 'board.dart';
 import 'board_history.dart';
 
@@ -30,6 +34,9 @@ enum EntryKind {
 final class PuzzleSession {
   PuzzleSession._({
     required this.history,
+    required this.solution,
+    required this.attempt,
+    required this.isStrict,
     required this.mode,
     required this.entryKind,
     required this.noteInk,
@@ -42,10 +49,16 @@ final class PuzzleSession {
   /// The mode belongs to the session, and each puzzle starts a new one.
   factory PuzzleSession.start({
     required Board board,
+    required Grid solution,
     InputMode mode = InputMode.cellFirst,
     EntryKind entryKind = EntryKind.value,
+    bool isStrict = false,
+    Attempt attempt = Attempt.fresh,
   }) => PuzzleSession._(
     history: BoardHistory.start(board),
+    solution: solution,
+    attempt: attempt,
+    isStrict: isStrict,
     mode: mode,
     entryKind: entryKind,
     // A puzzle opens in the settled ink whatever ink the last one ended in.
@@ -55,6 +68,29 @@ final class PuzzleSession {
   );
 
   final BoardHistory history;
+
+  /// What the puzzle's answer is.
+  ///
+  /// Required rather than optional: every real puzzle has one (the pack carries
+  /// it, D-32), and a session that could be built without it would be a session
+  /// that silently stops counting **mistake**s.
+  ///
+  /// Only ever compared against a *placement*. Nothing here consults it to
+  /// decide what to draw, what a note means, or whether a digit may be entered
+  /// — a wrong digit looks exactly like a right one unless **strict mode** is
+  /// on (D-04).
+  final Grid solution;
+
+  /// What has happened to the player in this run (D-96).
+  final Attempt attempt;
+
+  /// Whether the player has opted into stakes (D-04, D-94).
+  ///
+  /// Carried on the session rather than read where it is needed, so that
+  /// turning it off mid-puzzle lifts the flagging and the cap in the same
+  /// instant, from one place.
+  final bool isStrict;
+
   final InputMode mode;
 
   /// Whether a digit press writes a value or a **settled note**.
@@ -115,6 +151,8 @@ final class PuzzleSession {
 
   PuzzleSession _with({
     BoardHistory? history,
+    Attempt? attempt,
+    bool? isStrict,
     InputMode? mode,
     EntryKind? entryKind,
     NoteKind? noteInk,
@@ -126,6 +164,9 @@ final class PuzzleSession {
   }) {
     return PuzzleSession._(
       history: history ?? this.history,
+      solution: solution,
+      attempt: attempt ?? this.attempt,
+      isStrict: isStrict ?? this.isStrict,
       mode: mode ?? this.mode,
       entryKind: entryKind ?? this.entryKind,
       noteInk: noteInk ?? this.noteInk,
@@ -140,6 +181,7 @@ final class PuzzleSession {
   /// In [InputMode.digitFirst] with something held, this places it; otherwise it
   /// only moves the selection.
   PuzzleSession tapCell(int cell) {
+    if (isOver) return this;
     final held = lockedDigit;
     if (mode == InputMode.digitFirst && held != null) {
       final step = switch ((held, entryKind)) {
@@ -147,8 +189,17 @@ final class PuzzleSession {
         // Sweeping a digit across cells in notes mode toggles it in each, so
         // one sweep both marks and unmarks.
         (_, EntryKind.note) => history.toggleNote(cell, held, ink: noteInk),
-        (_, EntryKind.value) => history.place(cell, held),
+        (_, EntryKind.value) => null,
       };
+      if (step == null) {
+        final placed = _placing(cell, held);
+        return _with(
+          history: placed.step.history,
+          attempt: placed.attempt,
+          selectedCell: cell,
+          edit: placed.step.edit,
+        );
+      }
       return _with(history: step.history, selectedCell: cell, edit: step.edit);
     }
     return _with(selectedCell: cell);
@@ -173,6 +224,7 @@ final class PuzzleSession {
   /// drift apart, and the drift would show up as a mode that behaves subtly
   /// differently depending on how it was reached.
   PuzzleSession _digit(int digit, EntryKind kind) {
+    if (isOver) return this;
     if (mode == InputMode.digitFirst) {
       // A held digit is a brush, and a brush is swept many times — so there is
       // no "one entry in the other mode" to make. A long-press holds the digit
@@ -185,11 +237,113 @@ final class PuzzleSession {
     }
     final cell = selectedCell;
     if (cell == null) return _with();
-    final step = kind == EntryKind.note
-        ? history.toggleNote(cell, digit, ink: noteInk)
-        : history.place(cell, digit);
-    return _with(history: step.history, edit: step.edit);
+    if (kind == EntryKind.note) {
+      final step = history.toggleNote(cell, digit, ink: noteInk);
+      return _with(history: step.history, edit: step.edit);
+    }
+    final placed = _placing(cell, digit);
+    return _with(
+      history: placed.step.history,
+      attempt: placed.attempt,
+      edit: placed.step.edit,
+    );
   }
+
+  /// The one place a value is put on the board, for both input modes.
+  ///
+  /// Counting lives here rather than at the two call sites because a second
+  /// path is exactly where the two would drift apart — and a placement that
+  /// counted in one mode and not the other would be invisible until a player
+  /// compared their statistics with how they play.
+  ///
+  /// The report is taken against the board *before* the placement, which is
+  /// what lets `overwritesCorrectValue` see what was there (D-05). A refused
+  /// edit changes nothing and counts nothing: a digit that never landed is not
+  /// a wrong answer.
+  ({HistoryStep step, Attempt attempt}) _placing(int cell, int digit) {
+    final before = board;
+    final step = history.place(cell, digit);
+    if (step.edit is! EditApplied) return (step: step, attempt: attempt);
+    return (
+      step: step,
+      attempt: attempt.recording(
+        inspectPlacement(
+          grid: before.toGrid(),
+          solution: solution,
+          cell: cell,
+          digit: digit,
+        ),
+      ),
+    );
+  }
+
+  /// The cells whose placed value disagrees with the solution, while stakes
+  /// are on. Empty otherwise, and empty of givens always.
+  ///
+  /// **Flagging states a fact; counting is what D-05 restricts.** A cell the
+  /// player reached by overwriting a correct value is flagged like any other —
+  /// **strict mode**'s promise is that the board is checked — and it still
+  /// costs them nothing. The two questions are answered by different code for
+  /// that reason.
+  ///
+  /// Derived rather than stored, the way **candidate highlighting** is (D-88):
+  /// a flag has no lifecycle of its own, so there is no state to leave stale.
+  /// Correcting the cell clears it, erasing clears it, and turning the mode off
+  /// clears all of them in the same instant.
+  ///
+  /// A note is never here. This reads placed values only, so D-14 holds by
+  /// construction rather than by care.
+  Set<int> get flaggedCells {
+    if (!isStrict) return const <int>{};
+    final board = this.board;
+    return <int>{
+      for (var cell = 0; cell < GridGeometry.cellCount; cell++)
+        if (!board.isGiven(cell) &&
+            board.digitAt(cell) != Board.empty &&
+            board.digitAt(cell) != solution.digitAt(cell))
+          cell,
+    };
+  }
+
+  /// Whether this **attempt** has ended at the **strict mode** limit.
+  ///
+  /// Only ever true with stakes on: outside **strict mode** there is no limit
+  /// at all, not a larger one (constraint 1). While it is true the board is
+  /// locked but *kept* — the player gets to look at what they did and decide
+  /// (D-95).
+  bool get isOver => isStrict && attempt.hasReachedStrictLimit;
+
+  /// How many **mistake**s the player has left, or null when stakes are off.
+  ///
+  /// Null rather than three, so a screen cannot show a limit to a player who
+  /// has no limit (constraint 1).
+  int? get mistakesRemaining => isStrict ? attempt.remainingInStrictMode : null;
+
+  /// The puzzle as it was first opened, with the tally back to zero.
+  ///
+  /// The only route back to zero (D-96), and the way out of an ended
+  /// **attempt** that keeps the player's own choice of mode: they opted into
+  /// stakes, and failing is not a reason to decide otherwise for them.
+  ///
+  /// The history goes with it. A restarted puzzle has nothing to undo, because
+  /// there is nothing before it any more.
+  PuzzleSession restarted() => PuzzleSession.start(
+    board: board.asFirstOpened(),
+    solution: solution,
+    mode: mode,
+    isStrict: isStrict,
+  );
+
+  /// The player turned stakes on or off.
+  ///
+  /// Takes effect immediately in both directions. Leaving a mode the player
+  /// chose must be as available as entering it, so turning it off lifts the
+  /// flagging and the cap at once — it does not wait for the next puzzle.
+  ///
+  /// The tally is untouched either way. What the player did does not change
+  /// because they changed their mind about being told about it.
+  PuzzleSession withStrictMode(bool strict) =>
+      strict == isStrict ? this : _with(isStrict: strict);
 
   /// The player changed what a digit press writes.
   ///
@@ -212,6 +366,7 @@ final class PuzzleSession {
 
   /// The player pressed erase.
   PuzzleSession tapErase() {
+    if (isOver) return this;
     if (mode == InputMode.digitFirst) {
       return lockedDigit == Board.empty
           ? _with(clearLock: true)
@@ -228,6 +383,7 @@ final class PuzzleSession {
   /// Aimed at the board rather than a cell, so it needs neither a selection nor
   /// a held digit and leaves both exactly as they were.
   PuzzleSession fillNotes() {
+    if (isOver) return this;
     final step = history.fillNotes();
     return _with(history: step.history, edit: step.edit);
   }
@@ -238,18 +394,21 @@ final class PuzzleSession {
   /// it disturbs neither, nor the mode, nor the ink. Clearing a hypothesis is
   /// not a reason to put the brush down.
   PuzzleSession clearProvisional() {
+    if (isOver) return this;
     final step = history.clearProvisional();
     return _with(history: step.history, edit: step.edit);
   }
 
   /// The player kept the line of reasoning (D-91, **promote**).
   PuzzleSession promoteProvisional() {
+    if (isOver) return this;
     final step = history.promoteProvisional();
     return _with(history: step.history, edit: step.edit);
   }
 
-  /// The player pressed undo. Nothing to undo is a no-op, never an error.
-  PuzzleSession tapUndo() => _with(history: history.undo());
+  /// The player pressed undo. Nothing to undo is a no-op, never an error — and
+  /// an ended **attempt** is not something undo reaches back into (D-95).
+  PuzzleSession tapUndo() => isOver ? this : _with(history: history.undo());
 
   /// The player changed the input mode.
   ///

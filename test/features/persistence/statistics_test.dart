@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
 import 'package:doku_duty/features/persistence/data/statistics_repository.dart';
@@ -22,7 +23,7 @@ void main() {
       await stats.recordSolve(
         techniquesRequired: <Technique>{Technique.nakedSingle},
         timeTaken: const Duration(minutes: 4),
-        wasPerfect: true,
+        attempt: Attempt.fresh,
       );
 
       final lifetime = await stats.lifetime();
@@ -36,7 +37,7 @@ void main() {
         await stats.recordSolve(
           techniquesRequired: <Technique>{Technique.hiddenSingle},
           timeTaken: const Duration(minutes: 2),
-          wasPerfect: i.isEven,
+          attempt: i.isEven ? Attempt.fresh : const Attempt(mistakes: 2),
         );
       }
 
@@ -50,7 +51,7 @@ void main() {
       await stats.recordSolve(
         techniquesRequired: <Technique>{Technique.nakedPair},
         timeTaken: const Duration(minutes: 9),
-        wasPerfect: false,
+        attempt: const Attempt(mistakes: 1),
       );
 
       final lifetime = await stats.lifetime();
@@ -66,7 +67,7 @@ void main() {
           Technique.xWing,
         },
         timeTaken: const Duration(minutes: 20),
-        wasPerfect: false,
+        attempt: Attempt.fresh,
       );
 
       expect(await stats.allTechniqueCounts(), <Technique, int>{
@@ -98,7 +99,7 @@ void main() {
       await stats.recordSolve(
         techniquesRequired: <Technique>{Technique.hiddenSingle},
         timeTaken: const Duration(minutes: 5),
-        wasPerfect: true,
+        attempt: Attempt.fresh,
       );
 
       // The season's pack and everything scoped to it goes away.

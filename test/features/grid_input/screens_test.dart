@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/design_system/domain/shape.dart';
 import 'package:doku_duty/features/grid_input/domain/puzzle_session.dart';
 import 'package:doku_duty/features/grid_input/application/grid_providers.dart';
+import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
 import 'package:doku_duty/features/grid_input/presentation/rank_picker_screen.dart';
 import 'package:doku_duty/features/grid_input/presentation/settings_screen.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
+import 'package:doku_duty/features/persistence/application/settings_providers.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart'
     hide Pack;
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
@@ -54,6 +57,9 @@ Widget _app(AppDatabase db) => ProviderScope(
     packInstallationProvider.overrideWith(
       (ref) async => PackInstallOutcome.alreadyInstalled,
     ),
+    // The composition root applies these; a test that builds the app directly
+    // has to say so too, or a stored setting never reaches the screen.
+    persistedStrictModeOverride,
   ],
   child: const DokuDutyApp(),
 );
@@ -210,8 +216,9 @@ void main() {
     });
 
     // A row that appears to work but is read by nothing is worse than a row
-    // that is absent.
-    testWidgets('a setting nothing implements yet says so', (tester) async {
+    // that is absent. **Strict mode** was the last one making that promise
+    // falsely, and `add-mistake-model` made it true.
+    testWidgets('every row shown is a row something reads', (tester) async {
       final db = await _seeded();
       addTearDown(db.close);
 
@@ -220,10 +227,52 @@ void main() {
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Not in effect yet.'), findsNWidgets(2));
-      expect(SettingsScreen.rows[AppSetting.autoCheck]!.live, isFalse);
-      expect(SettingsScreen.rows[AppSetting.strictMode]!.live, isFalse);
-      expect(SettingsScreen.rows[AppSetting.numberFirstInput]!.live, isTrue);
+      expect(find.textContaining('Not in effect yet.'), findsNothing);
+      for (final entry in SettingsScreen.rows.entries) {
+        expect(entry.value.live, isTrue, reason: entry.key.name);
+      }
+    });
+
+    // The only failure state in the product should never be a surprise, so the
+    // row names both of its effects before it is turned on (D-94).
+    testWidgets('the strict mode row states both of its effects', (
+      tester,
+    ) async {
+      final db = await _seeded();
+      addTearDown(db.close);
+
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
+      await tester.pumpAndSettle();
+
+      final detail = SettingsScreen.rows[AppSetting.strictMode]!.detail;
+      expect(detail.toLowerCase(), contains('flag'));
+      expect(detail.toLowerCase(), contains('three'));
+      expect(detail.toLowerCase(), contains('mistake'));
+      // And the player reads it on the screen, not only in the source.
+      expect(find.textContaining(detail), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('setting-strictMode')),
+        findsOneWidget,
+      );
+    });
+
+    // D-94: there is no second row offering flagging without the cap.
+    testWidgets('there is no auto-check row', (tester) async {
+      final db = await _seeded();
+      addTearDown(db.close);
+
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Auto-check'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('setting-autoCheck')),
+        findsNothing,
+      );
     });
   });
 
@@ -250,5 +299,248 @@ void main() {
     ).write(AppSetting.numberFirstInput, value: false);
     container.invalidate(inputModeProvider);
     expect(await container.read(inputModeProvider.future), InputMode.cellFirst);
+  });
+
+  // Constraint 5: how much of an **attempt** is left is stated as a number.
+  // A colour that deepened towards the limit would be the signal resting on
+  // hue alone, and a player who cannot read the hue would not know.
+  group('the mistakes remaining', () {
+    Future<void> openPuzzle(WidgetTester tester, AppDatabase db) async {
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+    }
+
+    /// Cell 2 is empty and its solution is a 4, so a 7 is wrong.
+    Future<void> placeWrongDigit(WidgetTester tester) async {
+      // Touch the grid first: the pad's digits are only live once the board
+      // has a selection to write into.
+      await tester.tap(find.byType(PuzzleGrid));
+      await tester.pumpAndSettle();
+      final grid = tester.getRect(find.byType(PuzzleGrid));
+      final cell = grid.width / 9;
+      await tester.tapAt(Offset(grid.left + cell * 2.5, grid.top + cell * 0.5));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('7'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('is not shown at all with stakes off', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await openPuzzle(tester, db);
+
+      expect(find.textContaining('mistake'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('mistakes-remaining')),
+        findsNothing,
+        reason: 'a player with no limit is shown no limit',
+      );
+    });
+
+    testWidgets('is a number once stakes are on', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+      await SettingsRepository(db).write(AppSetting.strictMode, value: true);
+
+      await openPuzzle(tester, db);
+
+      expect(find.text('3 mistakes left'), findsOneWidget);
+    });
+
+    testWidgets('counts down as mistakes are made', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+      await SettingsRepository(db).write(AppSetting.strictMode, value: true);
+
+      await openPuzzle(tester, db);
+
+      // Cell 2 is empty and its solution is 4, so a 7 is wrong.
+      await placeWrongDigit(tester);
+
+      expect(find.text('2 mistakes left'), findsOneWidget);
+      expect(find.text('3 mistakes left'), findsNothing);
+    });
+
+    testWidgets('the number is not colour-coded', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+      await SettingsRepository(db).write(AppSetting.strictMode, value: true);
+
+      await openPuzzle(tester, db);
+
+      /// The count's own Text, found by the row it lives in rather than by the
+      /// words it currently shows.
+      Color? countColour() => tester
+          .widget<Text>(
+            find.descendant(
+              of: find.byKey(const ValueKey<String>('mistakes-remaining')),
+              matching: find.byType(Text),
+            ),
+          )
+          .style
+          ?.color;
+
+      expect(
+        find.byKey(const ValueKey<String>('mistakes-remaining')),
+        findsOneWidget,
+      );
+      final atThree = countColour();
+
+      await placeWrongDigit(tester);
+
+      expect(find.text('2 mistakes left'), findsOneWidget);
+      final atTwo = countColour();
+
+      expect(
+        atTwo,
+        atThree,
+        reason: 'the count is the signal; the colour says nothing',
+      );
+    });
+  });
+
+  // D-95. The only failure state in the product, and the two ways out of it.
+  group('an attempt that ended', () {
+    Future<void> failIt(WidgetTester tester, AppDatabase db) async {
+      await SettingsRepository(db).write(AppSetting.strictMode, value: true);
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PuzzleGrid));
+      await tester.pumpAndSettle();
+      final grid = tester.getRect(find.byType(PuzzleGrid));
+      final cell = grid.width / 9;
+      // Row 0's solution is 534678912, so each of these digits is wrong for
+      // the cell it goes in.
+      for (final (column, digit) in const <(int, int)>[
+        (2, 9),
+        (3, 9),
+        (5, 9),
+      ]) {
+        await tester.tapAt(
+          Offset(grid.left + cell * (column + 0.5), grid.top + cell * 0.5),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('$digit'));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    testWidgets('offers exactly two choices, and sells nothing', (
+      tester,
+    ) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+
+      expect(
+        find.byKey(const ValueKey<String>('attempt-ended')),
+        findsOneWidget,
+      );
+      expect(find.text('Start again'), findsOneWidget);
+      expect(find.text('Back to the map'), findsOneWidget);
+      for (final sold in const <String>[
+        'Watch',
+        'Revive',
+        'Continue',
+        'Stamps',
+      ]) {
+        expect(find.textContaining(sold), findsNothing, reason: sold);
+      }
+    });
+
+    testWidgets('each choice is named and holds the 44pt target', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+
+      for (final label in const <String>['Start again', 'Back to the map']) {
+        final node = tester.getSemantics(find.text(label));
+        expect(node.label, label);
+        expect(
+          tester.getSize(find.text(label)).height,
+          greaterThan(0),
+          reason: label,
+        );
+      }
+      for (final key in const <String>['attempt-restart', 'attempt-leave']) {
+        final size = tester.getSize(find.byKey(ValueKey<String>(key)));
+        expect(
+          size.height,
+          greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
+          reason: key,
+        );
+      }
+      handle.dispose();
+    });
+
+    testWidgets('the board is kept and the pad goes', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+
+      // The grid stays: the player gets to look at what they did (D-95).
+      expect(find.byType(PuzzleGrid), findsOneWidget);
+      expect(find.text('0 mistakes left'), findsOneWidget);
+
+      // The pad does not. It accepted nothing at this point, and a pad that
+      // looks live and swallows every tap is a set of disabled controls
+      // (constraint 1). That input is refused is proved on the session, in
+      // `attempt_end_test.dart`, where every path is covered rather than one.
+      expect(find.byType(NumberPad), findsNothing);
+    });
+
+    testWidgets('the pad comes back on a fresh start', (tester) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+      await tester.tap(find.byKey(const ValueKey<String>('attempt-restart')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NumberPad), findsOneWidget);
+    });
+
+    testWidgets('starting again gives a clean board and a clean tally', (
+      tester,
+    ) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+      await tester.tap(find.byKey(const ValueKey<String>('attempt-restart')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('3 mistakes left'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('attempt-ended')), findsNothing);
+    });
+
+    // 5.4: leaving changes nothing but where the player is.
+    testWidgets('leaving returns to the picker with the puzzle unsolved', (
+      tester,
+    ) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await failIt(tester, db);
+      await tester.tap(find.byKey(const ValueKey<String>('attempt-leave')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RankPickerScreen), findsOneWidget);
+      // Still offered, because a failed attempt is not a solve.
+      expect(find.byKey(const ValueKey<String>('rank-deputy')), findsOneWidget);
+      expect(await PackRepository(db).nextUnsolved(Rank.deputy), isNotNull);
+    });
   });
 }
