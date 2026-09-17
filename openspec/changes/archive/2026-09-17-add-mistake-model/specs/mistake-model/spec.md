@@ -222,6 +222,20 @@ sell, or advertise one.
 - **THEN** the grid accepts no further placements, notes, or erases, and the
   **attempt** is over
 
+#### Scenario: The controls that can do nothing are gone
+
+- **WHEN** an **attempt** has ended
+- **THEN** the number pad is not shown, because every key on it would be
+  refused, and a control that looks live and swallows every press is a disabled
+  control wearing a working one's clothes (constraint 1, D-97)
+
+#### Scenario: The board is still there to read
+
+- **WHEN** an **attempt** has ended
+- **THEN** the grid is still on screen with every digit the player placed and
+  every flag on it, because the player is being shown what happened rather than
+  being moved on from it (D-95)
+
 #### Scenario: Starting again
 
 - **WHEN** the player chooses to start the puzzle again after a failed

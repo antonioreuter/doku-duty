@@ -140,6 +140,9 @@ that turns those two booleans into a count, and nothing else.
   start, rather than returning to the map or letting the player continue
   unstrict. A player who opted into stakes gets them; a player who loses an hour
   of work gets to look at it and decide
+- [x] 8.3a Add **D-97**: an ended **attempt** takes the pad off screen with it
+  — found at archive time, because the behaviour was implemented and never
+  specified
 - [x] 8.3 Add **D-96**: a **mistake** is one wrong placement, not one wrong
   cell, and neither undo nor a correction walks the count back
 - [x] 8.4 Add **mistake** and **attempt** to the glossary in

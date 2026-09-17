@@ -1350,3 +1350,29 @@ with. Undo reverses the board. It does not reverse what happened.
 
 **What breaks if reversed.** The perfect-solve reward stops measuring anything,
 and in **strict mode** undo becomes a way to play with no limit at all.
+
+### D-97 · An ended attempt takes the number pad off screen with it
+When a **strict mode** **attempt** ends, the pad is removed rather than left in
+place refusing input. The grid stays, with every digit the player placed and
+every flag on it, and the two choices D-95 offers sit where the pad was.
+
+**Rationale.** D-95 locks the board, and the first implementation left the pad
+sitting under it looking exactly as it always had while silently discarding
+every press. That is a set of disabled controls by another name, and the one
+thing `docs/DESIGN.md` §8 and constraint 1 both refuse: "nothing is ever
+disabled, including a digit already placed nine times", because a disabled
+control is a small failure state. A pad that *appears* to work is worse than a
+greyed-out one — the player gets no signal at all, only the impression that
+their taps are being lost.
+
+It also resolves a layout failure that only appeared on a device at the
+reader's largest text size. The pad is 334pt once D-93 has capped it, the
+remaining-**mistake** count is 141pt at 3.1×, and the two choices need another
+136pt: about 900pt of fixed height on an 852pt phone, which overflowed by 73px.
+Removing the pad frees more than four times the overflow, so the fix for the
+honest problem and the fix for the layout are the same edit.
+
+**What breaks if reversed.** Either the player taps a live-looking pad that does
+nothing, or the ended screen runs off the bottom of the phone for every player
+using an accessibility text size — and the second one is invisible to every
+host test, because a host test picks its own surface and its own scaler.

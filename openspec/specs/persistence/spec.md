@@ -54,7 +54,8 @@ debounce, a batch, or application lifecycle events (D-33).
 ### Requirement: A puzzle in progress survives an app kill
 
 The system MUST restore an interrupted puzzle to the state it was in — placed
-values, both kinds of note, and elapsed time — when the app is next opened.
+values, both kinds of note, elapsed time, and the **mistake**s recorded against
+the **attempt** — when the app is next opened.
 
 #### Scenario: Killed mid-puzzle
 
@@ -67,6 +68,17 @@ values, both kinds of note, and elapsed time — when the app is next opened.
 - **WHEN** an interrupted puzzle is resumed
 - **THEN** its elapsed time continues from where it stopped, and time spent with
   the app closed is not counted
+
+#### Scenario: The mistake count is restored, not restarted
+
+- **WHEN** an interrupted puzzle is resumed
+- **THEN** the **mistake**s recorded against it are what they were, so a player
+  who was two into a **strict mode** **attempt** is still two into it
+
+#### Scenario: A save written before mistakes were stored
+
+- **WHEN** a save made before this capability existed is resumed
+- **THEN** it resumes with a count of zero rather than failing to open
 
 #### Scenario: A puzzle is completed
 
@@ -130,13 +142,20 @@ the **rank** its hardest required technique implies, and its seed (D-32).
 ### Requirement: Statistics accumulate across puzzles
 
 The system MUST record lifetime counters and per-technique counters that outlive
-any single puzzle, **season**, or pack.
+any single puzzle, **season**, or pack, and MUST record whether a completed
+puzzle was solved with no **mistake**.
 
 #### Scenario: A puzzle is solved
 
 - **WHEN** a puzzle is completed
 - **THEN** the lifetime counters and the counters for the techniques it required
   are updated durably
+
+#### Scenario: A perfect solve is counted as one
+
+- **WHEN** a puzzle is completed with no **mistake** recorded against it
+- **THEN** the perfect-solve counter rises, and it does not when a **mistake**
+  was recorded
 
 #### Scenario: A season rotates
 
@@ -156,8 +175,14 @@ return the documented default for any setting never chosen.
 #### Scenario: A setting has never been chosen
 
 - **WHEN** a setting is read on a fresh install
-- **THEN** its default is returned, and for **strict mode** and auto-check that
-  default is off (D-04)
+- **THEN** its default is returned, and for **strict mode** that default is off
+  (D-04)
+
+#### Scenario: A setting that no longer exists
+
+- **WHEN** a value stored under a retired setting's key is found on disk
+- **THEN** it is ignored and nothing reads it, because a stored value with no
+  behaviour behind it is worse than no value at all
 
 #### Scenario: The player changes a setting before its stored value is read
 
