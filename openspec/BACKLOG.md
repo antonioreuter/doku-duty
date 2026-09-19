@@ -14,23 +14,63 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ---
 
+## Status — 2026-09-19
+
+**Fourteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
+underway.** Items carry a **Done** line naming the archive directory they landed
+in; anything without one is not built. Two of the finished items still carry an
+**OUTSTANDING** note — read those before treating the capability as settled, because
+what is outstanding in both cases is a *measurement*, not code.
+
+| Milestone | Items | State |
+|---|---|---|
+| 0 — Foundation | 1–4 | Complete |
+| 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
+| 2 — A reason to come back | 12–17 | 12 done; 13–17 open |
+| *(unlabelled)* — the perk economy | 18, 19 | Not started |
+| 3 — The reason it exists | 20–23 | Not started |
+| 4 — The business | 24–29 | Not started |
+| 5 — Ship quality | 30–34 | Not started |
+
+**18 and 19 sit under no milestone heading** — they fall between Milestone 2's
+last item and Milestone 3's first, and always have. Left as they are rather than
+renumbered, for the reason given under 5a: the docs and the code cite these
+changes by number.
+
+**One archived change is not numbered here.** `add-pad-tools-row`
+(`2026-09-19-add-pad-tools-row`) replaced six unlabelled glyph keys with a named
+**tools row** after `add-mistake-model` found the pad overflowing, and added
+D-100 and D-101. It was corrective work on change 6's surface rather than a
+backlog item, and it is recorded here so the archive and this list can be
+reconciled.
+
+---
+
 ## Milestone 0 — Foundation
 
 *Done when: a signed build installs on both platforms from CI and shows a themed empty screen.*
 
+**Complete.** The one thing it could not verify — cold start, orientation, a real
+Sentry event, and a signed iOS archive, all of which need physical hardware and
+credentials — was deliberately carried to change 34 rather than holding this
+milestone open (D-70).
+
 ### 1. `setup-mobile-foundation`
+**Done** — `openspec/changes/archive/2026-09-05-setup-mobile-foundation/`.
 **Capabilities:** `platform-shell`
 Flutter project, iOS and Android targets, flavours for dev/staging/prod, Riverpod, routing, `flutter analyze` and `dart format` in CI, Fastlane lanes for both stores, Sentry.
 **Blocks:** everything.
 **Watch for:** get the minimum OS versions and bundle identifiers right now — changing a bundle ID after store registration is painful.
 
 ### 2. `add-design-system`
+**Done** — `openspec/changes/archive/2026-09-05-add-design-system/`.
 **Capabilities:** `design-system`
 The eight colour tokens — six carrying state, two surfaces — as named tokens, typography scale, corner radii, stroke weights, haptic vocabulary, and a theme structure where seasons can repaint surfaces but not state colours (D-53 as amended by D-71, D-65, D-55).
 **Depends on:** 1.
 **Watch for:** enforce the "one colour, one job" rule in the token API itself, so a later change physically cannot introduce a ninth hue.
 
 ### 3. `add-persistence-layer`
+**Done** — `openspec/changes/archive/2026-09-06-add-persistence-layer/`.
 **Capabilities:** `persistence`
 Drift schemas for puzzle packs, save state, notes, statistics, and settings. Write-on-every-change for note state (D-33). Survives app kill mid-puzzle. (`docs/TECH_STACK.md` §6 replaced Isar with Drift over SQLite; this line said Isar until `add-persistence-layer` corrected it.)
 **Depends on:** 1.
@@ -39,6 +79,7 @@ Drift schemas for puzzle packs, save state, notes, statistics, and settings. Wri
 ---
 
 ### 4. `add-remote-config`
+**Done** — `openspec/changes/archive/2026-09-06-add-remote-config/`.
 **Capabilities:** `remote-config`
 Versioned JSON on S3 behind CloudFront with a short TTL, a client fetch with cache and a baked-in fallback, and typed accessors. Carries the ad caps from D-24, season definitions, and any value that must change without a release.
 **Depends on:** 3.
@@ -48,7 +89,15 @@ Versioned JSON on S3 behind CloudFront with a short TTL, a client fetch with cac
 
 *Done when: a player can solve a puzzle at any of six ranks, with full notes, offline, and it feels good.*
 
+**Complete.** A player can open a puzzle from the shipped **pack** at any of the
+six **rank**s, place values, mark notes in fixed positional slots, run a **chain
+test** in **provisional note**s, and watch **unit**s celebrate and hold a
+**completion tint** — with **auto-cleanup**, **candidate highlighting**, and
+**auto-notes** throughout. "It feels good" is measured everywhere except on a
+physical Android phone; see the OUTSTANDING notes on changes 6 and 11.
+
 ### 5. `add-puzzle-engine`
+**Done** — `openspec/changes/archive/2026-09-09-add-puzzle-engine/`.
 **Capabilities:** `puzzle-engine`
 Puzzle model, solver, uniqueness verification, technique-based grading. Offline-first.
 **Depends on:** 3.
@@ -56,6 +105,7 @@ Puzzle model, solver, uniqueness verification, technique-based grading. Offline-
 **Note:** shipped as scoped, without a generator or a pack — see 5a.
 
 ### 5a. `add-puzzle-generation`
+**Done** — `openspec/changes/archive/2026-09-09-add-puzzle-generation/`.
 **Capabilities:** `puzzle-engine`
 Seeded generation on top of the engine's uniqueness check and grader, the first real shipped pack with puzzles at all six ranks, and pack loading and top-up. Without it there is nothing to play: change 6 can render a grid and change 7 can mark notes, but neither has content behind it, and Milestone 1's "a player can solve a puzzle at any of six ranks" is unreachable.
 **Depends on:** 5.
@@ -64,6 +114,7 @@ Seeded generation on top of the engine's uniqueness check and grader, the first 
 *Numbered 5a rather than inserted as 6 deliberately: the proposal, the docs, and existing code comments all cite changes by number ("change 19 is where a hint...", "generation and grading are change 5's business"), and renumbering twenty-nine items would silently invalidate every one of them.*
 
 ### 6. `add-grid-and-input`
+**Done** — `openspec/changes/archive/2026-09-10-add-grid-and-input/`.
 **Capabilities:** `grid-input`
 Custom-canvas grid render, cell selection, value entry, number pad, erase, undo at full depth, number-first input as a setting, peer highlighting.
 **Depends on:** 2, 5.
@@ -71,30 +122,35 @@ Custom-canvas grid render, cell selection, value entry, number pad, erase, undo 
 **OUTSTANDING — the device profile above was never taken.** Implemented and archived with tap-to-repaint measured on the host, an Android emulator, and an iOS simulator only (`docs/PERFORMANCE.md`): median 285–464 µs against a 100 ms budget, on debug builds. No physical Android phone was available. The headroom is roughly 200×, so the budget is very likely met — but that is an inference, and the backlog asked for a measurement. **Take it on the first mid-tier Android phone that comes to hand**, with `flutter test integration_test/grid_latency_test.dart -d <device> --flavor dev`, and record the number. Until then, treat the latency claim for this capability as unverified on real hardware.
 
 ### 7. `add-notes`
+**Done** — `openspec/changes/archive/2026-09-10-add-notes/`.
 **Capabilities:** `notes`
 Nine candidates per cell in fixed positions, persistent notes toggle, long-press for the opposite mode, notes never counting as mistakes (D-09, D-10, D-14).
 **Depends on:** 6.
 **Watch for:** positional layout is the whole point. Notes that reflow when a candidate is removed are the hidden cause of an app feeling bad.
 
 ### 8. `add-note-automation`
+**Done** — `openspec/changes/archive/2026-09-11-add-note-automation/`.
 **Capabilities:** `notes`
 Auto-cleanup on value placement, candidate highlighting, auto-notes fill, and single-action undo for each (D-12, D-13).
 **Depends on:** 7.
 **Watch for:** auto-cleanup is not optional. A setting to disable it would exist only to make the game worse.
 
 ### 9. `add-provisional-notes`
+**Done** — `openspec/changes/archive/2026-09-13-add-provisional-notes/`.
 **Capabilities:** `notes`
 A second turquoise ink for hypotheses under test, and a one-action clear of all provisional marks (D-11).
 **Depends on:** 8.
 **Watch for:** this is a real differentiator — almost nobody ships it. Worth doing properly rather than as a colour toggle.
 
 ### 10. `add-mistake-model`
+**Done** — `openspec/changes/archive/2026-09-17-add-mistake-model/`.
 **Capabilities:** `mistake-model`
 Silent mistake recording, auto-check off by default, opt-in strict mode, and overwriting a correct cell never counting as a mistake (D-04, D-05).
 **Depends on:** 6.
 **Watch for:** the default matters more than the feature. If auto-check ships on, the product's whole positioning is gone.
 
 ### 11. `add-completion-effects`
+**Done** — `openspec/changes/archive/2026-09-17-add-completion-effects/`.
 **Capabilities:** `completion-effects`
 Row, column, and block completion effects; chained cascades at 90ms offsets; puzzle completion sequence; persistent non-additive completion tints with corner marks (D-46 … D-50, D-52).
 **Depends on:** 6, 2.
@@ -108,10 +164,31 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 
 *Done when: there is a season to progress through, a daily habit, and a permanent record.*
 
+**Underway — change 12 is done, 13 through 17 are open.** 13, 14, and 15 are all
+unblocked now: 13 and 15 were waiting on 12, and 14 only ever needed 3 and 5.
+
 ### 12. `add-rank-progression`
+**Done** — `openspec/changes/archive/2026-09-19-add-rank-progression/`.
 **Capabilities:** `rank-progression`
 Six ranks Greenhorn through Legend, mapped to required techniques; rank state; per-technique statistics (D-07).
 **Depends on:** 5, 10.
+
+**What it left for 13, 15, and 16.** A player's **rank** is the hardest **rank**
+they have completed a puzzle at and never falls (D-102); **rank**s above theirs
+are marked and stay openable (D-103); a **technique unlock** is that technique's
+counter standing above zero, meaning *solved* rather than *encountered* (D-104).
+Ask `ProgressionRepository` rather than reading the counters directly, and ask
+`PlayerRank.above` rather than comparing enum indices.
+
+Two things it also fixed, because nothing worked without them: neither
+`recordSolve` nor `markSolved` had ever had a production caller, so finishing a
+puzzle recorded nothing at all; and the **rank** picker cached what was next, so
+it went on offering a puzzle the player had solved. Any later screen that caches
+a progression read needs the same invalidation (D-105).
+
+**`rank_picker_screen.dart` is scaffolding change 15 deletes.** The mark's
+presentation lives there; the rule lives in the capability and survives. Carry
+the mark onto the map.
 
 ### 13. `add-technique-tutorials`
 **Capabilities:** `technique-tutorials`
