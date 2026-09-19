@@ -722,9 +722,590 @@ i1.GeneratedColumn<int> _column_32(String aliasedName) =>
       type: i1.DriftSqlType.int,
       defaultValue: const Constant(0),
     );
+
+final class Schema4 extends i0.VersionedSchema {
+  Schema4({required super.database}) : super(version: 4);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    notes,
+    puzzleSaves,
+    packs,
+    puzzles,
+    solvedPuzzles,
+    lifetimeStats,
+    techniqueStats,
+    settings,
+    configCache,
+    seenLessons,
+  ];
+  late final Shape10 notes = Shape10(
+    source: i0.VersionedTable(
+      entityName: 'notes',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id, cell, digit)'],
+      columns: [
+        _column_33,
+        _column_34,
+        _column_35,
+        _column_36,
+        _column_37,
+        _column_38,
+        _column_39,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape11 puzzleSaves = Shape11(
+    source: i0.VersionedTable(
+      entityName: 'puzzle_saves',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id)'],
+      columns: [
+        _column_33,
+        _column_40,
+        _column_41,
+        _column_42,
+        _column_38,
+        _column_39,
+        _column_43,
+        _column_44,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape12 packs = Shape12(
+    source: i0.VersionedTable(
+      entityName: 'packs',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(pack_id)'],
+      columns: [_column_45, _column_46, _column_47],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 puzzles = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'puzzles',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_48,
+        _column_49,
+        _column_50,
+        _column_51,
+        _column_52,
+        _column_53,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape13 solvedPuzzles = Shape13(
+    source: i0.VersionedTable(
+      entityName: 'solved_puzzles',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(puzzle_id)'],
+      columns: [_column_33, _column_54, _column_38, _column_39],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape14 lifetimeStats = Shape14(
+    source: i0.VersionedTable(
+      entityName: 'lifetime_stats',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [
+        _column_55,
+        _column_56,
+        _column_57,
+        _column_58,
+        _column_38,
+        _column_39,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape15 techniqueStats = Shape15(
+    source: i0.VersionedTable(
+      entityName: 'technique_stats',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(technique)'],
+      columns: [_column_59, _column_60, _column_38, _column_39],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape16 settings = Shape16(
+    source: i0.VersionedTable(
+      entityName: 'settings',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY("key")'],
+      columns: [_column_61, _column_62, _column_38, _column_39],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape17 configCache = Shape17(
+    source: i0.VersionedTable(
+      entityName: 'config_cache',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(id)'],
+      columns: [_column_55, _column_63, _column_64, _column_65],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape18 seenLessons = Shape18(
+    source: i0.VersionedTable(
+      entityName: 'seen_lessons',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(lesson_id)'],
+      columns: [_column_66, _column_67, _column_38, _column_39],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+}
+
+class Shape10 extends i0.VersionedTable {
+  Shape10({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get puzzleId =>
+      columnsByName['puzzle_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get cell =>
+      columnsByName['cell']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get digit =>
+      columnsByName['digit']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get kind =>
+      columnsByName['kind']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get origin =>
+      columnsByName['origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_33(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'puzzle_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_34(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'cell',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL CHECK (cell BETWEEN 0 AND 80)',
+    );
+i1.GeneratedColumn<int> _column_35(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'digit',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL CHECK (digit BETWEEN 1 AND 9)',
+    );
+i1.GeneratedColumn<String> _column_36(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'kind',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_37(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'origin',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_38(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'updated_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_39(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'pending_upload',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 1 CHECK (pending_upload IN (0, 1))',
+      defaultValue: const i1.CustomExpression('1'),
+    );
+
+class Shape11 extends i0.VersionedTable {
+  Shape11({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get puzzleId =>
+      columnsByName['puzzle_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get placedValues =>
+      columnsByName['placed_values']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get elapsedMs =>
+      columnsByName['elapsed_ms']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get isComplete =>
+      columnsByName['is_complete']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get deviceOrigin =>
+      columnsByName['device_origin']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get mistakes =>
+      columnsByName['mistakes']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_40(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'placed_values',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_41(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'elapsed_ms',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_42(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'is_complete',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (is_complete IN (0, 1))',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<String> _column_43(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'device_origin',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'\'',
+      defaultValue: const i1.CustomExpression('\'\''),
+    );
+i1.GeneratedColumn<int> _column_44(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'mistakes',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+
+class Shape12 extends i0.VersionedTable {
+  Shape12({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get packId =>
+      columnsByName['pack_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get version =>
+      columnsByName['version']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get installedAt =>
+      columnsByName['installed_at']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_45(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'pack_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_46(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'version',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_47(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'installed_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_48(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_49(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'pack_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL REFERENCES packs(pack_id)',
+    );
+i1.GeneratedColumn<String> _column_50(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'clues',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_51(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'solution',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_52(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'rank',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_53(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'seed',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape13 extends i0.VersionedTable {
+  Shape13({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get puzzleId =>
+      columnsByName['puzzle_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get solvedAt =>
+      columnsByName['solved_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_54(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'solved_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape14 extends i0.VersionedTable {
+  Shape14({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get puzzlesSolved =>
+      columnsByName['puzzles_solved']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get perfectSolves =>
+      columnsByName['perfect_solves']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get totalPlayMs =>
+      columnsByName['total_play_ms']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<int> _column_55(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_56(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'puzzles_solved',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_57(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'perfect_solves',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_58(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'total_play_ms',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+
+class Shape15 extends i0.VersionedTable {
+  Shape15({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get technique =>
+      columnsByName['technique']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get puzzlesRequiring =>
+      columnsByName['puzzles_requiring']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_59(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'technique',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_60(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'puzzles_requiring',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+
+class Shape16 extends i0.VersionedTable {
+  Shape16({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get key =>
+      columnsByName['key']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get boolValue =>
+      columnsByName['bool_value']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_61(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'key',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_62(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'bool_value',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL CHECK (bool_value IN (0, 1))',
+    );
+
+class Shape17 extends i0.VersionedTable {
+  Shape17({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get document =>
+      columnsByName['document']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get validator =>
+      columnsByName['validator']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get fetchedAt =>
+      columnsByName['fetched_at']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_63(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'document',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_64(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'validator',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_65(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'fetched_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape18 extends i0.VersionedTable {
+  Shape18({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get lessonId =>
+      columnsByName['lesson_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get seenAt =>
+      columnsByName['seen_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get pendingUpload =>
+      columnsByName['pending_upload']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_66(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'lesson_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_67(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'seen_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
+  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -738,6 +1319,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from2To3(migrator, schema);
         return 3;
+      case 3:
+        final schema = Schema4(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from3To4(migrator, schema);
+        return 4;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -747,6 +1333,11 @@ i0.MigrationStepWithVersion migrationSteps({
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
+  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
+  step: migrationSteps(
+    from1To2: from1To2,
+    from2To3: from2To3,
+    from3To4: from3To4,
+  ),
 );

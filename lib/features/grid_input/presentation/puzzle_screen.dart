@@ -15,6 +15,9 @@ import '../../design_system/presentation/paper_grain.dart';
 import '../../persistence/domain/note_enums.dart';
 import '../../mistake_model/application/strict_mode.dart';
 import '../../completion_effects/domain/effect_event.dart';
+import '../../technique_tutorials/application/lesson_providers.dart';
+import '../../technique_tutorials/domain/lesson.dart';
+import '../../technique_tutorials/presentation/lesson_view.dart';
 import '../application/grid_providers.dart';
 import '../application/puzzle_controller.dart';
 import '../domain/puzzle_session.dart';
@@ -36,14 +39,61 @@ import 'puzzle_grid.dart';
 /// and both are invisible unless the player turned **strict mode** on: a wrong
 /// digit looks exactly like a right one by default, because finding it is the
 /// game (D-04).
-class PuzzleScreen extends ConsumerWidget {
+class PuzzleScreen extends ConsumerStatefulWidget {
   const PuzzleScreen({required this.puzzleId, super.key});
 
   final String puzzleId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final opening = ref.watch(puzzleOpeningProvider(puzzleId));
+  ConsumerState<PuzzleScreen> createState() => _PuzzleScreenState();
+}
+
+class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
+  /// Whether the **lesson** that was due has been dealt with this visit.
+  ///
+  /// Held here rather than derived, because the answer changes underneath us:
+  /// finishing or skipping marks the **lesson** seen, which makes it no longer
+  /// due — and without this the screen would simply have rebuilt into the
+  /// puzzle, which is right, but a second **lesson** due on the same opening
+  /// would then appear. At most one per opening (D-106).
+  bool _lessonDone = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final opening = ref.watch(puzzleOpeningProvider(widget.puzzleId));
+
+    if (!_lessonDone) {
+      final due = opening.value == null
+          ? const AsyncValue<Lesson?>.loading()
+          : ref.watch(
+              dueLessonProvider(
+                LessonRequest(
+                  rank: opening.value!.puzzle.rank,
+                  techniquesRequired: opening.value!.techniquesRequired,
+                ),
+              ),
+            );
+      final lesson = due.value;
+      if (lesson != null) {
+        return LessonView(
+          lesson: lesson,
+          // The same answer the puzzle gets: a player who asked for less
+          // motion asked for less of all of it, tutorial included.
+          reduceMotion: MotionSettings(
+            osReduceMotion: MediaQuery.disableAnimationsOf(context),
+            reduceEffects: ref.watch(reduceEffectsProvider),
+          ).isMotionReduced,
+          onDone: ({required bool skipped}) async {
+            // Seen either way, and written before the puzzle opens: a
+            // **lesson** that returned after being declined would be nagging
+            // rather than teaching (constraint 9 for the write).
+            await ref.read(lessonRepositoryProvider).markSeen(lesson.id);
+            ref.invalidate(seenLessonsProvider);
+            if (mounted) setState(() => _lessonDone = true);
+          },
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(),

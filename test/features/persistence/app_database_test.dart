@@ -12,11 +12,12 @@ void main() {
   group('the database', () {
     test('opens at the current schema version', () async {
       // Bumped to 2 by add-remote-config, which added the config cache table,
-      // and to 3 by add-mistake-model, which added the **mistake** tally to a
-      // save. Asserted by number rather than loosely, so a schema change has
-      // to change a test that names the version — and, with it, produce a
+      // to 3 by add-mistake-model, which added the **mistake** tally to a
+      // save, and to 4 by add-technique-tutorials, which added the seen
+      // **lesson**s. Asserted by number rather than loosely, so a schema change
+      // has to change a test that names the version — and, with it, produce a
       // snapshot and a migration.
-      expect(db.schemaVersion, 3);
+      expect(db.schemaVersion, 4);
       // Force the connection open — schemaVersion alone is a Dart getter and
       // would pass without sqlite ever being touched.
       await db.customSelect('SELECT 1').get();

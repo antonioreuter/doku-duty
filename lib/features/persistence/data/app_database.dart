@@ -133,7 +133,28 @@ class Packs extends Table {
 class Puzzles extends Table {
   TextColumn get id => text()();
 
-  TextColumn get packId => text().references(Packs, #packId)();
+  /// The **pack** this puzzle came from.
+  ///
+  /// Spelled as a custom constraint rather than `.references(Packs, #packId)`,
+  /// and not by preference. `.references()` stopped emitting the SQL-level
+  /// foreign key at some drift upgrade, so the app quietly began creating this
+  /// column as a bare `TEXT NOT NULL` while every schema snapshot from v1 on
+  /// still recorded `REFERENCES packs (pack_id)`. Nothing caught it because the
+  /// migration tests compare snapshots with each other, and no schema change
+  /// was made between the upgrade and `add-technique-tutorials` — whose bump to
+  /// version 4 was the first comparison against what the app actually builds.
+  ///
+  /// Installs from before that upgrade have the key; installs made in between
+  /// do not. Neither enforces it — there is no `foreign_keys` pragma — so the
+  /// divergence costs nothing at runtime, and stating the constraint here is
+  /// what makes new databases agree with the old ones and with the snapshots
+  /// again.
+  ///
+  /// **Do not swap this back to `.references()` without dumping
+  /// `sqlite_master` and reading the emitted SQL.** The declaration looks
+  /// correct either way; only the SQL says which one it is.
+  TextColumn get packId =>
+      text().customConstraint('NOT NULL REFERENCES packs (pack_id)')();
 
   /// The givens, 81 characters, `.` for empty.
   TextColumn get clues => text().withLength(min: 81, max: 81)();
@@ -156,6 +177,28 @@ class Puzzles extends Table {
 /// and progress that lived on those rows would be replaced with them. Losing a
 /// season's solved history to a content update is the kind of silent failure
 /// D-33 exists to prevent.
+/// Which **lesson**s the player has been shown.
+///
+/// Seen is a fact, not a count: a **lesson** completed, skipped, or replayed
+/// four times is one row either way. That is why there is no counter column —
+/// the only question anything asks of this table is whether the row exists, and
+/// a count would be a second answer nobody needs.
+///
+/// Keyed by the **lesson**'s own id rather than by a `Technique`, because the
+/// **notes lesson** teaches no technique and still has to live here.
+class SeenLessons extends Table {
+  TextColumn get lessonId => text()();
+
+  DateTimeColumn get seenAt => dateTime().clientDefault(DateTime.now)();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{lessonId};
+}
+
 class SolvedPuzzles extends Table {
   TextColumn get puzzleId => text()();
 
@@ -287,6 +330,7 @@ class Notes extends Table {
     TechniqueStats,
     Settings,
     ConfigCache,
+    SeenLessons,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -334,6 +378,15 @@ class AppDatabase extends _$AppDatabase {
       from2To3: (m, schema) async {
         await m.addColumn(schema.puzzleSaves, schema.puzzleSaves.mistakes);
       },
+      // Version 4 adds the seen **lesson**s. A new table and nothing else, so
+      // every existing save, note, statistic, setting and **solve record**
+      // carries over untouched — and, importantly, the table arrives *empty*.
+      // A player upgrading has seen no **lesson**, which is the direction that
+      // makes them all still due; arriving full would silently suppress the
+      // whole feature for every existing install (task 2.4).
+      from3To4: (m, schema) async {
+        await m.createTable(schema.seenLessons);
+      },
     ),
   );
 
@@ -364,5 +417,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 }

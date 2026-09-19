@@ -38,4 +38,8 @@ const List<String> syncableTables = <String>[
   'lifetime_stats',
   'technique_stats',
   'settings',
+  // Permanent progression, like the counters beside it: a **lesson** seen on
+  // one device should not be taught again on another (D-17). Cheap to sync —
+  // a row is an id and nothing else.
+  'seen_lessons',
 ];

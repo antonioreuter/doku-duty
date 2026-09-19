@@ -16,8 +16,8 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ## Status — 2026-09-19
 
-**Fourteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
-underway.** Items carry a **Done** line naming the archive directory they landed
+**Fifteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
+half done.** Items carry a **Done** line naming the archive directory they landed
 in; anything without one is not built. Two of the finished items still carry an
 **OUTSTANDING** note — read those before treating the capability as settled, because
 what is outstanding in both cases is a *measurement*, not code.
@@ -26,7 +26,7 @@ what is outstanding in both cases is a *measurement*, not code.
 |---|---|---|
 | 0 — Foundation | 1–4 | Complete |
 | 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
-| 2 — A reason to come back | 12–17 | 12 done; 13–17 open |
+| 2 — A reason to come back | 12–17 | 12, 13 done; 14–17 open |
 | *(unlabelled)* — the perk economy | 18, 19 | Not started |
 | 3 — The reason it exists | 20–23 | Not started |
 | 4 — The business | 24–29 | Not started |
@@ -164,8 +164,8 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 
 *Done when: there is a season to progress through, a daily habit, and a permanent record.*
 
-**Underway — change 12 is done, 13 through 17 are open.** 13, 14, and 15 are all
-unblocked now: 13 and 15 were waiting on 12, and 14 only ever needed 3 and 5.
+**Half done — 12 and 13 are archived, 14 through 17 are open.** 14 and 15 are
+both unblocked: 15 was waiting on 12, and 14 only ever needed 3 and 5.
 
 ### 12. `add-rank-progression`
 **Done** — `openspec/changes/archive/2026-09-19-add-rank-progression/`.
@@ -191,10 +191,30 @@ presentation lives there; the rule lives in the capability and survives. Carry
 the mark onto the map.
 
 ### 13. `add-technique-tutorials`
+**Done** — `openspec/changes/archive/2026-09-19-add-technique-tutorials/`.
 **Capabilities:** `technique-tutorials`
 Short interactive tutorial the first time a player meets a puzzle requiring a new technique. Skippable, replayable from the cabinet.
 **Depends on:** 12, 8.
 **Watch for:** the notes tutorial must land no later than Sheriff rank. Marshal upward is unplayable without notes.
+
+**What it left for 16 and 33.** Eleven **lesson**s — ten techniques plus notes —
+fire on encounter, at most one per puzzle opening and the hardest due (D-106).
+`LessonsScreen` is the replay list, and it is deliberately self-contained so
+`add-trophy-cabinet` can adopt it whole rather than rebuild it; it lives behind
+a settings row until then. Full house and naked single have no **lesson** on
+purpose: a player who cannot find those has not met a technique, they have not
+met the game, which is change 33's business.
+
+**The content is derived, not written.** `tool/find_lesson_positions.dart` walks
+the shipped **pack** until each technique actually fires, and
+`lesson_catalogue_test.dart` re-checks every grid against the engine. Regenerate
+rather than hand-editing a grid; a lesson demonstrating a pattern its own board
+does not contain reads perfectly and teaches nothing.
+
+**It amended a shipped scenario.** D-103 said a marked **rank** opens with "no
+extra step"; a **lesson** is one. `grid-input` now says a **lesson** may precede
+the grid and is never a penalty for reaching upward. It also fixed a schema
+defect it did not cause — see D-107.
 
 ### 14. `add-daily-challenge`
 **Capabilities:** `daily-challenge`

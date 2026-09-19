@@ -1,0 +1,900 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": true
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "notes",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "puzzle_id",
+            "getter_name": "puzzleId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "cell",
+            "getter_name": "cell",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "ComparableExpr",
+                        "import_uri": "package:drift/src/runtime/query_builder/query_builder.dart"
+                      },
+                      "(",
+                      {
+                        "lexeme": "cell",
+                        "tag": "cell"
+                      },
+                      ").isBetweenValues(0,80)"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "digit",
+            "getter_name": "digit",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "ComparableExpr",
+                        "import_uri": "package:drift/src/runtime/query_builder/query_builder.dart"
+                      },
+                      "(",
+                      {
+                        "lexeme": "digit",
+                        "tag": "digit"
+                      },
+                      ").isBetweenValues(1,9)"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "kind",
+            "getter_name": "kind",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<NoteKind>(NoteKind.values)",
+              "dart_type_name": "NoteKind"
+            }
+          },
+          {
+            "name": "origin",
+            "getter_name": "origin",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<NoteOrigin>(NoteOrigin.values)",
+              "dart_type_name": "NoteOrigin"
+            }
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "puzzle_id",
+          "cell",
+          "digit"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "puzzle_saves",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "puzzle_id",
+            "getter_name": "puzzleId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "placed_values",
+            "getter_name": "placedValues",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "allowed-lengths": {
+                  "min": 81,
+                  "max": 81
+                }
+              }
+            ]
+          },
+          {
+            "name": "elapsed_ms",
+            "getter_name": "elapsedMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "is_complete",
+            "getter_name": "isComplete",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"is_complete\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"is_complete\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "device_origin",
+            "getter_name": "deviceOrigin",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "mistakes",
+            "getter_name": "mistakes",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "puzzle_id"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "packs",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "pack_id",
+            "getter_name": "packId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "version",
+            "getter_name": "version",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "installed_at",
+            "getter_name": "installedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "pack_id"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "references": [
+        2
+      ],
+      "type": "table",
+      "data": {
+        "name": "puzzles",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "pack_id",
+            "getter_name": "packId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL REFERENCES packs (pack_id)",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "packs",
+                    "column": "pack_id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "clues",
+            "getter_name": "clues",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "allowed-lengths": {
+                  "min": 81,
+                  "max": 81
+                }
+              }
+            ]
+          },
+          {
+            "name": "solution",
+            "getter_name": "solution",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "allowed-lengths": {
+                  "min": 81,
+                  "max": 81
+                }
+              }
+            ]
+          },
+          {
+            "name": "rank",
+            "getter_name": "rank",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<Rank>(Rank.values)",
+              "dart_type_name": "Rank"
+            }
+          },
+          {
+            "name": "seed",
+            "getter_name": "seed",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "solved_puzzles",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "puzzle_id",
+            "getter_name": "puzzleId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "solved_at",
+            "getter_name": "solvedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "puzzle_id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "lifetime_stats",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "puzzles_solved",
+            "getter_name": "puzzlesSolved",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "perfect_solves",
+            "getter_name": "perfectSolves",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "total_play_ms",
+            "getter_name": "totalPlayMs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "technique_stats",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "technique",
+            "getter_name": "technique",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "const EnumNameConverter<Technique>(Technique.values)",
+              "dart_type_name": "Technique"
+            }
+          },
+          {
+            "name": "puzzles_requiring",
+            "getter_name": "puzzlesRequiring",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "technique"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "settings",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "key",
+            "getter_name": "key",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "bool_value",
+            "getter_name": "boolValue",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"bool_value\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"bool_value\" IN (0, 1))"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "key"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "config_cache",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "document",
+            "getter_name": "document",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "validator",
+            "getter_name": "validator",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fetched_at",
+            "getter_name": "fetchedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "seen_lessons",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "lesson_id",
+            "getter_name": "lessonId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "seen_at",
+            "getter_name": "seenAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at",
+            "getter_name": "updatedAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": "DateTime.now",
+            "dsl_features": []
+          },
+          {
+            "name": "pending_upload",
+            "getter_name": "pendingUpload",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"pending_upload\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"pending_upload\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "lesson_id"
+        ]
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "notes",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"notes\" (\"puzzle_id\" TEXT NOT NULL, \"cell\" INTEGER NOT NULL CHECK(\"cell\" BETWEEN 0 AND 80), \"digit\" INTEGER NOT NULL CHECK(\"digit\" BETWEEN 1 AND 9), \"kind\" TEXT NOT NULL, \"origin\" TEXT NOT NULL, \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"puzzle_id\", \"cell\", \"digit\"));"
+        }
+      ]
+    },
+    {
+      "name": "puzzle_saves",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"puzzle_saves\" (\"puzzle_id\" TEXT NOT NULL, \"placed_values\" TEXT NOT NULL, \"elapsed_ms\" INTEGER NOT NULL DEFAULT 0, \"is_complete\" INTEGER NOT NULL DEFAULT 0 CHECK (\"is_complete\" IN (0, 1)), \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), \"device_origin\" TEXT NOT NULL DEFAULT '', \"mistakes\" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (\"puzzle_id\"));"
+        }
+      ]
+    },
+    {
+      "name": "packs",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"packs\" (\"pack_id\" TEXT NOT NULL, \"version\" INTEGER NOT NULL, \"installed_at\" TEXT NOT NULL, PRIMARY KEY (\"pack_id\"));"
+        }
+      ]
+    },
+    {
+      "name": "puzzles",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"puzzles\" (\"id\" TEXT NOT NULL, \"pack_id\" TEXT NOT NULL REFERENCES packs (pack_id), \"clues\" TEXT NOT NULL, \"solution\" TEXT NOT NULL, \"rank\" TEXT NOT NULL, \"seed\" INTEGER NOT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "solved_puzzles",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"solved_puzzles\" (\"puzzle_id\" TEXT NOT NULL, \"solved_at\" TEXT NOT NULL, \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"puzzle_id\"));"
+        }
+      ]
+    },
+    {
+      "name": "lifetime_stats",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"lifetime_stats\" (\"id\" INTEGER NOT NULL, \"puzzles_solved\" INTEGER NOT NULL DEFAULT 0, \"perfect_solves\" INTEGER NOT NULL DEFAULT 0, \"total_play_ms\" INTEGER NOT NULL DEFAULT 0, \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "technique_stats",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"technique_stats\" (\"technique\" TEXT NOT NULL, \"puzzles_requiring\" INTEGER NOT NULL DEFAULT 0, \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"technique\"));"
+        }
+      ]
+    },
+    {
+      "name": "settings",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"settings\" (\"key\" TEXT NOT NULL, \"bool_value\" INTEGER NOT NULL CHECK (\"bool_value\" IN (0, 1)), \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"key\"));"
+        }
+      ]
+    },
+    {
+      "name": "config_cache",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"config_cache\" (\"id\" INTEGER NOT NULL, \"document\" TEXT NOT NULL, \"validator\" TEXT NULL, \"fetched_at\" TEXT NOT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "seen_lessons",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"seen_lessons\" (\"lesson_id\" TEXT NOT NULL, \"seen_at\" TEXT NOT NULL, \"updated_at\" TEXT NOT NULL, \"pending_upload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"pending_upload\" IN (0, 1)), PRIMARY KEY (\"lesson_id\"));"
+        }
+      ]
+    }
+  ]
+}

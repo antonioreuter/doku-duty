@@ -1337,6 +1337,7 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES packs (pack_id)',
   );
   static const VerificationMeta _cluesMeta = const VerificationMeta('clues');
   @override
@@ -1491,6 +1492,27 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
 
 class Puzzle extends DataClass implements Insertable<Puzzle> {
   final String id;
+
+  /// The **pack** this puzzle came from.
+  ///
+  /// Spelled as a custom constraint rather than `.references(Packs, #packId)`,
+  /// and not by preference. `.references()` stopped emitting the SQL-level
+  /// foreign key at some drift upgrade, so the app quietly began creating this
+  /// column as a bare `TEXT NOT NULL` while every schema snapshot from v1 on
+  /// still recorded `REFERENCES packs (pack_id)`. Nothing caught it because the
+  /// migration tests compare snapshots with each other, and no schema change
+  /// was made between the upgrade and `add-technique-tutorials` — whose bump to
+  /// version 4 was the first comparison against what the app actually builds.
+  ///
+  /// Installs from before that upgrade have the key; installs made in between
+  /// do not. Neither enforces it — there is no `foreign_keys` pragma — so the
+  /// divergence costs nothing at runtime, and stating the constraint here is
+  /// what makes new databases agree with the old ones and with the snapshots
+  /// again.
+  ///
+  /// **Do not swap this back to `.references()` without dumping
+  /// `sqlite_master` and reading the emitted SQL.** The declaration looks
+  /// correct either way; only the SQL says which one it is.
   final String packId;
 
   /// The givens, 81 characters, `.` for empty.
@@ -3436,6 +3458,326 @@ class ConfigCacheCompanion extends UpdateCompanion<ConfigCacheData> {
   }
 }
 
+class $SeenLessonsTable extends SeenLessons
+    with TableInfo<$SeenLessonsTable, SeenLesson> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SeenLessonsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _lessonIdMeta = const VerificationMeta(
+    'lessonId',
+  );
+  @override
+  late final GeneratedColumn<String> lessonId = GeneratedColumn<String>(
+    'lesson_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _seenAtMeta = const VerificationMeta('seenAt');
+  @override
+  late final GeneratedColumn<DateTime> seenAt = GeneratedColumn<DateTime>(
+    'seen_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    lessonId,
+    seenAt,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'seen_lessons';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SeenLesson> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('lesson_id')) {
+      context.handle(
+        _lessonIdMeta,
+        lessonId.isAcceptableOrUnknown(data['lesson_id']!, _lessonIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lessonIdMeta);
+    }
+    if (data.containsKey('seen_at')) {
+      context.handle(
+        _seenAtMeta,
+        seenAt.isAcceptableOrUnknown(data['seen_at']!, _seenAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {lessonId};
+  @override
+  SeenLesson map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SeenLesson(
+      lessonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lesson_id'],
+      )!,
+      seenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}seen_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $SeenLessonsTable createAlias(String alias) {
+    return $SeenLessonsTable(attachedDatabase, alias);
+  }
+}
+
+class SeenLesson extends DataClass implements Insertable<SeenLesson> {
+  final String lessonId;
+  final DateTime seenAt;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const SeenLesson({
+    required this.lessonId,
+    required this.seenAt,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['lesson_id'] = Variable<String>(lessonId);
+    map['seen_at'] = Variable<DateTime>(seenAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  SeenLessonsCompanion toCompanion(bool nullToAbsent) {
+    return SeenLessonsCompanion(
+      lessonId: Value(lessonId),
+      seenAt: Value(seenAt),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory SeenLesson.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SeenLesson(
+      lessonId: serializer.fromJson<String>(json['lessonId']),
+      seenAt: serializer.fromJson<DateTime>(json['seenAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'lessonId': serializer.toJson<String>(lessonId),
+      'seenAt': serializer.toJson<DateTime>(seenAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  SeenLesson copyWith({
+    String? lessonId,
+    DateTime? seenAt,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => SeenLesson(
+    lessonId: lessonId ?? this.lessonId,
+    seenAt: seenAt ?? this.seenAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  SeenLesson copyWithCompanion(SeenLessonsCompanion data) {
+    return SeenLesson(
+      lessonId: data.lessonId.present ? data.lessonId.value : this.lessonId,
+      seenAt: data.seenAt.present ? data.seenAt.value : this.seenAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeenLesson(')
+          ..write('lessonId: $lessonId, ')
+          ..write('seenAt: $seenAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(lessonId, seenAt, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SeenLesson &&
+          other.lessonId == this.lessonId &&
+          other.seenAt == this.seenAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class SeenLessonsCompanion extends UpdateCompanion<SeenLesson> {
+  final Value<String> lessonId;
+  final Value<DateTime> seenAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const SeenLessonsCompanion({
+    this.lessonId = const Value.absent(),
+    this.seenAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SeenLessonsCompanion.insert({
+    required String lessonId,
+    this.seenAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : lessonId = Value(lessonId);
+  static Insertable<SeenLesson> custom({
+    Expression<String>? lessonId,
+    Expression<DateTime>? seenAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (lessonId != null) 'lesson_id': lessonId,
+      if (seenAt != null) 'seen_at': seenAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SeenLessonsCompanion copyWith({
+    Value<String>? lessonId,
+    Value<DateTime>? seenAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return SeenLessonsCompanion(
+      lessonId: lessonId ?? this.lessonId,
+      seenAt: seenAt ?? this.seenAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (lessonId.present) {
+      map['lesson_id'] = Variable<String>(lessonId.value);
+    }
+    if (seenAt.present) {
+      map['seen_at'] = Variable<DateTime>(seenAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeenLessonsCompanion(')
+          ..write('lessonId: $lessonId, ')
+          ..write('seenAt: $seenAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3448,6 +3790,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TechniqueStatsTable techniqueStats = $TechniqueStatsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final $ConfigCacheTable configCache = $ConfigCacheTable(this);
+  late final $SeenLessonsTable seenLessons = $SeenLessonsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3462,6 +3805,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     techniqueStats,
     settings,
     configCache,
+    seenLessons,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -3983,6 +4327,29 @@ typedef $$PacksTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$PacksTableReferences
+    extends BaseReferences<_$AppDatabase, $PacksTable, Pack> {
+  $$PacksTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PuzzlesTable, List<Puzzle>> _puzzlesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.puzzles,
+    aliasName: $_aliasNameGenerator(db.packs.packId, db.puzzles.packId),
+  );
+
+  $$PuzzlesTableProcessedTableManager get puzzlesRefs {
+    final manager = $$PuzzlesTableTableManager($_db, $_db.puzzles).filter(
+      (f) => f.packId.packId.sqlEquals($_itemColumn<String>('pack_id')!),
+    );
+
+    final cache = $_typedResult.readTableOrNull(_puzzlesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$PacksTableFilterComposer extends Composer<_$AppDatabase, $PacksTable> {
   $$PacksTableFilterComposer({
     required super.$db,
@@ -4005,6 +4372,31 @@ class $$PacksTableFilterComposer extends Composer<_$AppDatabase, $PacksTable> {
     column: $table.installedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> puzzlesRefs(
+    Expression<bool> Function($$PuzzlesTableFilterComposer f) f,
+  ) {
+    final $$PuzzlesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packId,
+      referencedTable: $db.puzzles,
+      getReferencedColumn: (t) => t.packId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PuzzlesTableFilterComposer(
+            $db: $db,
+            $table: $db.puzzles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PacksTableOrderingComposer
@@ -4051,6 +4443,31 @@ class $$PacksTableAnnotationComposer
     column: $table.installedAt,
     builder: (column) => column,
   );
+
+  Expression<T> puzzlesRefs<T extends Object>(
+    Expression<T> Function($$PuzzlesTableAnnotationComposer a) f,
+  ) {
+    final $$PuzzlesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packId,
+      referencedTable: $db.puzzles,
+      getReferencedColumn: (t) => t.packId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PuzzlesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.puzzles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PacksTableTableManager
@@ -4064,9 +4481,9 @@ class $$PacksTableTableManager
           $$PacksTableAnnotationComposer,
           $$PacksTableCreateCompanionBuilder,
           $$PacksTableUpdateCompanionBuilder,
-          (Pack, BaseReferences<_$AppDatabase, $PacksTable, Pack>),
+          (Pack, $$PacksTableReferences),
           Pack,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool puzzlesRefs})
         > {
   $$PacksTableTableManager(_$AppDatabase db, $PacksTable table)
     : super(
@@ -4104,9 +4521,34 @@ class $$PacksTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) =>
+                    (e.readTable(table), $$PacksTableReferences(db, table, e)),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({puzzlesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (puzzlesRefs) db.puzzles],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (puzzlesRefs)
+                    await $_getPrefetchedData<Pack, $PacksTable, Puzzle>(
+                      currentTable: table,
+                      referencedTable: $$PacksTableReferences._puzzlesRefsTable(
+                        db,
+                      ),
+                      managerFromTypedResult: (p0) =>
+                          $$PacksTableReferences(db, table, p0).puzzlesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.packId == item.packId),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -4121,9 +4563,9 @@ typedef $$PacksTableProcessedTableManager =
       $$PacksTableAnnotationComposer,
       $$PacksTableCreateCompanionBuilder,
       $$PacksTableUpdateCompanionBuilder,
-      (Pack, BaseReferences<_$AppDatabase, $PacksTable, Pack>),
+      (Pack, $$PacksTableReferences),
       Pack,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool puzzlesRefs})
     >;
 typedef $$PuzzlesTableCreateCompanionBuilder =
     PuzzlesCompanion Function({
@@ -4146,6 +4588,29 @@ typedef $$PuzzlesTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$PuzzlesTableReferences
+    extends BaseReferences<_$AppDatabase, $PuzzlesTable, Puzzle> {
+  $$PuzzlesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $PacksTable _packIdTable(_$AppDatabase db) => db.packs.createAlias(
+    $_aliasNameGenerator(db.puzzles.packId, db.packs.packId),
+  );
+
+  $$PacksTableProcessedTableManager get packId {
+    final $_column = $_itemColumn<String>('pack_id')!;
+
+    final manager = $$PacksTableTableManager(
+      $_db,
+      $_db.packs,
+    ).filter((f) => f.packId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_packIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $$PuzzlesTableFilterComposer
     extends Composer<_$AppDatabase, $PuzzlesTable> {
   $$PuzzlesTableFilterComposer({
@@ -4157,11 +4622,6 @@ class $$PuzzlesTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get packId => $composableBuilder(
-    column: $table.packId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4185,6 +4645,29 @@ class $$PuzzlesTableFilterComposer
     column: $table.seed,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$PacksTableFilterComposer get packId {
+    final $$PacksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packId,
+      referencedTable: $db.packs,
+      getReferencedColumn: (t) => t.packId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PacksTableFilterComposer(
+            $db: $db,
+            $table: $db.packs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$PuzzlesTableOrderingComposer
@@ -4198,11 +4681,6 @@ class $$PuzzlesTableOrderingComposer
   });
   ColumnOrderings<String> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get packId => $composableBuilder(
-    column: $table.packId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4225,6 +4703,29 @@ class $$PuzzlesTableOrderingComposer
     column: $table.seed,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$PacksTableOrderingComposer get packId {
+    final $$PacksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packId,
+      referencedTable: $db.packs,
+      getReferencedColumn: (t) => t.packId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PacksTableOrderingComposer(
+            $db: $db,
+            $table: $db.packs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$PuzzlesTableAnnotationComposer
@@ -4239,9 +4740,6 @@ class $$PuzzlesTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get packId =>
-      $composableBuilder(column: $table.packId, builder: (column) => column);
-
   GeneratedColumn<String> get clues =>
       $composableBuilder(column: $table.clues, builder: (column) => column);
 
@@ -4253,6 +4751,29 @@ class $$PuzzlesTableAnnotationComposer
 
   GeneratedColumn<int> get seed =>
       $composableBuilder(column: $table.seed, builder: (column) => column);
+
+  $$PacksTableAnnotationComposer get packId {
+    final $$PacksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.packId,
+      referencedTable: $db.packs,
+      getReferencedColumn: (t) => t.packId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PacksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.packs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$PuzzlesTableTableManager
@@ -4266,9 +4787,9 @@ class $$PuzzlesTableTableManager
           $$PuzzlesTableAnnotationComposer,
           $$PuzzlesTableCreateCompanionBuilder,
           $$PuzzlesTableUpdateCompanionBuilder,
-          (Puzzle, BaseReferences<_$AppDatabase, $PuzzlesTable, Puzzle>),
+          (Puzzle, $$PuzzlesTableReferences),
           Puzzle,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool packId})
         > {
   $$PuzzlesTableTableManager(_$AppDatabase db, $PuzzlesTable table)
     : super(
@@ -4318,9 +4839,54 @@ class $$PuzzlesTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$PuzzlesTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({packId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (packId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.packId,
+                                referencedTable: $$PuzzlesTableReferences
+                                    ._packIdTable(db),
+                                referencedColumn: $$PuzzlesTableReferences
+                                    ._packIdTable(db)
+                                    .packId,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -4335,9 +4901,9 @@ typedef $$PuzzlesTableProcessedTableManager =
       $$PuzzlesTableAnnotationComposer,
       $$PuzzlesTableCreateCompanionBuilder,
       $$PuzzlesTableUpdateCompanionBuilder,
-      (Puzzle, BaseReferences<_$AppDatabase, $PuzzlesTable, Puzzle>),
+      (Puzzle, $$PuzzlesTableReferences),
       Puzzle,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool packId})
     >;
 typedef $$SolvedPuzzlesTableCreateCompanionBuilder =
     SolvedPuzzlesCompanion Function({
@@ -5283,6 +5849,189 @@ typedef $$ConfigCacheTableProcessedTableManager =
       ConfigCacheData,
       PrefetchHooks Function()
     >;
+typedef $$SeenLessonsTableCreateCompanionBuilder =
+    SeenLessonsCompanion Function({
+      required String lessonId,
+      Value<DateTime> seenAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$SeenLessonsTableUpdateCompanionBuilder =
+    SeenLessonsCompanion Function({
+      Value<String> lessonId,
+      Value<DateTime> seenAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$SeenLessonsTableFilterComposer
+    extends Composer<_$AppDatabase, $SeenLessonsTable> {
+  $$SeenLessonsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get lessonId => $composableBuilder(
+    column: $table.lessonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get seenAt => $composableBuilder(
+    column: $table.seenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SeenLessonsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SeenLessonsTable> {
+  $$SeenLessonsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get lessonId => $composableBuilder(
+    column: $table.lessonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get seenAt => $composableBuilder(
+    column: $table.seenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SeenLessonsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SeenLessonsTable> {
+  $$SeenLessonsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get lessonId =>
+      $composableBuilder(column: $table.lessonId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get seenAt =>
+      $composableBuilder(column: $table.seenAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$SeenLessonsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SeenLessonsTable,
+          SeenLesson,
+          $$SeenLessonsTableFilterComposer,
+          $$SeenLessonsTableOrderingComposer,
+          $$SeenLessonsTableAnnotationComposer,
+          $$SeenLessonsTableCreateCompanionBuilder,
+          $$SeenLessonsTableUpdateCompanionBuilder,
+          (
+            SeenLesson,
+            BaseReferences<_$AppDatabase, $SeenLessonsTable, SeenLesson>,
+          ),
+          SeenLesson,
+          PrefetchHooks Function()
+        > {
+  $$SeenLessonsTableTableManager(_$AppDatabase db, $SeenLessonsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SeenLessonsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SeenLessonsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SeenLessonsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> lessonId = const Value.absent(),
+                Value<DateTime> seenAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SeenLessonsCompanion(
+                lessonId: lessonId,
+                seenAt: seenAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String lessonId,
+                Value<DateTime> seenAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SeenLessonsCompanion.insert(
+                lessonId: lessonId,
+                seenAt: seenAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SeenLessonsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SeenLessonsTable,
+      SeenLesson,
+      $$SeenLessonsTableFilterComposer,
+      $$SeenLessonsTableOrderingComposer,
+      $$SeenLessonsTableAnnotationComposer,
+      $$SeenLessonsTableCreateCompanionBuilder,
+      $$SeenLessonsTableUpdateCompanionBuilder,
+      (
+        SeenLesson,
+        BaseReferences<_$AppDatabase, $SeenLessonsTable, SeenLesson>,
+      ),
+      SeenLesson,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5305,4 +6054,6 @@ class $AppDatabaseManager {
       $$SettingsTableTableManager(_db, _db.settings);
   $$ConfigCacheTableTableManager get configCache =>
       $$ConfigCacheTableTableManager(_db, _db.configCache);
+  $$SeenLessonsTableTableManager get seenLessons =>
+      $$SeenLessonsTableTableManager(_db, _db.seenLessons);
 }

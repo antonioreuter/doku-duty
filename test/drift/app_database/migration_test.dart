@@ -9,6 +9,7 @@ import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
+import 'generated/schema_v4.dart' as v4;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -391,4 +392,156 @@ void main() {
       );
     },
   );
+
+  // The migration that carries live player progress across
+  // `add-technique-tutorials`. Version 4 adds a table and changes no existing
+  // one, so the whole point of this test is the *absence* of movement: every
+  // save, note, statistic, setting and **solve record** arrives unchanged.
+  //
+  // Validated with raw queries rather than the generated v4 data classes. The
+  // newer drift codegen types those with storage types — `int` for a bool,
+  // `String` for a `DateTime` — where v1 through v3 carry Dart types, so an
+  // expectation written against the generated class would be asserting which
+  // version of drift_dev produced the snapshot rather than whether the
+  // player's rows survived.
+  test('migration from v3 to v4 keeps everything and adds no seen lessons', () async {
+    final stamp = DateTime.utc(2026, 9, 19, 11);
+    const grid =
+        '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+    final oldSaves = <v3.PuzzleSavesData>[
+      v3.PuzzleSavesData(
+        puzzleId: 'p1',
+        placedValues: grid,
+        elapsedMs: 742000,
+        isComplete: false,
+        updatedAt: stamp,
+        pendingUpload: true,
+        deviceOrigin: 'test-device',
+        mistakes: 2,
+      ),
+    ];
+
+    final oldNotes = <v3.NotesData>[
+      v3.NotesData(
+        puzzleId: 'p1',
+        cell: 40,
+        digit: 7,
+        kind: 'provisional',
+        origin: 'manual',
+        updatedAt: stamp,
+        pendingUpload: true,
+      ),
+    ];
+
+    // A player mid-ladder: a solved puzzle behind them and a technique counted.
+    // Both are what the **rank** and the **technique unlock**s are read from,
+    // so losing either would reset a player's progression silently.
+    final oldSolved = <v3.SolvedPuzzlesData>[
+      v3.SolvedPuzzlesData(
+        puzzleId: 'q-sheriff',
+        solvedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: true,
+      ),
+    ];
+
+    final oldTechniques = <v3.TechniqueStatsData>[
+      v3.TechniqueStatsData(
+        technique: 'nakedPair',
+        puzzlesRequiring: 3,
+        updatedAt: stamp,
+        pendingUpload: true,
+      ),
+    ];
+
+    final oldLifetime = <v3.LifetimeStatsData>[
+      v3.LifetimeStatsData(
+        id: 0,
+        puzzlesSolved: 41,
+        perfectSolves: 12,
+        totalPlayMs: 9000000,
+        updatedAt: stamp,
+        pendingUpload: true,
+      ),
+    ];
+
+    final oldSettings = <v3.SettingsData>[
+      v3.SettingsData(
+        key: 'strictMode',
+        boolValue: true,
+        updatedAt: stamp,
+        pendingUpload: true,
+      ),
+    ];
+
+    await verifier.testWithDataIntegrity(
+      oldVersion: 3,
+      newVersion: 4,
+      createOld: v3.DatabaseAtV3.new,
+      createNew: v4.DatabaseAtV4.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.notes, oldNotes);
+        batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        batch.insertAll(oldDb.solvedPuzzles, oldSolved);
+        batch.insertAll(oldDb.techniqueStats, oldTechniques);
+        batch.insertAll(oldDb.lifetimeStats, oldLifetime);
+        batch.insertAll(oldDb.settings, oldSettings);
+      },
+      validateItems: (newDb) async {
+        Future<List<Map<String, Object?>>> rows(String sql) async {
+          final result = await newDb.customSelect(sql).get();
+          return <Map<String, Object?>>[for (final r in result) r.data];
+        }
+
+        final saves = await rows(
+          'SELECT puzzle_id, placed_values, elapsed_ms, mistakes, device_origin '
+          'FROM puzzle_saves',
+        );
+        expect(saves, hasLength(1));
+        expect(saves.single['puzzle_id'], 'p1');
+        expect(saves.single['placed_values'], grid);
+        expect(saves.single['elapsed_ms'], 742000);
+        expect(saves.single['mistakes'], 2);
+        expect(saves.single['device_origin'], 'test-device');
+
+        final notes = await rows(
+          'SELECT puzzle_id, cell, digit, kind, origin FROM notes',
+        );
+        expect(notes, hasLength(1));
+        expect(notes.single['cell'], 40);
+        expect(notes.single['digit'], 7);
+        expect(notes.single['kind'], 'provisional');
+        expect(notes.single['origin'], 'manual');
+
+        final solved = await rows('SELECT puzzle_id FROM solved_puzzles');
+        expect(solved.single['puzzle_id'], 'q-sheriff');
+
+        final techniques = await rows(
+          'SELECT technique, puzzles_requiring FROM technique_stats',
+        );
+        expect(techniques.single['technique'], 'nakedPair');
+        expect(techniques.single['puzzles_requiring'], 3);
+
+        final lifetime = await rows(
+          'SELECT puzzles_solved, perfect_solves, total_play_ms '
+          'FROM lifetime_stats',
+        );
+        expect(lifetime.single['puzzles_solved'], 41);
+        expect(lifetime.single['perfect_solves'], 12);
+        expect(lifetime.single['total_play_ms'], 9000000);
+
+        final settings = await rows('SELECT key, bool_value FROM settings');
+        expect(settings.single['key'], 'strictMode');
+
+        // The direction that matters. An upgrading player has seen no
+        // **lesson**, so every **lesson** is still due. Arriving in any state
+        // that read as "all seen" would switch the whole feature off for every
+        // existing install, silently and permanently — nothing ever un-sees a
+        // lesson.
+        expect(await rows('SELECT lesson_id FROM seen_lessons'), isEmpty);
+      },
+    );
+  });
 }

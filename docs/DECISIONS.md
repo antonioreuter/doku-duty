@@ -1609,3 +1609,71 @@ handed the same puzzle — the exact symptom this change existed to fix, restore
 one layer higher up where the repository tests cannot see it. If the picker is
 ever replaced by a screen that does not stay mounted, this becomes dead code
 rather than wrong code, which is the safe direction.
+
+### D-106 · At most one lesson per puzzle opening, the hardest one due
+
+When a puzzle is opened and more than one of its techniques is due a **lesson**,
+exactly one is shown: the hardest by the D-57 ladder. The rest stay due and
+arrive on a later opening.
+
+**Rationale.** The alternative — show every **lesson** the puzzle needs — is the
+obvious reading of "each tier introduces its technique" and it breaks on a case
+D-103 deliberately created. Because **rank**s above the player's are marked
+rather than locked, a Greenhorn can open a Legend puzzle on one tap, and that
+puzzle may require six techniques they have never met. Six walkthroughs in front
+of one grid is not the "short" `docs/SPEC.md` §4 asks for; it is a wall built
+out of teaching material, at the exact moment the player has just expressed
+curiosity by reaching upward. The soft gate would have punished the player for
+using it.
+
+One is chosen over "as many as fit" or "up to three" because a fixed bound of
+one is the only version with no second question attached. The interruption is
+then a known quantity: opening a puzzle costs at most one **lesson**, always,
+and a player can predict that.
+
+The *hardest* rather than the easiest, because the hardest due technique is the
+one the puzzle is graded on (D-07) and therefore the one most likely to be what
+stops them. Teaching a Greenhorn who opened a Legend puzzle about hidden singles
+first would be answering a question they did not ask.
+
+**What breaks if reversed.** Showing all of them turns the soft **rank** gate
+into a penalty for curiosity, and the first thing an adventurous player meets is
+a queue. Showing the easiest instead of the hardest teaches around the problem
+rather than at it, and the player still cannot finish the grid.
+
+### D-107 · The pack foreign key is spelled out, because `references()` stopped emitting it
+
+`Puzzles.packId` declares its foreign key as a custom constraint —
+`text().customConstraint('NOT NULL REFERENCES packs (pack_id)')` — rather than
+with drift's `.references(Packs, #packId)`.
+
+**Rationale.** This was not a preference. At some drift upgrade, `.references()`
+stopped emitting the SQL-level foreign key, and the app began creating the
+column as a bare `TEXT NOT NULL` while every schema snapshot from v1 onward
+still recorded `REFERENCES packs (pack_id)`. Nothing caught it: the migration
+tests compare one snapshot against another, so neither side ever looks at what
+the app actually builds, and no schema change was made between the upgrade and
+`add-technique-tutorials` — whose bump to version 4 was the first comparison
+that did.
+
+The state it left behind is two populations. Installs from before the upgrade
+carry the key; installs made in between do not. Neither *enforces* it — there is
+no `foreign_keys` pragma anywhere, so SQLite has never checked it — which is why
+the divergence cost nothing at runtime and could sit unnoticed for three
+changes.
+
+Restoring it was chosen over the two alternatives. Regenerating the older
+snapshot helpers to agree that the key never existed would have made the
+snapshots describe the code, at the price of their no longer describing the
+databases actually in the field. Dropping `.references()` outright would have
+been honest about the SQL and thrown away the statement that a puzzle belongs to
+a **pack**. Spelling the constraint out makes new databases agree with the old
+ones *and* with all four snapshots, and it is the only option under which the
+three sources stop disagreeing.
+
+**What breaks if reversed.** Going back to `.references()` silently drops the
+key again, and the next schema bump fails the same migration test with the same
+confusing message — a diff about `puzzles` in a change that never touched
+`puzzles`. The declaration looks correct either way; only the emitted SQL says
+which it is, which is why the column now carries an instruction to dump
+`sqlite_master` rather than trust the Dart.

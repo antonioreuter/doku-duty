@@ -219,6 +219,20 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey<String>('rank-marshal')));
       await tester.pumpAndSettle();
+
+      // Since `add-technique-tutorials`, a **lesson** can stand in front of the
+      // grid on a first opening. Skipped here rather than suppressed: what this
+      // test is about is the **rank** still being openable, and the skip is the
+      // one action a player always has (constraint 1).
+      final skip = find.byKey(const ValueKey<String>('lesson-skip'));
+      if (skip.evaluate().isNotEmpty) {
+        await tester.tap(skip);
+        // The seen write is a database round trip and resolves after the frame
+        // loop goes quiet, so settling once is not enough.
+        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pumpAndSettle();
+      }
       expect(find.byType(PuzzleGrid), findsOneWidget);
     });
 

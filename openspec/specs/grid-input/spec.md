@@ -212,7 +212,16 @@ report having none left at a **rank** as an ordinary absence, and MUST mark the
 
 - **WHEN** the player chooses a **rank** above their own
 - **THEN** a puzzle of that **rank** is opened, with no confirmation, no warning
-  to dismiss, and no extra step (constraint 1)
+  to dismiss, and no gate — and a **lesson** may precede it on a first
+  encounter, on exactly the terms it would precede any other puzzle, skippable
+  in one tap (constraint 1)
+
+#### Scenario: A lesson is not a penalty for reaching upward
+
+- **WHEN** a **lesson** precedes a puzzle at a **rank** above the player's own
+- **THEN** it is the same **lesson**, shown for the same reason, as it would be
+  at any other **rank** — triggered by a technique the player has not met, never
+  by the **rank** being above theirs
 
 #### Scenario: Solving a marked rank clears its mark
 

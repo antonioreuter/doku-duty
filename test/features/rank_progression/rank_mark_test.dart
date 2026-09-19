@@ -139,10 +139,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(_markOn(Rank.legend), findsOneWidget);
 
-      // One tap. No confirmation to accept, no warning to dismiss, no second
-      // step of any kind (constraint 1).
+      // One tap. No confirmation to accept, no warning to dismiss, no gate
+      // (constraint 1).
       await tester.tap(find.byKey(const ValueKey<String>('rank-legend')));
       await tester.pumpAndSettle();
+
+      // A **lesson** may stand in front of the grid on a first encounter, and
+      // `add-technique-tutorials` amended this scenario to say so. What D-103
+      // forbids is a penalty for reaching upward — so what matters here is that
+      // the lesson is the ordinary one, leaves in a single tap, and asks
+      // nothing of the player before it does.
+      final skip = find.byKey(const ValueKey<String>('lesson-skip'));
+      if (skip.evaluate().isNotEmpty) {
+        expect(
+          find.byKey(const ValueKey<String>('lesson-next')),
+          findsOneWidget,
+          reason: 'a lesson with no way forward is a gate',
+        );
+        await tester.tap(skip);
+        // Seen is written before the puzzle opens (constraint 9), and that
+        // write is a real database round trip — it resolves after the frame
+        // loop has gone quiet, so settling once is not enough.
+        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pumpAndSettle();
+      }
 
       expect(find.byType(PuzzleGrid), findsOneWidget);
       expect(tester.takeException(), isNull);
