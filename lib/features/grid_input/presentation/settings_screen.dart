@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
+import '../../completion_effects/application/completion_settings.dart';
 import '../../mistake_model/application/strict_mode.dart';
 import '../../persistence/domain/app_setting.dart';
 import '../application/grid_providers.dart';
@@ -28,6 +29,13 @@ class SettingsScreen extends ConsumerStatefulWidget {
     AppSetting.reduceEffects: (
       title: 'Reduce effects',
       detail: 'Silences animation. Independent of the system setting.',
+      live: true,
+    ),
+    AppSetting.hideCompletionTints: (
+      title: 'Hide completion tints',
+      detail:
+          'Stops colouring finished rows, columns, and boxes. The corner marks '
+          'stay.',
       live: true,
     ),
     // Both effects named before it is turned on: the only failure state in the
@@ -86,6 +94,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             // and take effect only on the next launch.
                             if (entry.key == AppSetting.strictMode) {
                               ref.read(strictModeProvider.notifier).set(value);
+                            } else if (entry.key ==
+                                AppSetting.hideCompletionTints) {
+                              ref
+                                  .read(hideCompletionTintsProvider.notifier)
+                                  .set(value);
                             } else {
                               await repository.write(entry.key, value: value);
                             }

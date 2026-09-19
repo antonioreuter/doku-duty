@@ -31,6 +31,7 @@ Future<void> bootstrap(FlavourConfig config) async {
       // rather than inside either feature so neither imports the other.
       persistedReduceEffectsOverride,
       persistedStrictModeOverride,
+      persistedHideCompletionTintsOverride,
     ],
   );
 

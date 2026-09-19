@@ -27,6 +27,20 @@ enum AppSetting {
   /// reduce-motion setting, which is read separately and is not stored here.
   reduceEffects(defaultValue: false),
 
+  /// Stop drawing the **completion tint** on the cells of a complete **unit**.
+  ///
+  /// **Off**, so the tints are drawn. Phrased as *hide* rather than *show* on
+  /// purpose: every setting in this enum is off until the player turns it on,
+  /// and the tints are the default behaviour, so the switch has to name the
+  /// departure from it. A `showCompletionTints` defaulting to true would be the
+  /// one row in the app whose default was "on", and the rule that keeps this
+  /// list honest is the one that has no exceptions.
+  ///
+  /// The **corner mark** is not affected by this. Hiding the tint hides a
+  /// convenience; the mark is the signal, and completion has to stay readable
+  /// without colour whatever the player has chosen (D-50, constraint 5).
+  hideCompletionTints(defaultValue: false),
+
   /// Lock a digit, then tap cells to place it (`docs/SPEC.md` §3.4).
   ///
   /// **Off.** Cell-first is the mode that needs no explaining, so it is what a

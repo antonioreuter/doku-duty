@@ -4,21 +4,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:doku_duty/features/design_system/domain/shape.dart';
 import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
+import 'package:doku_duty/features/grid_input/presentation/pad_tools.dart';
 
+/// The digits and the tools together, the way the puzzle screen builds them.
 Future<List<PadKey>> _pump(
   WidgetTester tester, {
   bool notesMode = false,
   bool provisionalInk = false,
+  bool hasProvisionalNotes = false,
 }) async {
   final pressed = <PadKey>[];
   await tester.pumpWidget(
     Directionality(
       textDirection: TextDirection.ltr,
       child: Center(
-        child: NumberPad(
-          notesMode: notesMode,
-          provisionalInk: provisionalInk,
-          onKey: pressed.add,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            NumberPad(onKey: pressed.add),
+            PadTools(
+              notesMode: notesMode,
+              provisionalInk: provisionalInk,
+              hasProvisionalNotes: hasProvisionalNotes,
+              onKey: pressed.add,
+            ),
+          ],
         ),
       ),
     ),
@@ -26,338 +36,287 @@ Future<List<PadKey>> _pump(
   return pressed;
 }
 
-/// The semantics node a screen reader is handed for the key drawn as [glyph].
-SemanticsNode _nodeFor(WidgetTester tester, String glyph) =>
+/// The semantics node a screen reader is handed for the control labelled
+/// [label].
+SemanticsNode _nodeFor(WidgetTester tester, String label) =>
     tester.getSemantics(
       find
-          .ancestor(of: find.text(glyph), matching: find.byType(Semantics))
+          .ancestor(of: find.text(label), matching: find.byType(Semantics))
           .first,
     );
 
+/// The tappable box behind the control labelled [label].
+Size _chipSize(WidgetTester tester, String label) => tester.getSize(
+  find
+      .ancestor(of: find.text(label), matching: find.byType(ConstrainedBox))
+      .first,
+);
+
 void main() {
-  testWidgets('the pad carries a notes toggle', (tester) async {
-    final pressed = await _pump(tester);
+  group('the tools are named, not drawn', () {
+    testWidgets('every tool carries its name in words', (tester) async {
+      await _pump(tester, notesMode: true, hasProvisionalNotes: true);
 
-    expect(find.text('✎'), findsOneWidget);
-    await tester.tap(find.text('✎'));
-    await tester.pump();
-
-    expect(pressed.single, isA<NotesToggleKey>());
-  });
-
-  testWidgets('the toggle holds the 44pt minimum like every other key', (
-    tester,
-  ) async {
-    await _pump(tester);
-
-    final box = find
-        .ancestor(of: find.text('✎'), matching: find.byType(SizedBox))
-        .first;
-    final size = tester.getSize(box);
-    expect(size.width, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
-    expect(size.height, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
-  });
-
-  // Constraint 1 applies to controls: nothing is disabled, ever.
-  testWidgets('the toggle never refuses a press', (tester) async {
-    final pressed = await _pump(tester);
-
-    for (var i = 0; i < 4; i++) {
-      await tester.tap(find.text('✎'));
-      await tester.pump();
-    }
-    expect(pressed, hasLength(4));
-  });
-
-  testWidgets('the toggle shows which mode is in force', (tester) async {
-    // Read before re-pumping: a semantics handle does not survive a new tree.
-    await _pump(tester, notesMode: true);
-    final on = tester.getSemantics(find.text('✎')).flagsCollection.isSelected;
-
-    await _pump(tester);
-    final off = tester.getSemantics(find.text('✎')).flagsCollection.isSelected;
-
-    expect(on, isNot(off));
-  }, semanticsEnabled: true);
-
-  testWidgets('long-pressing a digit reports it as the other mode', (
-    tester,
-  ) async {
-    final pressed = await _pump(tester);
-
-    await tester.longPress(find.text('7'));
-    await tester.pump();
-
-    expect(pressed.single, isA<DigitLongPressKey>());
-    expect((pressed.single as DigitLongPressKey).digit, 7);
-  });
-
-  testWidgets('a short press is still an ordinary digit', (tester) async {
-    final pressed = await _pump(tester);
-
-    await tester.tap(find.text('7'));
-    await tester.pump();
-
-    expect(pressed.single, isA<DigitKey>());
-  });
-
-  // Only a digit has an opposite-mode entry to make. Holding erase or undo is
-  // treated as pressing it, rather than as a gesture that does nothing — a
-  // control that ignores a deliberate press is a small failure state.
-  testWidgets('holding erase or undo just presses it', (tester) async {
-    final pressed = await _pump(tester);
-
-    await tester.longPress(find.text('⌫'));
-    await tester.pump();
-    await tester.longPress(find.text('↶'));
-    await tester.pump();
-
-    expect(pressed, hasLength(2));
-    expect(pressed[0], isA<EraseKey>());
-    expect(pressed[1], isA<UndoKey>());
-    expect(
-      pressed.whereType<DigitLongPressKey>(),
-      isEmpty,
-      reason: 'only digits carry an opposite-mode entry',
-    );
-  });
-
-  // The control for **auto-notes**. Free and unmetered here — the charge is
-  // `add-perks` (change 19).
-  group('the auto-notes key', () {
-    testWidgets('the pad carries it', (tester) async {
-      final pressed = await _pump(tester);
-
-      expect(find.text('⁙'), findsOneWidget);
-      await tester.tap(find.text('⁙'));
-      await tester.pump();
-
-      expect(pressed.single, isA<AutoNotesKey>());
+      for (final label in const <String>[
+        'Notes',
+        'Test',
+        'Fill notes',
+        'Undo',
+        'Discard test',
+        'Keep test',
+      ]) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
     });
 
-    testWidgets('it holds the 44pt minimum like every other key', (
+    // The symbols these replaced. `~` for which ink a note is written in and
+    // `⁙` for filling the board are not guessable by anyone who has not read
+    // the source, and `✕` beside `✓` reads as cancel beside confirm — which
+    // advertises the answer-checking this product does not do (D-04).
+    testWidgets('no tool is a bare symbol', (tester) async {
+      await _pump(tester, notesMode: true, hasProvisionalNotes: true);
+
+      for (final glyph in const <String>['✎', '~', '⁙', '↶', '✕', '✓']) {
+        expect(find.text(glyph), findsNothing, reason: glyph);
+      }
+    });
+
+    testWidgets('the label a player reads is the name a reader hears', (
       tester,
     ) async {
-      await _pump(tester);
-
-      final box = find
-          .ancestor(of: find.text('⁙'), matching: find.byType(SizedBox))
-          .first;
-      final size = tester.getSize(box);
-      expect(size.width, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
-      expect(size.height, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
-    });
-
-    testWidgets('it carries a label a screen reader can read', (tester) async {
       final handle = tester.ensureSemantics();
-      await _pump(tester);
+      await _pump(tester, notesMode: true, hasProvisionalNotes: true);
 
-      // What a screen reader is actually handed for that key, not what the
-      // widget was asked for: the glyph alone says nothing.
-      final node = tester.getSemantics(
-        find
-            .ancestor(of: find.text('⁙'), matching: find.byType(Semantics))
-            .first,
-      );
-      // The label and nothing else. The glyph is decoration and is excluded,
-      // so a screen reader never reads the symbol aloud.
-      expect(node.label, 'Fill notes');
-      expect(node.flagsCollection.isButton, isTrue);
-      // Naming a button a screen reader cannot press would be the worse bug,
-      // so the tap action has to survive the exclusion.
-      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
-
-      // The same shape the notes toggle has, so this key is not a special
-      // case a screen reader meets differently.
-      final toggle = tester.getSemantics(
-        find
-            .ancestor(of: find.text('✎'), matching: find.byType(Semantics))
-            .first,
-      );
-      expect(toggle.label, 'Notes');
-
-      handle.dispose();
-    });
-
-    testWidgets('it is never disabled', (tester) async {
-      // Constraint 1: a disabled control is a small failure state, and this
-      // product does not have those.
-      final pressed = await _pump(tester);
-
-      await tester.tap(find.text('⁙'));
-      await tester.tap(find.text('⁙'));
-      await tester.pump();
-
-      expect(pressed, hasLength(2));
-    });
-
-    testWidgets('it is not the notes toggle', (tester) async {
-      final pressed = await _pump(tester, notesMode: true);
-
-      await tester.tap(find.text('⁙'));
-      await tester.pump();
-
-      // The toggle changes what a digit press writes; this fills the board.
-      expect(pressed.single, isA<AutoNotesKey>());
-      expect(pressed.single, isNot(isA<NotesToggleKey>()));
-    });
-  });
-
-  // The second ink's three controls. The ink toggle is the axis (D-89); clear
-  // and **promote** are the two ways a chain test ends (D-11, D-91).
-  group('the provisional controls', () {
-    const glyphs = <String, Type>{
-      '~': InkToggleKey,
-      '✕': ClearProvisionalKey,
-      '✓': PromoteProvisionalKey,
-    };
-
-    testWidgets('each key fires its own action', (tester) async {
-      for (final entry in glyphs.entries) {
-        final pressed = await _pump(tester);
-
-        expect(find.text(entry.key), findsOneWidget);
-        await tester.tap(find.text(entry.key));
-        await tester.pump();
-
-        expect(pressed.single.runtimeType, entry.value);
-      }
-    });
-
-    testWidgets('each holds the 44pt minimum like every other key', (
-      tester,
-    ) async {
-      await _pump(tester);
-
-      for (final glyph in glyphs.keys) {
-        final size = tester.getSize(
-          find
-              .ancestor(of: find.text(glyph), matching: find.byType(SizedBox))
-              .first,
-        );
+      for (final label in const <String>[
+        'Notes',
+        'Test',
+        'Fill notes',
+        'Undo',
+        'Discard test',
+        'Keep test',
+      ]) {
+        final node = _nodeFor(tester, label);
         expect(
-          size.width,
-          greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
-          reason: glyph,
+          node.label,
+          label,
+          reason: '$label is announced as its own name',
         );
-        expect(
-          size.height,
-          greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
-          reason: glyph,
-        );
-      }
-    });
-
-    // Constraint 1: a disabled control is a small failure state. A board with
-    // no **provisional note** is the ordinary case for two of these three, and
-    // neither may grey out because of it.
-    testWidgets('none is ever disabled', (tester) async {
-      final pressed = await _pump(tester);
-
-      for (final glyph in glyphs.keys) {
-        await tester.tap(find.text(glyph));
-        await tester.tap(find.text(glyph));
-        await tester.pump();
-      }
-
-      expect(pressed, hasLength(glyphs.length * 2));
-    });
-
-    // The ink in force has to be readable without marking a digit to find out
-    // (constraint 5).
-    testWidgets('the ink toggle reports itself selected', (tester) async {
-      // Read before re-pumping: a semantics handle does not survive a new tree.
-      await _pump(tester, provisionalInk: true);
-      final on = tester.getSemantics(find.text('~')).flagsCollection.isSelected;
-      final settledToggle = tester
-          .getSemantics(find.text('✎'))
-          .flagsCollection
-          .isSelected;
-
-      await _pump(tester);
-      final off = tester
-          .getSemantics(find.text('~'))
-          .flagsCollection
-          .isSelected;
-
-      expect(on, isNot(off));
-      // The same "selected" the notes toggle reports when *it* is in force, so
-      // the ink is read the way every other held control on the pad is — and
-      // it is the ink that is being read, not notes mode, which was off in
-      // both pumps.
-      expect(settledToggle, off);
-    }, semanticsEnabled: true);
-
-    // The two axes are independent (D-89): neither control reports the other's
-    // state.
-    testWidgets('the ink toggle is not the notes toggle', (tester) async {
-      await _pump(tester, notesMode: true);
-      final inkOffNotesOn = tester
-          .getSemantics(find.text('~'))
-          .flagsCollection
-          .isSelected;
-      final notesOn = tester
-          .getSemantics(find.text('✎'))
-          .flagsCollection
-          .isSelected;
-
-      await _pump(tester, provisionalInk: true);
-      final inkOnNotesOff = tester
-          .getSemantics(find.text('~'))
-          .flagsCollection
-          .isSelected;
-      final notesOff = tester
-          .getSemantics(find.text('✎'))
-          .flagsCollection
-          .isSelected;
-
-      // Each control reports its own axis and neither reports the other's
-      // (D-89).
-      expect(inkOffNotesOn, isNot(inkOnNotesOff));
-      expect(notesOn, isNot(notesOff));
-      expect(inkOffNotesOn, notesOff);
-    }, semanticsEnabled: true);
-
-    testWidgets('clear and promote are told apart by name', (tester) async {
-      final handle = tester.ensureSemantics();
-      await _pump(tester);
-
-      final clear = _nodeFor(tester, '✕');
-      final promote = _nodeFor(tester, '✓');
-
-      expect(clear.label, 'Clear provisional notes');
-      expect(promote.label, 'Promote provisional notes');
-      expect(clear.label, isNot(promote.label));
-      expect(_nodeFor(tester, '~').label, 'Provisional ink');
-
-      for (final node in <SemanticsNode>[clear, promote]) {
-        // The glyph is decoration: a screen reader reads the name and never
-        // the symbol.
-        expect(node.label, isNot(contains('✕')));
-        expect(node.label, isNot(contains('✓')));
         expect(node.flagsCollection.isButton, isTrue);
+        // Naming a button a screen reader cannot press is the worse bug, so
+        // the tap action has to survive the glyph's exclusion.
         expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
       }
 
       handle.dispose();
     });
+  });
 
-    // A mis-tap on clear discards the work the player meant to keep, so it
-    // does not sit among the keys a player taps constantly.
-    testWidgets('clear and promote sit together, away from the digits', (
+  group('what is on screen, and when', () {
+    testWidgets('a player who has not turned notes on sees three tools', (
       tester,
     ) async {
       await _pump(tester);
 
-      final clear = tester.getCenter(find.text('✕'));
-      final promote = tester.getCenter(find.text('✓'));
-      expect(clear.dy, promote.dy, reason: 'the two share a row');
+      expect(find.text('Notes'), findsOneWidget);
+      expect(find.text('Fill notes'), findsOneWidget);
+      expect(find.text('Undo'), findsOneWidget);
+      expect(
+        find.text('Test'),
+        findsNothing,
+        reason:
+            'the ink decides what the next note is written in, and in '
+            'value mode there is no next note',
+      );
+      expect(find.text('Discard test'), findsNothing);
+      expect(find.text('Keep test'), findsNothing);
+    });
 
-      for (final glyph in <String>['1', '9', '⌫', '↶', '✎']) {
+    testWidgets('turning notes on brings the ink control', (tester) async {
+      await _pump(tester);
+      expect(find.text('Test'), findsNothing);
+
+      await _pump(tester, notesMode: true);
+      expect(find.text('Test'), findsOneWidget);
+    });
+
+    testWidgets('turning notes off takes it away again', (tester) async {
+      await _pump(tester, notesMode: true, provisionalInk: true);
+      expect(find.text('Test'), findsOneWidget);
+
+      await _pump(tester, provisionalInk: true);
+      expect(
+        find.text('Test'),
+        findsNothing,
+        reason: 'the ink is remembered by the session, not by the control',
+      );
+    });
+
+    testWidgets('the chain-test controls arrive with the first provisional '
+        'note', (tester) async {
+      await _pump(tester, notesMode: true);
+      expect(find.text('Discard test'), findsNothing);
+      expect(find.text('Keep test'), findsNothing);
+
+      await _pump(tester, notesMode: true, hasProvisionalNotes: true);
+      expect(find.text('Discard test'), findsOneWidget);
+      expect(find.text('Keep test'), findsOneWidget);
+    });
+
+    testWidgets('and leave with the last one', (tester) async {
+      await _pump(tester, hasProvisionalNotes: true);
+      expect(find.text('Discard test'), findsOneWidget);
+
+      await _pump(tester);
+      expect(
+        find.text('Discard test'),
+        findsNothing,
+        reason: 'there is nothing left to discard',
+      );
+    });
+
+    // They are shown whether or not notes mode is on: a hypothesis on the
+    // board is a hypothesis on the board, and the player may want to end it
+    // while placing values.
+    testWidgets('they do not depend on notes mode', (tester) async {
+      await _pump(tester, hasProvisionalNotes: true);
+
+      expect(find.text('Discard test'), findsOneWidget);
+      expect(find.text('Keep test'), findsOneWidget);
+    });
+  });
+
+  group('pressing', () {
+    testWidgets('each tool fires its own action', (tester) async {
+      final pressed = await _pump(
+        tester,
+        notesMode: true,
+        hasProvisionalNotes: true,
+      );
+
+      for (final label in const <String>[
+        'Notes',
+        'Test',
+        'Fill notes',
+        'Undo',
+        'Discard test',
+        'Keep test',
+      ]) {
+        await tester.tap(find.text(label));
+        await tester.pump();
+      }
+
+      expect(pressed[0], isA<NotesToggleKey>());
+      expect(pressed[1], isA<InkToggleKey>());
+      expect(pressed[2], isA<AutoNotesKey>());
+      expect(pressed[3], isA<UndoKey>());
+      expect(pressed[4], isA<ClearProvisionalKey>());
+      expect(pressed[5], isA<PromoteProvisionalKey>());
+    });
+
+    // Constraint 1: a disabled control is a small failure state, and this
+    // product does not have those. A tool with no work to do is absent, which
+    // is a different thing.
+    testWidgets('nothing on screen ever refuses a press', (tester) async {
+      final pressed = await _pump(
+        tester,
+        notesMode: true,
+        hasProvisionalNotes: true,
+      );
+
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.text('Notes'));
+        await tester.tap(find.text('Discard test'));
+        await tester.pump();
+      }
+      expect(pressed, hasLength(6));
+    });
+  });
+
+  group('the mode in force is readable', () {
+    testWidgets('the notes tool reports itself selected', (tester) async {
+      await _pump(tester, notesMode: true);
+      final on = _nodeFor(tester, 'Notes').flagsCollection.isSelected;
+
+      await _pump(tester);
+      final off = _nodeFor(tester, 'Notes').flagsCollection.isSelected;
+
+      expect(on, isNot(off));
+    }, semanticsEnabled: true);
+
+    testWidgets('the ink tool reports itself selected', (tester) async {
+      await _pump(tester, notesMode: true, provisionalInk: true);
+      final on = _nodeFor(tester, 'Test').flagsCollection.isSelected;
+
+      await _pump(tester, notesMode: true);
+      final off = _nodeFor(tester, 'Test').flagsCollection.isSelected;
+
+      expect(on, isNot(off));
+    }, semanticsEnabled: true);
+
+    // Two axes, not one (D-89). Notes mode says whether a digit writes a note;
+    // the ink says which kind. Neither is the other.
+    testWidgets('the ink tool is not the notes tool', (tester) async {
+      final pressed = await _pump(tester, notesMode: true);
+
+      await tester.tap(find.text('Test'));
+      await tester.pump();
+
+      expect(pressed.single, isA<InkToggleKey>());
+      expect(pressed.whereType<NotesToggleKey>(), isEmpty);
+    });
+  });
+
+  group('the digits still behave', () {
+    testWidgets('long-pressing a digit reports it as the other mode', (
+      tester,
+    ) async {
+      final pressed = await _pump(tester);
+
+      await tester.longPress(find.text('7'));
+      await tester.pump();
+
+      expect(pressed.single, isA<DigitLongPressKey>());
+      expect((pressed.single as DigitLongPressKey).digit, 7);
+    });
+
+    testWidgets('a short press is still an ordinary digit', (tester) async {
+      final pressed = await _pump(tester);
+
+      await tester.tap(find.text('7'));
+      await tester.pump();
+
+      expect(pressed.single, isA<DigitKey>());
+    });
+
+    // Only a digit has an opposite-mode entry to make. Holding erase is
+    // treated as pressing it, rather than as a gesture that does nothing.
+    testWidgets('holding erase just presses it', (tester) async {
+      final pressed = await _pump(tester);
+
+      await tester.longPress(find.text('⌫'));
+      await tester.pump();
+
+      expect(pressed.single, isA<EraseKey>());
+      expect(pressed.whereType<DigitLongPressKey>(), isEmpty);
+    });
+  });
+
+  group('the tap target', () {
+    testWidgets('every tool holds the 44pt minimum', (tester) async {
+      await _pump(tester, notesMode: true, hasProvisionalNotes: true);
+
+      for (final label in const <String>[
+        'Notes',
+        'Test',
+        'Fill notes',
+        'Undo',
+        'Discard test',
+        'Keep test',
+      ]) {
         expect(
-          tester.getCenter(find.text(glyph)).dy,
-          lessThan(clear.dy),
-          reason: '\$glyph is tapped constantly and sits above the clear row',
+          _chipSize(tester, label).height,
+          greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
+          reason: '$label is too short to hit',
         );
       }
     });

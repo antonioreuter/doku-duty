@@ -95,3 +95,8 @@ Read them there before proposing or implementing anything.
 | **Design token** | A named value in the design system — a colour, type role, radius, stroke weight, duration, depth, or haptic. Code reads tokens; it never writes a literal |
 | **State colour** | One of the six colour tokens that carries meaning on the grid: ink, focus, candidate, provisional, error, completion. Fixed across every season, unlike the two surface tokens (D-71, D-55) |
 | **Reduce effects** | The in-app setting that silences tokenised motion. Independent of the OS reduce-motion setting; either one alone is enough |
+| **Completion tint** | The flat colour a completed **unit** keeps for the rest of the puzzle, always accompanied by a **corner mark**. One level only: a cell in three completed **unit**s looks identical to a cell in one (D-48). Derived from the board, never stored |
+| **Corner mark** | The small glyph in a cell's corner that says its **unit** is complete without using colour. Survives both colour vision deficiency and the player hiding **completion tint**s (D-50) |
+| **Tools row** | The named controls below the digit keys — **Notes**, **Test**, **Fill notes**, **Undo**, and the two that end a **chain test**. Words, never symbols, and only the ones with work to do are on screen (D-100, D-101) |
+| **Chain test** | A hypothesis the player is following through the board, written in **provisional note**s. It ends one of two ways: discarded in one action (D-11) or kept by **promote** (D-91) |
+| **Cascade** | Two or more **unit**s completed by a single placement. Their effects chain at 90ms offsets in the order row, column, block, never simultaneously, for 520ms in total (D-47) |

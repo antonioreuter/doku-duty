@@ -68,7 +68,7 @@ final class DigitLongPressKey extends PadKey {
   final int digit;
 }
 
-/// The nine digits, erase, and undo.
+/// The nine digits and erase.
 ///
 /// Five columns, not nine (`docs/DESIGN.md` §8): nine keys in a row cannot carry
 /// the depth treatment and are worse for thumbs regardless. Every key holds the
@@ -79,18 +79,22 @@ final class DigitLongPressKey extends PadKey {
 /// disabled control is a small failure state, and this product does not have
 /// those (constraint 1).
 ///
-/// Four rows, not three. The second ink brought the chrome controls to six,
-/// and a row is five wide: crowding them into one would put **clear** beside
-/// undo, where a mis-tap discards the hypothesis the player meant to keep.
-/// Clear and **promote** share the bottom row instead — together, because they
-/// are the two ways one chain test ends, and furthest from the digits, because
-/// those are what a thumb is already near.
+/// **Digits only. Everything that is not a digit is a named control in
+/// [PadTools].** This used to carry six more keys drawn as bare symbols, which
+/// grew one at a time as the notes model did until no player could tell what any
+/// of them were — `docs/pages/screens.html` had specified a labelled tools row
+/// from the start and nothing in the specs protected it.
+///
+/// Erase stays here rather than moving to the tools row, which is a deliberate
+/// departure from that page. Its layout puts the pad at nine columns, where
+/// there is no tenth slot and erase has nowhere else to go; at the five columns
+/// `docs/DESIGN.md` §8 fixes, the second row has a spare slot and it is the one
+/// nearest the thumb already reaching for digits. The glyph also needs no label:
+/// ⌫ is the one symbol here a player arrives already knowing.
 class NumberPad extends StatelessWidget {
   const NumberPad({
     required this.onKey,
     this.lockedDigit,
-    this.notesMode = false,
-    this.provisionalInk = false,
     this.reduceMotion = false,
     super.key,
   });
@@ -100,13 +104,6 @@ class NumberPad extends StatelessWidget {
   /// The digit held for digit-first input, or null in cell-first mode.
   final int? lockedDigit;
 
-  /// Whether a digit press writes a note rather than a value.
-  final bool notesMode;
-
-  /// Whether note entry writes a **provisional note** rather than a settled
-  /// one. Independent of [notesMode] — they are two axes, not one (D-89).
-  final bool provisionalInk;
-
   final bool reduceMotion;
 
   /// The pad is five columns wide (`docs/DESIGN.md` §8), so the widest row
@@ -114,7 +111,10 @@ class NumberPad extends StatelessWidget {
   static const int columns = 5;
 
   /// Horizontal padding each side of a key.
-  static const double _gutter = 4;
+  ///
+  /// Public because [PadTools] lays itself out to the same width, and the two
+  /// agreeing by construction is what keeps the pad reading as one block.
+  static const double gutter = 4;
 
   /// How large a key may be drawn: it grows with the reader's text size until
   /// the row it sits in is full, and then it stops (D-93).
@@ -131,7 +131,7 @@ class NumberPad extends StatelessWidget {
     final grown = DokuLayout.minimumTapTarget * (textScale < 1 ? 1 : textScale);
     // An unbounded width caps nothing — there is no row to fill.
     if (!maxWidth.isFinite) return grown;
-    final fits = maxWidth / columns - _gutter * 2;
+    final fits = maxWidth / columns - gutter * 2;
     return math.max(DokuLayout.minimumTapTarget, math.min(grown, fits));
   }
 
@@ -150,21 +150,6 @@ class NumberPad extends StatelessWidget {
               for (var d = 6; d <= 9; d++) DigitKey(d),
               const EraseKey(),
             ], side),
-            _row(
-              const <PadKey>[
-                NotesToggleKey(),
-                InkToggleKey(),
-                AutoNotesKey(),
-                UndoKey(),
-              ],
-              side,
-              fill: false,
-            ),
-            _row(
-              const <PadKey>[ClearProvisionalKey(), PromoteProvisionalKey()],
-              side,
-              fill: false,
-            ),
           ],
         );
       },
@@ -178,7 +163,7 @@ class NumberPad extends StatelessWidget {
       children: <Widget>[
         for (final key in keys)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _gutter),
+            padding: const EdgeInsets.symmetric(horizontal: gutter),
             child: _PadButton(
               padKey: key,
               side: side,
@@ -189,10 +174,7 @@ class NumberPad extends StatelessWidget {
               onLongPressed: key is DigitKey
                   ? () => onKey(DigitLongPressKey(key.digit))
                   : null,
-              isLocked:
-                  (key is DigitKey && key.digit == lockedDigit) ||
-                  (key is NotesToggleKey && notesMode) ||
-                  (key is InkToggleKey && provisionalInk),
+              isLocked: key is DigitKey && key.digit == lockedDigit,
               reduceMotion: reduceMotion,
             ),
           ),
@@ -268,6 +250,13 @@ class _PadButton extends StatelessWidget {
     );
   }
 
+  /// The face a key is drawn with.
+  ///
+  /// Only [DigitKey] and [EraseKey] reach here — [NumberPad] builds nothing
+  /// else, and every other control is a named chip in `PadTools` (D-100). The
+  /// remaining arms exist because [PadKey] is sealed and the switch has to be
+  /// exhaustive; they are unreachable, and a symbol appearing on the pad again
+  /// would mean something had started building one of them as a key.
   String get _glyph => switch (padKey) {
     DigitKey(:final digit) => '$digit',
     DigitLongPressKey(:final digit) => '$digit',

@@ -51,7 +51,7 @@ void main() {
         await _pump(tester, scale: scale);
 
         expect(tester.takeException(), isNull, reason: '${scale}x overflowed');
-        for (final glyph in const <String>['1', '5', '9', '⌫', '✓']) {
+        for (final glyph in const <String>['1', '5', '9', '⌫']) {
           final rect = tester.getRect(find.text(glyph));
           expect(
             rect.right,

@@ -100,6 +100,8 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 **Depends on:** 6, 2.
 **Watch for:** tints must not stack. A cell in three completed units looks identical to one in a single unit, or a nearly finished board turns to mud.
 
+**OUTSTANDING — the mid-tier Android profile was not taken here either.** Everything short of a physical phone is measured and recorded in `docs/PERFORMANCE.md`: repaint under a full three-step cascade with sixty particles and a fully tinted board, on the host (399 µs), an Android emulator (3.9–4.5 ms), and an iOS simulator (409 µs), against a 100 ms budget and a 16.6 ms frame. `integration_test/completion_effects_test.dart` is the device runner, so the phone measurement is one command rather than a morning's work. **A cascade is a heavier frame than anything change 6 measured, so one session on a mid-tier Android phone settles change 6's outstanding profile and this one together.** Haptics are covered by none of it — the simulator reports success for a haptic it never played, so telling the light impact from the medium one is a manual check on real hardware. Sound was deferred out of this change entirely: no audio package is chosen in `docs/TECH_STACK.md` and no change owns audio, so the per-event cues in `docs/DESIGN.md` §5 are still unbuilt and need a decision plus a change of their own.
+
 ---
 
 ## Milestone 2 — A reason to come back

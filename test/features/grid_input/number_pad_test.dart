@@ -20,14 +20,25 @@ Future<List<PadKey>> _pump(WidgetTester tester, {int? locked}) async {
 
 void main() {
   group('the keys', () {
-    testWidgets('nine digits, erase, and undo', (tester) async {
+    // Digits and erase, and nothing else. Everything that is not a digit is a
+    // named control in `PadTools` — the pad used to carry six more keys drawn
+    // as bare symbols and no player could read any of them.
+    testWidgets('nine digits and erase, and no unnamed controls', (
+      tester,
+    ) async {
       final pressed = await _pump(tester);
 
       for (var digit = 1; digit <= 9; digit++) {
         expect(find.text('$digit'), findsOneWidget, reason: 'digit $digit');
       }
       expect(find.text('⌫'), findsOneWidget, reason: 'erase');
-      expect(find.text('↶'), findsOneWidget, reason: 'undo');
+      for (final glyph in <String>['↶', '✎', '⁙', '~', '✕', '✓']) {
+        expect(
+          find.text(glyph),
+          findsNothing,
+          reason: '$glyph is a control the player cannot read',
+        );
+      }
       expect(pressed, isEmpty);
     });
 
@@ -52,11 +63,7 @@ void main() {
     testWidgets('every key holds the 44pt minimum', (tester) async {
       await _pump(tester);
 
-      for (final label in <String>[
-        for (var d = 1; d <= 9; d++) '$d',
-        '⌫',
-        '↶',
-      ]) {
+      for (final label in <String>[for (var d = 1; d <= 9; d++) '$d', '⌫']) {
         final size = tester.getSize(find.text(label).first);
         expect(
           size.width,
@@ -86,16 +93,13 @@ void main() {
       expect((pressed.single as DigitKey).digit, 7);
     });
 
-    testWidgets('erase and undo report themselves', (tester) async {
+    testWidgets('erase reports itself', (tester) async {
       final pressed = await _pump(tester);
 
       await tester.tap(find.text('⌫'));
       await tester.pump();
-      await tester.tap(find.text('↶'));
-      await tester.pump();
 
-      expect(pressed[0], isA<EraseKey>());
-      expect(pressed[1], isA<UndoKey>());
+      expect(pressed.single, isA<EraseKey>());
     });
   });
 

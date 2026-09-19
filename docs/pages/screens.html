@@ -207,12 +207,14 @@ Treat the drawings as historical and the decision documents as canonical.
 </div>
 <div style="padding:0 14px 16px">
 <div class="pad" id="p-play"></div>
-<div class="tools"><div class="tool">Erase</div><div class="tool on">Notes</div><div class="tool">Hint</div></div>
+<div class="tools"><div class="tool">Notes</div><div class="tool">Fill notes</div><div class="tool">Undo</div></div>
 </div>
 </div>
 <ul class="notes">
 <li><span class="ref">D-04</span><div><div class="nh">No mistake limit</div><div class="nb"><span class="flag f-green">Non-punitive</span>Auto-check off by default. Errors counted quietly for stats, not flagged. Strict mode is opt-in.</div></div></li>
-<li><span class="ref">§8</span><div><div class="nh">Five-column pad, not nine</div><div class="nb">Nine keys in a row cannot carry the depth treatment and are worse for thumbs regardless. Bigger targets, fewer per row.</div></div></li>
+<li><span class="ref">§8</span><div><div class="nh">Five-column pad, not nine</div><div class="nb">Nine keys in a row cannot carry the depth treatment and are worse for thumbs regardless. Bigger targets, fewer per row. <b>The markup above drew nine and the build is five</b> — five is right, and it is why erase stays a digit key rather than a tool (D-100).</div></div></li>
+<li><span class="ref">D-100</span><div><div class="nh">Tools are named, never drawn</div><div class="nb"><span class="flag f-indigo">Corrected</span>This row was specified from the start and built as six bare symbols — <code>✎ ~ ⁙ ↶ ✕ ✓</code> — because it never became a requirement. <code>✕</code> beside <code>✓</code> read as cancel beside confirm, which advertised the answer-checking D-04 refuses. Now named in words.</div></div></li>
+<li><span class="ref">D-101</span><div><div class="nh">Absent, not disabled</div><div class="nb">The default pad is three tools. The ink control appears with notes mode; the two that end a chain test appear only while there is a test to end. A control that looks live and swallows the tap is the failure state constraint 1 objects to — an empty space is not.</div></div></li>
 <li><span class="ref">§4</span><div><div class="nh">Pressed state is visible</div><div class="nb">Notes is active: dropped 4px, depth reduced to 1px. Eight pixels of travel is enough to feel and not enough to lag.</div></div></li>
 <li><span class="ref">D-40</span><div><div class="nh">The strip is a stage, not a container</div><div class="nb">Empty most of the time. Character slides up, holds 2.5s, leaves. Reactions never queue and never cover the grid.</div></div></li>
 <li><span class="ref">D-24</span><div><div class="nh">No interstitial reachable from here</div><div class="nb"><span class="flag f-red">Ad rule</span>Nothing interrupts a grid in progress. Ever.</div></div></li>
@@ -230,7 +232,8 @@ Treat the drawings as historical and the decision documents as canonical.
 <div style="padding:14px 14px 8px"><div class="grid" id="g-notes" style="grid-template-columns:repeat(6,1fr)"></div></div>
 <div style="padding:0 14px 14px">
 <div class="pad" id="p-notes"></div>
-<div class="tools"><div class="tool">Clear provisional</div><div class="tool on">Auto-notes</div></div>
+<div class="tools"><div class="tool on">Notes</div><div class="tool on">Test</div><div class="tool">Fill notes</div><div class="tool">Undo</div></div>
+<div class="tools"><div class="tool">Discard test</div><div class="tool">Keep test</div></div>
 <div style="display:flex;gap:16px;margin-top:11px" class="tag">
 <span><b style="color:var(--indigo);font-size:13px">7</b> settled</span>
 <span><b style="color:#1A7A72;font-size:13px">7</b> provisional</span>

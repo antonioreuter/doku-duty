@@ -1376,3 +1376,119 @@ honest problem and the fix for the layout are the same edit.
 nothing, or the ended screen runs off the bottom of the phone for every player
 using an accessibility text size — and the second one is invisible to every
 host test, because a host test picks its own surface and its own scaler.
+
+### D-98 · The fresh-completion hold is a state duration, not a third motion exception
+
+A completed **unit** holds `goldPale` for two seconds before settling to
+`greenPale`. That is 2000ms against a 400ms ceiling, and it is **not** recorded
+as a third exception beside the **cascade** and the puzzle-completion sequence.
+`DokuMotion.completionTintHold` carries `isInPuzzle: false`, so the build check
+that fails any in-puzzle duration over 400ms does not consider it.
+
+**Rationale.** The ceiling in D-46 exists to stop the player waiting. What it
+governs is motion the player passes through on the way to their next tap, which
+is why the rule is stated together with "none blocks input". The hold is not
+that: nothing moves, nothing is animating, and the colour being held is one the
+cell is entitled to for the rest of the puzzle either way. The only motion in it
+is the settle from one tint to the other, which is short. A player can place a
+digit, complete another **unit**, undo, and leave the puzzle during the hold, and
+none of those wait on it by a single frame.
+
+Recording it as a third exception would have been the tidier-looking choice and
+the wrong one. The value of D-46's exception list is that it is short and every
+entry is a decision someone argued for; a list that also collects things which
+are not in-puzzle motion stops being evidence of anything, and the next person
+adding a 2000ms animation has a precedent to point at. Marking it as outside the
+category keeps the ceiling meaning what it says.
+
+**What breaks if reversed.** Either the design system's build check starts
+failing a hold that blocks nothing — and the obvious fix is to weaken the check
+— or the exception list grows a third entry that is not an exception, and the
+fourth one is an argument nobody wins.
+
+### D-99 · Completion is decided without the solution, so a wrong unit is celebrated too
+
+A **unit** is complete when it holds nine distinct digits. `UnitCompletion` takes
+a board and a **unit** and has no parameter through which the puzzle's solution
+could reach it. A **unit** the player has filled with nine distinct digits that
+disagree with the solution is tinted, marked, counted in the screen reader's
+announcement, and celebrated exactly like a correct one.
+
+**Rationale.** The alternative — celebrating only **unit**s that match the
+solution — is auto-check wearing a party hat. Silence where a celebration was
+expected tells the player they are wrong just as clearly as a red cell does, and
+it does so while **strict mode** is off, which is the one thing constraint 1 and
+D-04 exist to prevent. The feedback would also be worse than the flagging it
+imitates: the player learns that something in the row is wrong without learning
+what, on a **rank** where they may have no technique to find it.
+
+Making it structural rather than careful is the load-bearing part. A future
+change cannot add a correctness check here by accident, because there is no
+solution in scope to check against — it would have to widen a signature, which
+is a visible act rather than a quiet one.
+
+**What breaks if reversed.** Auto-check arrives by the back door, off the
+setting that is supposed to gate it, and the product's entire positioning goes
+with it.
+
+### D-100 · The pad's tools are named in words, and erase stays a digit key
+
+Every control on the pad that is not a digit carries its name in words —
+**Notes**, **Test**, **Fill notes**, **Undo**, **Discard test**, **Keep test** —
+in a tools row below the digits. **Erase** stays in the digit keys as the tenth
+key, drawn as ⌫.
+
+`docs/pages/screens.html` specified a labelled tools row from the start and put
+erase in it. The row is adopted; the erase placement is not, and that is a
+deliberate departure.
+
+**Rationale.** The pad had grown to six controls drawn as bare symbols —
+`✎ ~ ⁙ ↶ ✕ ✓` — across four ragged rows, and no player could read any of them.
+`~` for which ink a note is written in and `⁙` for filling the board are not
+guessable by anyone who has not read the source. Worse, `✕` beside `✓` reads as
+cancel beside confirm, and confirm reads as "check my answer" — the one thing
+this product does not do (D-04). The most prominent pair on the pad advertised
+the feature the whole positioning rests on not having.
+
+This was not a decision anyone made. The tools row lived only in an HTML mockup
+and never became a requirement, so `add-grid-and-input` built one pad, and
+`add-notes`, `add-note-automation` and `add-provisional-notes` each appended one
+more glyph to it. Every step was reasonable; the structure was already wrong.
+
+**Erase is the departure, and the mockup's own premise is why.** That page draws
+the pad at nine columns, where there is no tenth slot and erase has nowhere to go
+but the tools row. `docs/DESIGN.md` §8 fixes five columns — the repo's copy of
+the page carries a margin note saying so, contradicting its own markup — and at
+five columns the second row has a spare slot, the one nearest a thumb already
+reaching for digits. ⌫ is also the one symbol on the pad a player arrives
+already knowing, so a label would only repeat the glyph.
+
+**What breaks if reversed.** Symbols come back and the pad becomes unreadable
+again, one control at a time, exactly as it did the first time — and the next
+change has nothing to point at when it adds a seventh.
+
+### D-101 · A pad control with nothing to act on is absent, not disabled
+
+The control that switches note ink appears only while notes mode is on. The two
+controls that end a chain test — **Discard test** and **Keep test** — appear only
+while the board holds at least one **provisional note**.
+
+**Rationale.** Constraint 1 forbids disabled controls, and this is the other way
+to satisfy it. `add-mistake-model` already established the pattern when it took
+the whole pad off screen at the end of an **attempt** rather than leaving it live
+and unresponsive: a control that looks live and swallows the tap is the failure
+state, and an empty space is not.
+
+It also answers the clutter. Three of the six controls exist only for
+**provisional notes** — a Marshal-and-above technique — and they were on screen
+at Greenhorn, where the player has not met notes yet, let alone a hypothesis
+under test. The default pad is now three rows and three named tools.
+
+And it makes the two most dangerous controls self-explanatory. "Discard test"
+and "Keep test" are meaningless on a board with no hypothesis on it; shown only
+where they can act, named for the act, they cannot be mistaken for a verdict on
+the puzzle.
+
+**What breaks if reversed.** Either the pad goes back to showing a player six
+controls, half of which do nothing they understand, or the controls get greyed
+out instead — which is the disabled state constraint 1 rules out.

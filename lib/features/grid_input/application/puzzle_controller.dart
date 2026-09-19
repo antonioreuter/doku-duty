@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../completion_effects/domain/completion_schedule.dart';
+import '../../completion_effects/domain/effect_event.dart';
+import '../../completion_effects/domain/unit_completion.dart';
 import '../../design_system/domain/haptics.dart';
 import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
 import '../../mistake_model/domain/attempt.dart';
@@ -71,6 +74,28 @@ class PuzzleController extends ChangeNotifier {
   PuzzleSession _state;
 
   PuzzleSession get state => _state;
+
+  final StreamController<EffectEvent> _effects =
+      StreamController<EffectEvent>.broadcast();
+
+  /// What completed, where, and when.
+  ///
+  /// A broadcast stream because more than one thing listens: the effect layer
+  /// today, the characters and a sound layer later. Broadcast also means an
+  /// event with nobody listening is dropped rather than buffered — which is the
+  /// behaviour a celebration wants. A player who backgrounded the app mid-solve
+  /// should not be met by four queued cascades on their return.
+  ///
+  /// **Nothing waits on a listener.** The events are published after the new
+  /// state is, and no subscriber can delay the board reaching the screen
+  /// (constraint 2).
+  Stream<EffectEvent> get effects => _effects.stream;
+
+  @override
+  void dispose() {
+    unawaited(_effects.close());
+    super.dispose();
+  }
 
   /// Completed *and* right. A full board that disagrees with the solution is
   /// not a solved puzzle, and nothing here tells the player which it is —
@@ -168,7 +193,56 @@ class PuzzleController extends ChangeNotifier {
       fireHaptic?.call(DokuHaptic.selectionTick);
     }
     if (!changed) return;
+    // The write is started before anything is announced, and the order is not
+    // cosmetic. `_persist` runs synchronously up to its first await, so putting
+    // it first means nothing between the board changing and the write being in
+    // flight can prevent it — constraint 9, which has no visible symptom when
+    // it breaks. Announcing first would put a second code path in that gap for
+    // no benefit: the event reaches its listeners on a microtask either way.
     unawaited(_persist(previous.board, next.board, next.attempt.mistakes));
+    _announce(previous.board, next.board, edit);
+  }
+
+  /// Say what this change completed, if anything.
+  ///
+  /// Published after [notifyListeners], so the board is already on its way to
+  /// the screen before any effect is scheduled. A celebration that ran before
+  /// the digit it is celebrating would be the wrong way round, and one that
+  /// delayed it would cost the budget in constraint 2.
+  ///
+  /// **A note completes nothing** (D-52). Candidates are thinking, and the
+  /// guard is structural rather than a check: a note edit moves no value, so
+  /// [UnitCompletion.forChange] finds nothing changed and there is no event to
+  /// suppress.
+  void _announce(Board before, Board after, BoardEdit? edit) {
+    if (edit is! EditApplied) return;
+    final origin = edit.cell;
+
+    final change = UnitCompletion.forChange(
+      before: before,
+      after: after,
+      cell: origin,
+    );
+    if (change.completed.isNotEmpty) {
+      _emit(
+        UnitsCompleted(
+          origin: origin,
+          steps: CompletionSchedule.forChange(change, origin: origin),
+        ),
+      );
+    }
+
+    // Asked of both boards, so finishing the board announces once — an edit
+    // that leaves an already-finished board finished says nothing.
+    if (UnitCompletion.isBoardComplete(after) &&
+        !UnitCompletion.isBoardComplete(before)) {
+      _emit(BoardCompleted(origin: origin));
+    }
+  }
+
+  void _emit(EffectEvent event) {
+    if (_effects.isClosed) return;
+    _effects.add(event);
   }
 
   /// Every cell whose candidates differ between two boards, with what they

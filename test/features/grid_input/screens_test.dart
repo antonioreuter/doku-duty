@@ -67,6 +67,91 @@ Widget _app(AppDatabase db) => ProviderScope(
 );
 
 void main() {
+  // The whole screen, not a widget out of context. `add-mistake-model` found
+  // the grid, the remaining-mistake count, the pad and the ended-attempt panel
+  // overflowing a phone together at the reader's largest text size — a failure
+  // no component test could see, because a component test picks its own
+  // surface. The tools row is new furniture on that same screen, so it gets
+  // checked the same way.
+  group('the puzzle screen fits a phone', () {
+    for (final scale in <double>[1, 2, 3]) {
+      testWidgets('nothing overflows at ${scale}x', (tester) async {
+        // The smallest phone the app targets (D-84).
+        tester.view.physicalSize = const Size(320, 568);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+
+        final db = await _seeded(ranks: <Rank>{Rank.deputy});
+        addTearDown(db.close);
+
+        await tester.pumpWidget(
+          MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+            child: _app(db),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'the puzzle screen overflowed at ${scale}x',
+        );
+      });
+    }
+
+    // The tools are the controls a player reaches for, so they have to be on
+    // the screen rather than merely in the widget tree.
+    testWidgets('the tools are on screen and hittable', (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+
+      for (final label in const <String>['Notes', 'Fill notes', 'Undo']) {
+        expect(find.text(label), findsOneWidget, reason: label);
+        final rect = tester.getRect(find.text(label));
+        expect(rect.top, greaterThanOrEqualTo(0), reason: '$label off the top');
+        expect(
+          rect.bottom,
+          lessThanOrEqualTo(568),
+          reason: '$label off the bottom',
+        );
+      }
+    });
+
+    // The two chain-test controls are absent until there is a test to end, so
+    // a player who has never marked a provisional note never sees them.
+    testWidgets('the chain-test controls are not there on opening', (
+      tester,
+    ) async {
+      final db = await _seeded(ranks: <Rank>{Rank.deputy});
+      addTearDown(db.close);
+
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Discard test'), findsNothing);
+      expect(find.text('Keep test'), findsNothing);
+      expect(
+        find.text('Test'),
+        findsNothing,
+        reason: 'the ink control waits for notes mode',
+      );
+    });
+  });
+
   group('the rank picker', () {
     testWidgets('shows all six ranks, named as ranks', (tester) async {
       final db = await _seeded(ranks: Rank.values.toSet());

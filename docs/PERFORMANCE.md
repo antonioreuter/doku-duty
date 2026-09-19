@@ -138,3 +138,53 @@ Reproduce with:
 flutter test test/features/grid_input/latency_test.dart
 ```
 
+
+## Completion effects — `add-completion-effects`, 2026-09-17
+
+The busiest frame this capability can produce: a three-step **cascade** in
+flight, the particle pool full at 60, and every cell of a finished board
+carrying a **completion tint** and a **corner mark**. Medians over the samples
+named in each row; a discarded warm-up pass precedes every measurement.
+
+| What | Host | Android emulator | iOS simulator |
+|---|---|---|---|
+| Repaint under a full cascade (60 frames) | 399 µs | 3.9–4.5 ms | 409 µs |
+| Painter across a whole cascade (231 frames) | — | 3.0–3.6 ms | 224 µs |
+| Puzzle-completion sequence (264 frames) | — | 1.6–1.8 ms | 156 µs |
+| Fully tinted board vs untouched | — | 0.5–0.9 ms vs 32–94 µs | 143 µs vs 11 µs |
+
+Against a 100 ms input budget (constraint 2) and a 16.6 ms 60fps frame, the
+worst of these is roughly a fifth of a frame on the emulator and a sixtieth on
+the simulator. All figures are **debug** builds; release is faster, so read them
+as a ceiling.
+
+**Medians, not worst frames, and that is deliberate.** The worst frame on the
+emulator swung between 8 ms and 220 ms across runs that changed no code — the
+host deschedules the emulator for tens of milliseconds at a time, and GC lands
+where it lands. That number measures the machine, not the painter. The median
+over several hundred samples is the painter's own cost and is stable to within
+about 20% run to run. The same convention is already set by
+`integration_test/grid_latency_test.dart`, which asserts on the median and
+prints the worst beside it.
+
+**The tint costs nothing to stack, because it cannot.** A fully tinted board is
+one flat pass over a set of cells (D-48), so the fully-tinted row above is the
+ceiling for tinting however many **unit**s are complete. If that row ever grows
+with the number of completed **unit**s rather than with the number of cells, the
+tint has become additive and D-48 is broken.
+
+**Still not measured on a phone**, and the gap is now recorded against two
+changes. The outstanding device profile for change 6 in `openspec/BACKLOG.md`
+applies here as well, and a cascade is a heavier frame than anything change 6
+measured — so one session on a mid-tier Android phone settles both. Haptics are
+not covered by any of this: the simulator reports success for a haptic it never
+played, so telling the light impact from the medium one is a manual check on
+real hardware.
+
+Reproduce with:
+
+```
+flutter test test/features/completion_effects/effect_latency_test.dart   # host
+flutter test integration_test/completion_effects_test.dart \
+  -d <device> --flavor dev                                              # device
+```

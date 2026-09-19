@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../completion_effects/application/completion_effects_controller.dart';
+import '../../completion_effects/application/completion_settings.dart';
+import '../../completion_effects/domain/unit_completion.dart';
 import '../../design_system/domain/haptics.dart';
 import '../../design_system/application/motion_settings.dart';
 import '../../design_system/presentation/haptic_service.dart';
@@ -11,16 +14,23 @@ import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
 import '../../persistence/domain/note_enums.dart';
 import '../../mistake_model/application/strict_mode.dart';
+import '../../completion_effects/domain/effect_event.dart';
 import '../application/grid_providers.dart';
 import '../application/puzzle_controller.dart';
 import '../domain/puzzle_session.dart';
 import 'number_pad.dart';
+import 'pad_tools.dart';
 import 'puzzle_grid.dart';
 
 /// The grid and the pad.
 ///
-/// No timer and no completion effect — both belong to a later change and both
-/// are easy to add "while we are here", which is exactly why neither is here.
+/// No timer — that belongs to a later change and is easy to add "while we are
+/// here", which is exactly why it is not here.
+///
+/// Completion effects arrived with `add-completion-effects`. They are drawn
+/// from the board and never write to it: the **completion tint** is derived,
+/// the celebration is a snapshot the painter consumes, and neither can delay a
+/// tap (constraint 2).
 ///
 /// The **mistake** count and the error colour arrived with `add-mistake-model`,
 /// and both are invisible unless the player turned **strict mode** on: a wrong
@@ -54,6 +64,9 @@ class PuzzleScreen extends ConsumerWidget {
                   // mode from there on, so the flagging and the cap move
                   // together through one path rather than two.
                   isStrict: ref.watch(strictModeProvider),
+                  // Hides the tint and nothing else — the **corner mark**s are
+                  // drawn either way, so completion stays readable (D-50).
+                  hideCompletionTints: ref.watch(hideCompletionTintsProvider),
                   // A player who asked for less motion asked for less of all
                   // of it — the pad stops animating and the haptic goes quiet.
                   reduceMotion: MotionSettings(
@@ -73,18 +86,21 @@ class _PuzzleBody extends StatefulWidget {
     required this.sink,
     required this.reduceMotion,
     required this.isStrict,
+    required this.hideCompletionTints,
   });
 
   final PuzzleOpening opening;
   final BoardSink sink;
   final bool reduceMotion;
   final bool isStrict;
+  final bool hideCompletionTints;
 
   @override
   State<_PuzzleBody> createState() => _PuzzleBodyState();
 }
 
-class _PuzzleBodyState extends State<_PuzzleBody> {
+class _PuzzleBodyState extends State<_PuzzleBody>
+    with SingleTickerProviderStateMixin {
   late final PuzzleController _controller = PuzzleController(
     puzzle: widget.opening.puzzle,
     sink: widget.sink,
@@ -99,6 +115,28 @@ class _PuzzleBodyState extends State<_PuzzleBody> {
     fireHaptic: (haptic) => unawaited(_haptics.fire(haptic)),
   );
 
+  late final CompletionEffectsController _effects = CompletionEffectsController(
+    vsync: this,
+    // Told which cells hold a value rather than handed the board: the
+    // effect layer has no business reading the game, only decorating it.
+    cellIsFilled: (cell) => !_controller.state.board.isEmptyAt(cell),
+    fireHaptic: (haptic) => unawaited(_haptics.fire(haptic)),
+    reduceMotion: widget.reduceMotion,
+  );
+
+  late final StreamSubscription<EffectEvent> _subscription = driveEffects(
+    _controller.effects,
+    _effects,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // Touch the subscription so it is live from the first frame. A completion
+    // in the first second of a resumed puzzle is an ordinary thing.
+    _subscription;
+  }
+
   /// The stored choice arrives after the first frame (D-85), and the player
   /// can change it mid-puzzle. Either way the session is told, so the mode
   /// lives in exactly one place.
@@ -108,20 +146,53 @@ class _PuzzleBodyState extends State<_PuzzleBody> {
     if (old.isStrict != widget.isStrict) {
       _controller.setStrictMode(widget.isStrict);
     }
+    // Either switch alone is enough, and it takes effect on whatever is running
+    // rather than at the next completion: a player who asked for less asked for
+    // less now.
+    if (old.reduceMotion != widget.reduceMotion) {
+      _effects.reduceMotion = widget.reduceMotion;
+    }
   }
 
   HapticService get _haptics => HapticService(isEnabled: !widget.reduceMotion);
 
   @override
   void dispose() {
+    unawaited(_subscription.cancel());
+    _effects.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// A key or a tool was pressed.
+  ///
+  /// The celebration is skipped first: a player who reaches for the pad
+  /// mid-**cascade** has moved on, and the effect should not still be running
+  /// over the board they are working (D-46).
+  void _onPadKey(PadKey key) {
+    _effects.skip();
+    _controller.tapKey(key);
+  }
+
+  /// A tap anywhere on the grid ends whatever is celebrating, and is still the
+  /// tap it was.
+  ///
+  /// Both happen, in this order, on the same gesture: the effect is skipped and
+  /// the cell is selected (D-46). Nothing is swallowed — a tap that only
+  /// dismissed a celebration would make the player tap twice, which is exactly
+  /// the obstacle the skippability rule exists to prevent.
+  void _onCellTapped(int cell) {
+    _effects.skip();
+    _controller.tapCell(cell);
   }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _controller,
+      // Both, so a frame of the celebration and a change to the board each
+      // repaint on their own. The effect layer never causes a board change, so
+      // listening to it cannot cause a write (constraint 9).
+      listenable: Listenable.merge(<Listenable>[_controller, _effects]),
       builder: (context, _) {
         final session = _controller.state;
         final remaining = session.mistakesRemaining;
@@ -156,7 +227,14 @@ class _PuzzleBodyState extends State<_PuzzleBody> {
                     selectedCell: session.selectedCell,
                     highlightedDigit: session.highlightedDigit,
                     flaggedCells: session.flaggedCells,
-                    onCellTapped: _controller.tapCell,
+                    // Derived from the board every frame rather than stored.
+                    // Nothing is written when a **unit** completes, so nothing
+                    // can be written wrongly (D-48).
+                    completedCells: UnitCompletion.tintedCells(session.board),
+                    freshCells: _effects.freshCells,
+                    showCompletionTints: !widget.hideCompletionTints,
+                    effects: _effects.frame,
+                    onCellTapped: _onCellTapped,
                   ),
                 ),
               ),
@@ -170,14 +248,28 @@ class _PuzzleBodyState extends State<_PuzzleBody> {
               if (!session.isOver)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: NumberPad(
-                    lockedDigit: session.mode == InputMode.digitFirst
-                        ? session.lockedDigit
-                        : null,
-                    notesMode: session.entryKind == EntryKind.note,
-                    provisionalInk: session.noteInk == NoteKind.provisional,
-                    reduceMotion: widget.reduceMotion,
-                    onKey: _controller.tapKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      NumberPad(
+                        lockedDigit: session.mode == InputMode.digitFirst
+                            ? session.lockedDigit
+                            : null,
+                        reduceMotion: widget.reduceMotion,
+                        onKey: _onPadKey,
+                      ),
+                      // The named controls, below the digits and visibly not
+                      // more of them. Which ones are here is derived from the
+                      // board and the mode, so nothing is stored and nothing
+                      // can fall out of step.
+                      PadTools(
+                        notesMode: session.entryKind == EntryKind.note,
+                        provisionalInk: session.noteInk == NoteKind.provisional,
+                        hasProvisionalNotes: session.board.hasProvisionalNotes,
+                        reduceMotion: widget.reduceMotion,
+                        onKey: _onPadKey,
+                      ),
+                    ],
                   ),
                 ),
             ],

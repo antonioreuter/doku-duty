@@ -39,15 +39,59 @@ class RecordingCanvas implements Canvas {
       if (line.$3.toARGB32() == colour.toARGB32()) (line.$1, line.$2),
   ];
 
+  /// The paths drawn, with their colour.
+  ///
+  /// The **corner mark** is a path, not a rect — and it is the signal that
+  /// survives when the tint is hidden (D-50), so a test has to be able to count
+  /// them and say where they were.
+  final List<(Path, Color)> paths = <(Path, Color)>[];
+
+  /// The bounds of every path drawn in [colour].
+  List<Rect> pathBoundsIn(Color colour) => <Rect>[
+    for (final entry in paths)
+      if (entry.$2.toARGB32() == colour.toARGB32()) entry.$1.getBounds(),
+  ];
+
+  /// The circles drawn, with their centre, radius, colour, and style.
+  ///
+  /// Particles and the dynamite's ring are circles. A test counts them to check
+  /// the budget and reads their order to check they went down before the
+  /// glyphs did.
+  final List<(Offset, double, Color)> circles = <(Offset, double, Color)>[];
+
+  /// Every drawing call in the order it was made, as a tag.
+  ///
+  /// The effect layer's whole contract is an ordering — above the cells, below
+  /// the glyphs — and an ordering is the one thing a count cannot check.
+  final List<String> order = <String>[];
+
+  @override
+  void drawCircle(Offset centre, double radius, Paint paint) {
+    circles.add((centre, radius, paint.color));
+    order.add('circle');
+  }
+
+  @override
+  void drawParagraph(Paragraph paragraph, Offset offset) {
+    order.add('glyph');
+  }
+
+  @override
+  void drawPath(Path path, Paint paint) {
+    paths.add((path, paint.color));
+  }
+
   @override
   void drawRect(Rect rect, Paint paint) {
     final entry = (rect, paint.color);
     (paint.style == PaintingStyle.stroke ? strokes : fills).add(entry);
+    order.add('rect');
   }
 
   @override
   void drawLine(Offset from, Offset to, Paint paint) {
     lines.add((from, to, paint.color, paint.strokeWidth));
+    order.add('line');
   }
 
   @override

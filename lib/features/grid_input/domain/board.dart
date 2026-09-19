@@ -187,6 +187,18 @@ final class Board {
   /// Cells carrying at least one candidate.
   int get notedCount => _notes.length;
 
+  /// Whether any cell holds a **provisional note**.
+  ///
+  /// Whether a chain test is running, in other words — which is what decides
+  /// whether the controls that end one are worth showing (D-11, D-91). Derived
+  /// on the spot rather than tracked, so it cannot fall out of step with the
+  /// board after an undo, a clear, or a **promote**.
+  ///
+  /// Cheap: the map holds only cells that carry candidates, so an untouched
+  /// board answers without looking at anything.
+  bool get hasProvisionalNotes =>
+      _notes.values.any((notes) => notes.provisional.isNotEmpty);
+
   /// Mark [digit] in [cell] in [ink], remove it, or change its ink.
   ///
   /// Which of the three happens is [NoteSet.toggle]'s rule (D-90): absent marks,

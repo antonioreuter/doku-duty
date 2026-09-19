@@ -3,24 +3,37 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: Milestone 1 is playable.** The Flutter project exists and nine
-changes are archived — foundation, design system, persistence, remote config,
-puzzle engine, generation, grid and input, notes, and note automation. A player
-can open a puzzle from a shipped pack at any of the six **rank**s, place values,
-mark notes in fixed positional slots, and rely on **auto-cleanup**, **candidate
-highlighting**, and **auto-notes**.
+**Current state: Milestone 1 is complete.** Thirteen changes are archived —
+foundation, design system, persistence, remote config, puzzle engine,
+generation, grid and input, notes, note automation, provisional notes, the
+mistake model, completion effects, and the pad's tools row. A player can open a
+puzzle from a shipped pack at any of the six **rank**s, place values, mark
+notes in fixed positional slots, run a **chain test** in **provisional note**s,
+and see **unit**s celebrate and hold a **completion tint** — with
+**auto-cleanup**, **candidate highlighting**, and **auto-notes** throughout.
 
-`add-provisional-notes` (backlog item 9) is in progress. Run
-`openspec status --change add-provisional-notes` for where it stopped, and read
-its `tasks.md` — every task is ticked the moment it is done, so the file is the
-record of where to resume.
+Nothing is in progress. The next item is **backlog change 12,
+`add-rank-progression`**, which opens Milestone 2; its dependencies (5, 10) are
+both archived. Run `openspec status` to confirm before starting.
+
+`add-pad-tools-row` is not in `openspec/BACKLOG.md` — it was an unnumbered
+corrective change that replaced six unlabelled glyph keys with named controls
+after `add-mistake-model` found the pad overflowing. Expect the archive to hold
+changes the backlog does not number.
+
+**Two measurements are still outstanding, both on real hardware.** The mid-tier
+Android latency profile is recorded as unmet against *both* change 6 and change
+11 in `openspec/BACKLOG.md`; a **cascade** is the heavier frame, so
+`integration_test/completion_effects_test.dart` on one physical phone settles
+both. Haptics are covered by neither — a simulator reports success for a haptic
+it never played.
 
 ## Source of truth — read before proposing or implementing
 
 | File | Holds |
 |---|---|
 | `docs/IDEA.md` | Product description, world, cast, business model |
-| `docs/DECISIONS.md` | 70 numbered decisions (D-01 … D-70) with rationale |
+| `docs/DECISIONS.md` | 101 numbered decisions (D-01 … D-101) with rationale |
 | `docs/SPEC.md` | Long-form product spec |
 | `openspec/project.md` | Platform requirements, conventions, glossary |
 | `docs/TECH_STACK.md` | **Canonical for the stack** — client, AWS backend, auth and guest tier, purchases, offline and sync |
@@ -95,7 +108,9 @@ note, auto-cleanup, auto-notes, candidate highlighting, cabinet, strict mode,
 stamp, perk, digit sweep**
 
 The list grows: `add-note-automation` added **auto-notes**, **candidate
-highlighting**, and **generated note**. Read `openspec/project.md` rather than
+highlighting**, and **generated note**; `add-completion-effects` added
+**completion tint**, **corner mark**, and **cascade**; `add-pad-tools-row`
+added **tools row** and **chain test**. Read `openspec/project.md` rather than
 this summary when it matters — a change that needs a new concept adds it there
 in the same change.
 
@@ -163,10 +178,14 @@ is not landing and the installed skill file needs editing.
   the store, the pass offer, and chest openings have no character attached. The
   argument for giving monetisation a face is still in `docs/SPEC.md` §7 and still
   good. Settle it before `add-purchases-and-entitlements` (change 26).
-- **The mid-tier Android latency profile has never been taken.** Recorded
-  against `add-grid-and-input` in `openspec/BACKLOG.md`: measured on the host, an
-  emulator, and a simulator only. Take it on the first physical phone that comes
-  to hand and record the number.
+- **The mid-tier Android latency profile has never been taken.** Now recorded
+  against both `add-grid-and-input` and `add-completion-effects` in
+  `openspec/BACKLOG.md`: measured on the host, an emulator, and a simulator
+  only, with roughly 200× headroom against the 100 ms budget — but that is an
+  inference, not the measurement the backlog asked for. A **cascade** is the
+  heavier frame, so `integration_test/completion_effects_test.dart` on the first
+  physical phone that comes to hand settles both. Record the number, and check
+  the haptics by hand in the same session.
 
 Resolved, kept here only so they are not re-opened: the Sheriff's retired
 wrong-advice gag (D-39 → D-60) is gone from `docs/ART-BRIEF.md`, whose animation

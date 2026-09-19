@@ -10,6 +10,7 @@ import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_metrics.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_painter.dart';
 import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
+import 'package:doku_duty/features/grid_input/presentation/pad_tools.dart';
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 
@@ -138,24 +139,44 @@ void main() {
   // What `add-note-automation` added, checked against constraint 5 and the
   // 44pt floor.
   group('note automation', () {
-    testWidgets('the auto-notes key meets the tap target and is labelled', (
+    testWidgets('the auto-notes tool meets the tap target and is named', (
       tester,
     ) async {
       final handle = tester.ensureSemantics();
-      await tester.pumpWidget(_host(Center(child: NumberPad(onKey: (_) {}))));
+      await tester.pumpWidget(
+        _host(
+          Center(
+            child: PadTools(
+              notesMode: false,
+              provisionalInk: false,
+              hasProvisionalNotes: false,
+              onKey: (_) {},
+            ),
+          ),
+        ),
+      );
 
       final box = find
-          .ancestor(of: find.text('⁙'), matching: find.byType(SizedBox))
+          .ancestor(
+            of: find.text('Fill notes'),
+            matching: find.byType(ConstrainedBox),
+          )
           .first;
-      final size = tester.getSize(box);
-      expect(size.width, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
-      expect(size.height, greaterThanOrEqualTo(DokuLayout.minimumTapTarget));
+      expect(
+        tester.getSize(box).height,
+        greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
+      );
 
       final node = tester.getSemantics(
         find
-            .ancestor(of: find.text('⁙'), matching: find.byType(Semantics))
+            .ancestor(
+              of: find.text('Fill notes'),
+              matching: find.byType(Semantics),
+            )
             .first,
       );
+      // The word on the control is the word announced. It used to be `⁙`, a
+      // symbol that said nothing to either kind of player.
       expect(node.label, 'Fill notes');
 
       handle.dispose();
@@ -253,11 +274,14 @@ void main() {
     });
   });
 
-  // Every key on the pad, so the glyph cannot creep back into an announcement
-  // one key at a time. The symbols here — ⌫, ↶, ✎, ⁙, ~, ✕, ✓ — are
-  // decoration; read aloud they are noise at best and unreadable at worst.
+  // Every control on the pad, so a symbol cannot creep back into an
+  // announcement one control at a time. The digits and ⌫ are drawn as their
+  // own faces; everything else carries its name in words, and the word a
+  // player reads is the word a screen reader says.
   group('the pad announces names, never glyphs', () {
-    testWidgets('each key reads as its label and is pressable', (tester) async {
+    testWidgets('each digit key reads as itself and is pressable', (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(_host(Center(child: NumberPad(onKey: (_) {}))));
 
@@ -266,12 +290,6 @@ void main() {
         '5': '5',
         '9': '9',
         '⌫': 'Erase',
-        '↶': 'Undo',
-        '✎': 'Notes',
-        '⁙': 'Fill notes',
-        '~': 'Provisional ink',
-        '✕': 'Clear provisional notes',
-        '✓': 'Promote provisional notes',
       };
 
       for (final entry in expected.entries) {
@@ -294,8 +312,47 @@ void main() {
       handle.dispose();
     });
 
-    // Constraint 5 on the pad: the mode is readable without seeing which key
-    // is painted differently.
+    testWidgets('each tool reads as the word drawn on it', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _host(
+          Center(
+            child: PadTools(
+              notesMode: true,
+              provisionalInk: false,
+              hasProvisionalNotes: true,
+              onKey: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      for (final label in const <String>[
+        'Notes',
+        'Test',
+        'Fill notes',
+        'Undo',
+        'Discard test',
+        'Keep test',
+      ]) {
+        final node = tester.getSemantics(
+          find
+              .ancestor(of: find.text(label), matching: find.byType(Semantics))
+              .first,
+        );
+        expect(node.label, label, reason: '$label is announced as itself');
+        expect(
+          node.getSemanticsData().hasAction(SemanticsAction.tap),
+          isTrue,
+          reason: '$label is named but cannot be pressed',
+        );
+      }
+
+      handle.dispose();
+    });
+
+    // Constraint 5 on the pad: the mode is readable without seeing which
+    // control is painted differently.
     testWidgets('a held key and the notes mode report as selected', (
       tester,
     ) async {
@@ -303,19 +360,30 @@ void main() {
       await tester.pumpWidget(
         _host(
           Center(
-            child: NumberPad(lockedDigit: 4, notesMode: true, onKey: (_) {}),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                NumberPad(lockedDigit: 4, onKey: (_) {}),
+                PadTools(
+                  notesMode: true,
+                  provisionalInk: false,
+                  hasProvisionalNotes: false,
+                  onKey: (_) {},
+                ),
+              ],
+            ),
           ),
         ),
       );
 
-      SemanticsNode nodeFor(String glyph) => tester.getSemantics(
+      SemanticsNode nodeFor(String face) => tester.getSemantics(
         find
-            .ancestor(of: find.text(glyph), matching: find.byType(Semantics))
+            .ancestor(of: find.text(face), matching: find.byType(Semantics))
             .first,
       );
 
       expect(nodeFor('4').flagsCollection.isSelected, Tristate.isTrue);
-      expect(nodeFor('✎').flagsCollection.isSelected, Tristate.isTrue);
+      expect(nodeFor('Notes').flagsCollection.isSelected, Tristate.isTrue);
       expect(nodeFor('5').flagsCollection.isSelected, Tristate.isFalse);
 
       handle.dispose();

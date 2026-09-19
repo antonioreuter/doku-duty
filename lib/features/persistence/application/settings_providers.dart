@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../completion_effects/application/completion_settings.dart';
 import '../../design_system/application/motion_settings.dart';
 import '../../mistake_model/application/strict_mode.dart';
 import '../data/settings_repository.dart';
@@ -156,3 +157,63 @@ class PersistedStrictMode extends StrictMode {
 final persistedStrictModeOverride = strictModeProvider.overrideWith(
   PersistedStrictMode.new,
 );
+
+/// The "hide completion tints" switch, backed by storage.
+///
+/// The third of these, and the same shape for the same reasons — wired here so
+/// that neither feature imports the other, and hydrated *after* the first frame
+/// so no disk read reaches the cold-start path (D-85).
+///
+/// The synchronous default is the one that draws the tints. A player whose
+/// stored choice has not arrived yet sees a tint for a moment rather than
+/// missing one, which is the harmless direction: the **corner mark**s are drawn
+/// either way, so nothing is unreadable in either state of the race.
+class PersistedHideCompletionTints extends HideCompletionTints {
+  @override
+  bool build() {
+    final repository = ref.read(settingsRepositoryProvider);
+    _hydrated = _hydrate(repository);
+    return super.build();
+  }
+
+  Future<void> _hydrate(SettingsRepository repository) async {
+    final stored = await repository.read(AppSetting.hideCompletionTints);
+    if (!ref.mounted) return;
+    if (_playerHasChosen) return;
+    if (stored != state) state = stored;
+  }
+
+  Future<void> _lastWrite = Future<void>.value();
+
+  late final Future<void> _hydrated;
+
+  /// Completes when the stored value has been read and applied, or discarded
+  /// because the player got there first. Nothing in the app waits on it.
+  @visibleForTesting
+  Future<void> get hydrated => _hydrated;
+
+  /// Whether the player has changed the switch since this notifier was built.
+  /// Their choice is current and the disk is stale.
+  bool _playerHasChosen = false;
+
+  /// The most recent write to storage, kept for tests and for callers that
+  /// genuinely need to know it landed.
+  @visibleForTesting
+  Future<void> get lastWrite => _lastWrite;
+
+  @override
+  void set(bool value) {
+    _playerHasChosen = true;
+    super.set(value);
+    _lastWrite = ref
+        .read(settingsRepositoryProvider)
+        .write(AppSetting.hideCompletionTints, value: value);
+  }
+
+  @override
+  void toggle() => set(!state);
+}
+
+/// Applied at the composition root beside the other two.
+final persistedHideCompletionTintsOverride = hideCompletionTintsProvider
+    .overrideWith(PersistedHideCompletionTints.new);
