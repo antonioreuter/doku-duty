@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
 import 'package:doku_duty/features/completion_effects/application/completion_effects_controller.dart';
 import 'package:doku_duty/features/completion_effects/domain/completion_schedule.dart';
 import 'package:doku_duty/features/completion_effects/domain/effect_frame.dart';
@@ -42,7 +43,11 @@ class _NullSink implements BoardSink {
   Future<void> writeNotes(String id, Map<int, NoteSet> byCell) async {}
 
   @override
-  Future<void> complete(String id) async {}
+  Future<void> complete(
+    String id, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }
 
 /// A controller and an effect layer, wired the way the screen wires them.

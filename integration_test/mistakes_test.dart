@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 import 'package:doku_duty/features/grid_input/application/grid_providers.dart';
 import 'package:doku_duty/features/design_system/domain/shape.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
@@ -59,7 +60,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final saves = PuzzleSaveRepository(db);
-    final sink = RepositoryBoardSink(saves, NoteRepository(db));
+    final sink = RepositoryBoardSink(
+      saves,
+      NoteRepository(db),
+      ProgressionRepository(db),
+    );
 
     // Cell 2's solution is a 4, so a 7 is wrong and a 4 is not.
     var current = session().tapCell(2).tapDigit(7);
@@ -80,7 +85,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final saves = PuzzleSaveRepository(db);
-    final sink = RepositoryBoardSink(saves, NoteRepository(db));
+    final sink = RepositoryBoardSink(
+      saves,
+      NoteRepository(db),
+      ProgressionRepository(db),
+    );
 
     var current = session().tapCell(2).tapDigit(7);
     await sink.write(
@@ -109,7 +118,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final saves = PuzzleSaveRepository(db);
-    final sink = RepositoryBoardSink(saves, NoteRepository(db));
+    final sink = RepositoryBoardSink(
+      saves,
+      NoteRepository(db),
+      ProgressionRepository(db),
+    );
 
     const endedId = 'mistakes-ended-probe';
     var current = session(strict: true);
@@ -141,7 +154,11 @@ void main() {
 
     final existing = (await saves.all()).where((s) => s.puzzleId == survivorId);
     if (existing.isEmpty) {
-      final sink = RepositoryBoardSink(saves, NoteRepository(db));
+      final sink = RepositoryBoardSink(
+        saves,
+        NoteRepository(db),
+        ProgressionRepository(db),
+      );
       final current = session().tapCell(2).tapDigit(7).tapCell(3).tapDigit(9);
       await sink.write(
         survivorId,

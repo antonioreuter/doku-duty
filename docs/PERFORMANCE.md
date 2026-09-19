@@ -188,3 +188,46 @@ flutter test test/features/completion_effects/effect_latency_test.dart   # host
 flutter test integration_test/completion_effects_test.dart \
   -d <device> --flavor dev                                              # device
 ```
+
+## Rank progression — `add-rank-progression`, 2026-09-19
+
+Two costs arrive with the **solve record**: one grade when a puzzle is opened,
+and one transaction when it is finished. Neither is on the path of a tap, which
+is the property that matters and the one asserted structurally — the controller
+does not import the grader, so grading cannot drift onto an input.
+
+| What | Host | Android emulator | iOS simulator |
+|---|---|---|---|
+| `grade()`, one puzzle | 64 µs | 1.1–1.2 ms | 42–44 µs |
+| **Solve record** write, one transaction | — | 35–41 ms | 5.6–6.2 ms |
+
+Debug builds throughout; release is faster, so read these as a ceiling. The
+Android figures were taken under software GL with the host short of memory, so
+they are conservative even by that standard.
+
+**The grade is paid on open, once.** Against a 16.6 ms frame the worst of it is
+under a tenth of a frame on the emulator, and opening a puzzle is already
+asynchronous and off the first-frame path. Re-deriving the technique set was
+chosen over storing it in the **pack** for this reason: the cost is small enough
+that regenerating every shipped **pack** to save it would be the more expensive
+decision.
+
+**The write is off the input path entirely.** 35 ms is a long time in frame
+terms and would be unacceptable on a tap; it is not on one. The write is started
+unawaited after the new board is already published, exactly as every other write
+in `_persist` is (constraint 9's rule, constraint 2's reason), so the player
+never waits on it. What the 35 ms does mean is that a **solve record** must
+never be moved onto a synchronous path.
+
+**Still not measured on a phone.** This inherits the outstanding device profile
+recorded against changes 6 and 11 in `openspec/BACKLOG.md` rather than adding a
+third: a **cascade** is a heavier frame than anything here, so the phone session
+that settles those settles this too.
+
+Reproduce with:
+
+```
+flutter test test/features/rank_progression/open_grade_cost_test.dart    # host
+flutter test integration_test/rank_progression_test.dart \
+  -d <device> --flavor dev                                              # device
+```

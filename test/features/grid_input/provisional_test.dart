@@ -1,5 +1,7 @@
 import 'package:test/test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
+import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/design_system/domain/haptics.dart';
 import 'package:doku_duty/features/grid_input/application/puzzle_controller.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
@@ -381,5 +383,9 @@ final class _NullSink implements BoardSink {
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }

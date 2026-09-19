@@ -10,6 +10,7 @@ import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
 import '../../mistake_model/domain/attempt.dart';
 import '../../persistence/domain/note_enums.dart';
 import '../../puzzle_engine/domain/grid.dart';
+import '../../puzzle_engine/domain/technique.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
 import '../domain/puzzle_session.dart';
@@ -42,8 +43,18 @@ abstract interface class BoardSink {
   /// the single-cell case cannot drift away from the many-cell one.
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell);
 
-  /// The puzzle is finished.
-  Future<void> complete(String puzzleId);
+  /// The puzzle is finished, and this is the **solve record**.
+  ///
+  /// Carries what the record needs and nothing the caller could get wrong:
+  /// the [Attempt] rather than a "was it perfect" flag, because perfection is a
+  /// fact about the run and [Attempt] is the one place that decides it; and the
+  /// techniques the puzzle actually required rather than its **rank**, because
+  /// a **rank** says only what a puzzle *may* need (D-07).
+  Future<void> complete(
+    String puzzleId, {
+    required Set<Technique> techniquesRequired,
+    required Attempt attempt,
+  });
 }
 
 /// One puzzle being played.
@@ -56,12 +67,21 @@ class PuzzleController extends ChangeNotifier {
     required this.puzzle,
     required this.sink,
     required PuzzleSession initial,
+    this.techniquesRequired = const <Technique>{},
     this.fireHaptic,
     this.onError,
   }) : _state = initial;
 
   final StoredPuzzle puzzle;
   final BoardSink sink;
+
+  /// What the grader says this puzzle requires, taken once when it was opened.
+  ///
+  /// Held rather than computed because grading is a solver run, and constraint
+  /// 2 has no room for one on the path of a tap. Empty is a legitimate value —
+  /// a caller that has not graded records a solve with no techniques against
+  /// it rather than guessing a set from the **rank**.
+  final Set<Technique> techniquesRequired;
 
   /// Named rather than called on the platform directly, so the vocabulary in
   /// `docs/DESIGN.md` §5 stays the only way a haptic happens.
@@ -170,7 +190,7 @@ class PuzzleController extends ChangeNotifier {
     final previous = _state;
     _state = _state.restarted();
     notifyListeners();
-    unawaited(_persist(previous.board, _state.board, _state.attempt.mistakes));
+    unawaited(_persist(previous.board, _state.board, _state.attempt));
   }
 
   void setMode(InputMode mode) {
@@ -199,7 +219,7 @@ class PuzzleController extends ChangeNotifier {
     // flight can prevent it — constraint 9, which has no visible symptom when
     // it breaks. Announcing first would put a second code path in that gap for
     // no benefit: the event reaches its listeners on a microtask either way.
-    unawaited(_persist(previous.board, next.board, next.attempt.mistakes));
+    unawaited(_persist(previous.board, next.board, next.attempt));
     _announce(previous.board, next.board, edit);
   }
 
@@ -264,15 +284,21 @@ class PuzzleController extends ChangeNotifier {
   /// Written on every change, never on a timer — the discipline D-33 sets for
   /// notes, applied to values for the same reason: nobody gets a warning before
   /// the OS reclaims the process.
-  Future<void> _persist(Board before, Board board, int mistakes) async {
+  Future<void> _persist(Board before, Board board, Attempt attempt) async {
     try {
       final changed = _notesChangedBetween(before, board);
       if (changed.isNotEmpty) await sink.writeNotes(puzzle.id, changed);
-      await sink.write(puzzle.id, board, mistakes: mistakes);
+      await sink.write(puzzle.id, board, mistakes: attempt.mistakes);
       // Asked of the board that was written, not of the current state: writes
       // are in flight concurrently, and an earlier one resuming after the
       // puzzle was finished would report it finished a second time.
-      if (_solves(board)) await sink.complete(puzzle.id);
+      if (_solves(board)) {
+        await sink.complete(
+          puzzle.id,
+          techniquesRequired: techniquesRequired,
+          attempt: attempt,
+        );
+      }
     } on Object catch (error, stack) {
       onError?.call(error, stack);
     }

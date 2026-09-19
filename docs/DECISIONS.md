@@ -1492,3 +1492,120 @@ the puzzle.
 **What breaks if reversed.** Either the pad goes back to showing a player six
 controls, half of which do nothing they understand, or the controls get greyed
 out instead — which is the disabled state constraint 1 rules out.
+
+### D-102 · A rank is the hardest rank you have solved, and it never falls
+
+The player's **rank** is the hardest **rank** at which they have completed a
+puzzle. It rises the moment a **solve record** is written and has no route back
+down: no decay, no demotion, no expiry, and nothing spends it.
+
+**Rationale.** The alternative on the table was a threshold — three solves at a
+**rank** before the next is credited — and it is the conventional choice, so it
+is worth saying exactly why it loses. It holds a player who has *demonstrated*
+they can solve Marshal puzzles at Sheriff until they have repeated themselves
+twice more. That is a grind gate, and constraint 1 has no room for one: the
+game has no lives, no energy, and no session limit precisely so that the only
+thing standing between a player and the next puzzle is the puzzle. A counter
+that makes them re-prove a settled fact is the same obstacle wearing a
+progression costume.
+
+It also keeps the badge honest. "Marshal" under this rule means "has solved a
+Marshal puzzle", which is a claim the player can check against their own memory.
+Under a threshold it means "has solved three Sheriff puzzles", which is a
+different sentence that nobody would guess from the word.
+
+The one-way ratchet is the same argument as D-96's tally: a **rank** that could
+fall would teach the player to protect it, and protecting a **rank** means not
+attempting the harder puzzle. That is precisely backwards.
+
+**What breaks if reversed.** A player who can solve the next tier is told to go
+and do easier puzzles first, which is the game withholding content it has
+already agreed they have earned — and the first lesson it teaches is that
+reaching upward is punished.
+
+### D-103 · Ranks above the player's are marked, never locked
+
+The **rank** picker marks every **rank** harder than the player's own. The mark
+is a label and nothing else: a marked **rank** opens on one tap, with no
+confirmation, no warning to dismiss, and no extra step.
+
+**Rationale.** The hard gate — only **rank**s up to the player's own can be
+opened — is what most of the category does, and it is refused here for the
+reason it is usually adopted: it converts a **rank** from something the player
+*achieved* into something the game *permits*. Nothing else in this product tells
+a player no, and constraint 1 is the reason. A lock here would be the first one,
+and it would be aimed at a player whose only stated intent is to attempt a harder
+puzzle.
+
+Marking is kept rather than dropped entirely because the ladder should still
+mean something on sight. A player who wants to know whether they are reaching
+above themselves can see it; a player who does not care is not stopped. D-102
+makes the mark self-clearing — solve the puzzle and the mark is gone, along with
+every mark below it.
+
+Constraint 5 applies as everywhere else: the mark is carried in words, not by
+colour alone.
+
+**What breaks if reversed.** Locking turns **rank** into a permission and adds a
+failure state to a product whose whole positioning is the absence of them.
+Dropping the mark entirely costs nothing structural, but the six-**rank** ladder
+stops being legible at the one moment the player is looking at all six.
+
+### D-104 · A technique unlock is a counter above zero, not a second record
+
+A **technique unlock** is derived: a technique reads as unlocked when its
+per-technique counter stands above zero, which happens when a **solve record**
+counts a puzzle that required it. No set of unlocked techniques is stored.
+
+**Rationale.** A stored set and a counter are two answers to the same question,
+and the only thing two answers can do over time is disagree. The counter already
+exists, is already written in the **solve record**'s transaction, and is already
+what `add-trophy-cabinet` will read for its per-technique statistics — so the
+stored set would be a second write of a fact the first write already implies,
+with its own migration and its own opportunity to drift.
+
+The definition also settles what "unlocked" means, which `docs/SPEC.md` §5.1 and
+the bible both list in the cabinet without ever saying. It is *solved*, not
+*encountered*: opening a puzzle that needs an X-wing and abandoning it teaches
+nothing, and a cabinet claiming otherwise would be counting intentions.
+`add-technique-tutorials` keys its lesson off this, which is why it is defined
+here rather than there.
+
+Phrasing follows constraint 1. A technique the player has not met reads as not
+yet met — never as locked or withheld, which would describe the game keeping
+something from them when it is only describing what they have done so far.
+
+**What breaks if reversed.** A stored set drifts from the counters, and the
+cabinet shows a technique as unlocked with a zero beside it, or the reverse.
+Defining the unlock as an encounter makes the tutorial fire for a technique the
+player never successfully used, which is the one moment it is least useful.
+
+### D-105 · A solve record invalidates the reads derived from it, explicitly
+
+Writing the **solve record** is not the end of the operation. The sink that
+writes it also invalidates the two cached reads that depend on it — which puzzle
+is next at each **rank**, and the player's **rank** — rather than leaving them to
+expire on their own.
+
+**Rationale.** This was found by a test and not by reasoning, which is the part
+worth recording. Wiring the write closed the original break — nothing had ever
+called `markSolved`, so the picker offered a solved puzzle forever — and the
+end-to-end test still failed, because the picker's read is cached and the picker
+is *mounted the whole time*. It sits beneath the puzzle in the navigation stack,
+so it keeps its listener, and a provider with a live listener never disposes.
+The repository-level tests all passed either way; only a test that drove the
+real screens could see it.
+
+Two alternatives were considered. Marking the provider `autoDispose` is the
+idiomatic Riverpod answer and does nothing here, for the reason above: the
+listener never goes away, so the provider never disposes. Watching the database
+and rebuilding from a stream is the genuinely correct answer, and it was
+rejected on cost — it means reworking the query layer for one screen that
+`add-season-map` deletes, and the explicit invalidation is three lines with a
+test holding it in place.
+
+**What breaks if reversed.** The player solves a puzzle, walks back, and is
+handed the same puzzle — the exact symptom this change existed to fix, restored
+one layer higher up where the repository tests cannot see it. If the picker is
+ever replaced by a screen that does not stay mounted, this becomes dead code
+rather than wrong code, which is the safe direction.

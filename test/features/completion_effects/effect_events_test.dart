@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:test/test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
 import 'package:doku_duty/features/completion_effects/domain/completion_schedule.dart';
 import 'package:doku_duty/features/completion_effects/domain/effect_event.dart';
 import 'package:doku_duty/features/completion_effects/domain/unit_completion.dart';
@@ -96,7 +97,11 @@ class _RecordingSink implements BoardSink {
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }
 
 void main() {

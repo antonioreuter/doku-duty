@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 import 'package:doku_duty/features/grid_input/application/grid_providers.dart';
 import 'package:doku_duty/features/grid_input/application/puzzle_controller.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
@@ -76,7 +77,15 @@ final class _CountingSink implements BoardSink {
       throw UnimplementedError();
 
   @override
-  Future<void> complete(String puzzleId) => _inner.complete(puzzleId);
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) => _inner.complete(
+    puzzleId,
+    techniquesRequired: techniquesRequired,
+    attempt: attempt,
+  );
 }
 
 void main() {
@@ -87,7 +96,11 @@ void main() {
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
     saves = PuzzleSaveRepository(db);
-    sink = RepositoryBoardSink(saves, NoteRepository(db));
+    sink = RepositoryBoardSink(
+      saves,
+      NoteRepository(db),
+      ProgressionRepository(db),
+    );
   });
   tearDown(() => db.close());
 

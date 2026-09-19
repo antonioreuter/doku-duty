@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 import 'package:doku_duty/features/grid_input/application/grid_providers.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
 import 'package:doku_duty/features/grid_input/domain/note_set.dart';
@@ -40,7 +41,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final notes = NoteRepository(db);
-    final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+    final sink = RepositoryBoardSink(
+      PuzzleSaveRepository(db),
+      notes,
+      ProgressionRepository(db),
+    );
 
     await sink.writeNotes(puzzleId, <int, NoteSet>{
       cell: NoteSet.of(const <int>[1, 5, 9]),
@@ -72,7 +77,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final notes = NoteRepository(db);
-    final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+    final sink = RepositoryBoardSink(
+      PuzzleSaveRepository(db),
+      notes,
+      ProgressionRepository(db),
+    );
 
     await sink.writeNotes(puzzleId, <int, NoteSet>{
       cell: NoteSet.of(const <int>[1, 9]),
@@ -89,7 +98,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final notes = NoteRepository(db);
-    final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+    final sink = RepositoryBoardSink(
+      PuzzleSaveRepository(db),
+      notes,
+      ProgressionRepository(db),
+    );
 
     const fillId = 'notes-fill-probe';
     final board = Board.forPuzzle(
@@ -154,7 +167,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final notes = NoteRepository(db);
-    final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+    final sink = RepositoryBoardSink(
+      PuzzleSaveRepository(db),
+      notes,
+      ProgressionRepository(db),
+    );
 
     const inkId = 'notes-ink-probe';
     var board = Board.forPuzzle(givens: (Grid.parse(clues) as ValidGrid).grid);
@@ -239,7 +256,11 @@ void main() {
     final stored = await notes.notesInCell(provisionalId, 40);
 
     if (stored.isEmpty) {
-      final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+      final sink = RepositoryBoardSink(
+        PuzzleSaveRepository(db),
+        notes,
+        ProgressionRepository(db),
+      );
       var board = Board.forPuzzle(
         givens: (Grid.parse(clues) as ValidGrid).grid,
       );
@@ -266,7 +287,11 @@ void main() {
     final db = AppDatabase.open();
     addTearDown(db.close);
     final notes = NoteRepository(db);
-    final sink = RepositoryBoardSink(PuzzleSaveRepository(db), notes);
+    final sink = RepositoryBoardSink(
+      PuzzleSaveRepository(db),
+      notes,
+      ProgressionRepository(db),
+    );
 
     const cleanupId = 'notes-cleanup-probe';
     var board = Board.forPuzzle(givens: (Grid.parse(clues) as ValidGrid).grid);

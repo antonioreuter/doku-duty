@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
+import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/design_system/domain/haptics.dart';
 import 'package:doku_duty/features/grid_input/application/puzzle_controller.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
@@ -47,7 +49,11 @@ class _Sink implements BoardSink {
   }
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }
 
 PuzzleController _controller(
@@ -350,5 +356,9 @@ class _FailingSink implements BoardSink {
   }
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }

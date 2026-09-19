@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
+import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/design_system/domain/haptics.dart';
 import 'package:doku_duty/features/grid_input/application/puzzle_controller.dart';
 import 'package:doku_duty/features/grid_input/domain/board.dart';
@@ -45,7 +47,11 @@ class _RecordingSink implements BoardSink {
   }
 
   @override
-  Future<void> complete(String puzzleId) async => completed.add(puzzleId);
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async => completed.add(puzzleId);
 }
 
 /// Records the order of publish and write, so one can be shown to precede the
@@ -67,7 +73,11 @@ class _OrderedSink implements BoardSink {
       order.add('writeNotes');
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }
 
 class _FailingSink implements BoardSink {
@@ -83,7 +93,11 @@ class _FailingSink implements BoardSink {
       throw StateError('disk full');
 
   @override
-  Future<void> complete(String puzzleId) async {}
+  Future<void> complete(
+    String puzzleId, {
+    Set<Technique> techniquesRequired = const <Technique>{},
+    Attempt attempt = Attempt.fresh,
+  }) async {}
 }
 
 PuzzleController _controller(

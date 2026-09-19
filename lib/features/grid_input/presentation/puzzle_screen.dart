@@ -104,6 +104,9 @@ class _PuzzleBodyState extends State<_PuzzleBody>
   late final PuzzleController _controller = PuzzleController(
     puzzle: widget.opening.puzzle,
     sink: widget.sink,
+    // Graded when the puzzle was opened, so the **solve record** has the
+    // technique set without a solver run on the frame that completes the board.
+    techniquesRequired: widget.opening.techniquesRequired,
     initial: sessionFor(
       puzzle: widget.opening.puzzle,
       placedValues: widget.opening.placedValues,
