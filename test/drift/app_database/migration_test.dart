@@ -11,6 +11,7 @@ import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
+import 'generated/schema_v6.dart' as v6;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -683,6 +684,192 @@ void main() {
         expect(await rows('SELECT position FROM completed_nodes'), isEmpty);
         expect(await rows('SELECT season_id FROM season_states'), isEmpty);
         expect(await rows('SELECT attempts FROM boss_attempts'), isEmpty);
+      },
+    );
+  });
+
+  test('migration from v5 to v6 keeps everything and starts the streak at zero', () async {
+    final stamp = DateTime.utc(2026, 9, 21, 9).toIso8601String();
+    const grid =
+        '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+    // A player deep into a **season**: a puzzle in progress with **mistake**s
+    // and a hypothesis on it, a **solve record** and technique counters behind
+    // them, a **lesson** seen, a **season** in force and **node**s completed on
+    // it. Version 6 adds two tables and moves nothing, so all of it must come
+    // through untouched.
+    final oldSaves = <v5.PuzzleSavesData>[
+      v5.PuzzleSavesData(
+        puzzleId: 'p1',
+        placedValues: grid,
+        elapsedMs: 615000,
+        isComplete: 0,
+        updatedAt: stamp,
+        pendingUpload: 1,
+        deviceOrigin: 'test-device',
+        mistakes: 1,
+      ),
+    ];
+
+    final oldNotes = <v5.NotesData>[
+      v5.NotesData(
+        puzzleId: 'p1',
+        cell: 33,
+        digit: 4,
+        kind: 'provisional',
+        origin: 'manual',
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSolved = <v5.SolvedPuzzlesData>[
+      v5.SolvedPuzzlesData(
+        puzzleId: 'q-marshal',
+        solvedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldTechniques = <v5.TechniqueStatsData>[
+      v5.TechniqueStatsData(
+        technique: 'hiddenPair',
+        puzzlesRequiring: 5,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldLifetime = <v5.LifetimeStatsData>[
+      v5.LifetimeStatsData(
+        id: 0,
+        puzzlesSolved: 63,
+        perfectSolves: 19,
+        totalPlayMs: 14400000,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSeenLessons = <v5.SeenLessonsData>[
+      v5.SeenLessonsData(
+        lessonId: 'nakedPair',
+        seenAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSeason = <v5.SeasonStatesData>[
+      v5.SeasonStatesData(
+        id: 0,
+        seasonId: 'frontier-1',
+        startedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldNodes = <v5.CompletedNodesData>[
+      for (final position in <int>[1, 2, 3])
+        v5.CompletedNodesData(
+          seasonId: 'frontier-1',
+          position: position,
+          completedAt: stamp,
+          updatedAt: stamp,
+          pendingUpload: 1,
+        ),
+    ];
+
+    await verifier.testWithDataIntegrity(
+      oldVersion: 5,
+      newVersion: 6,
+      createOld: v5.DatabaseAtV5.new,
+      createNew: v6.DatabaseAtV6.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.notes, oldNotes);
+        batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        batch.insertAll(oldDb.solvedPuzzles, oldSolved);
+        batch.insertAll(oldDb.techniqueStats, oldTechniques);
+        batch.insertAll(oldDb.lifetimeStats, oldLifetime);
+        batch.insertAll(oldDb.seenLessons, oldSeenLessons);
+        batch.insertAll(oldDb.seasonStates, oldSeason);
+        batch.insertAll(oldDb.completedNodes, oldNodes);
+      },
+      validateItems: (newDb) async {
+        Future<List<Map<String, Object?>>> rows(String sql) async {
+          final result = await newDb.customSelect(sql).get();
+          return <Map<String, Object?>>[for (final r in result) r.data];
+        }
+
+        final saves = await rows(
+          'SELECT puzzle_id, placed_values, elapsed_ms, mistakes FROM puzzle_saves',
+        );
+        expect(saves.single['placed_values'], grid);
+        expect(saves.single['elapsed_ms'], 615000);
+        expect(saves.single['mistakes'], 1);
+
+        final notes = await rows('SELECT cell, digit, kind FROM notes');
+        expect(notes.single['cell'], 33);
+        expect(notes.single['kind'], 'provisional');
+
+        // The permanent layer (D-17), which nothing about a new capability may
+        // disturb.
+        expect(
+          (await rows(
+            'SELECT puzzle_id FROM solved_puzzles',
+          )).single['puzzle_id'],
+          'q-marshal',
+        );
+        expect(
+          (await rows(
+            'SELECT puzzles_requiring FROM technique_stats',
+          )).single['puzzles_requiring'],
+          5,
+        );
+        expect(
+          (await rows(
+            'SELECT puzzles_solved FROM lifetime_stats',
+          )).single['puzzles_solved'],
+          63,
+        );
+        expect(
+          (await rows(
+            'SELECT lesson_id FROM seen_lessons',
+          )).single['lesson_id'],
+          'nakedPair',
+        );
+
+        // The seasonal layer survives intact: still walking the same
+        // **season**, still three **node**s in.
+        expect(
+          (await rows(
+            'SELECT season_id FROM season_states',
+          )).single['season_id'],
+          'frontier-1',
+        );
+        expect(
+          await rows('SELECT position FROM completed_nodes'),
+          hasLength(3),
+        );
+
+        // The new tables arrive empty, and that is the only honest direction.
+        // There was no **daily challenge** before this version, so an upgrading
+        // player has completed no day and their **streak** is zero. Arriving
+        // with rows would credit days that never happened.
+        expect(await rows('SELECT day FROM completed_days'), isEmpty);
+
+        // The ledger is empty too, which by D-117 means `last_spent_day` is
+        // null and the player holds one **streak freeze** from the moment they
+        // open the app. Intended, not incidental: the safety net is for the
+        // player whose second day goes wrong, and an upgrade is somebody's
+        // first day.
+        expect(
+          await rows('SELECT last_spent_day FROM streak_freeze_ledgers'),
+          isEmpty,
+        );
       },
     );
   });

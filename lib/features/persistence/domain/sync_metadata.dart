@@ -56,4 +56,17 @@ const List<String> syncableTables = <String>[
   'season_states',
   'completed_nodes',
   'boss_attempts',
+  // The **daily challenge**'s **calendar** and its **streak freeze** ledger.
+  //
+  // `completed_days` is the table `docs/TECH_STACK.md` §3b's merge rule was
+  // written about: **union the days and recompute the streak**, never sync the
+  // number. That is why there is no streak column anywhere to list here — the
+  // count is derived, so two devices have nothing to disagree about.
+  //
+  // `streak_freeze_ledgers` is one row holding a date. Last-write-wins would be
+  // wrong on it in one direction only: taking the *later* spend is what keeps a
+  // freeze from being spent twice across two devices, so `add-cloud-sync` (29)
+  // should merge it by maximum like a counter, not by recency of write.
+  'completed_days',
+  'streak_freeze_ledgers',
 ];

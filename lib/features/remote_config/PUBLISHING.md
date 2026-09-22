@@ -20,6 +20,7 @@ own.
 | `ads.interstitial_minimum_gap_seconds` | integer | Seconds between interstitials |
 | `ads.interstitials_per_session` | integer | Interstitials in one session |
 | `season` | object | The **season** the **trail** shows. Absent is valid and common — see below |
+| `daily` | object | The **daily challenge** schedule. Absent is valid and common — see below |
 
 Whole numbers may be written as `3`, `3.0`, or `"3"` — all three are accepted,
 because a hand-edited file will eventually contain each of them. A fractional
@@ -105,6 +106,87 @@ thing to be careful with: the completions already written still refer to
 positions 1…42, so **node** 7 becoming a different **rank** changes what a
 player who has passed it already did. Editing a live **season** in place is for
 fixing a typo in its `name`; anything structural should be a new `id`.
+
+## The daily schedule
+
+`daily` is the second structured key, and it is the mirror image of `season` in
+the one way that matters. A **node** names a **rank** and never a puzzle
+(D-110), so that a **pack** top-up cannot strand it. A **daily challenge** names
+a **puzzle** and never a **rank**, so that every player is solving the same
+board — which is the only thing this capability promises and the reason it is
+built on a different mechanism at all.
+
+Absent is valid and common, exactly as `season` is. With no `daily` key the
+client derives each day's board from the installed **pack** by a seed fixed by
+the date, so every date still resolves and no player is ever told the **daily
+challenge** is unavailable (D-115).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `daily.schema_version` | integer | Recorded, never enforced |
+| `daily.days` | array | One object per date, in any order |
+
+Each entry in `daily.days` carries:
+
+| Key | Type | Meaning |
+|---|---|---|
+| `date` | string | `YYYY-MM-DD`. The player's **local** date, not an instant |
+| `puzzle_id` | string | The id of a puzzle in a shipped **pack** |
+
+### The date is local, and that is deliberate
+
+`date` is a calendar day, not a timestamp, because the **daily challenge**
+rolls over at midnight *local* time (`docs/SPEC.md` §5.3). Two players in
+different timezones meet the same board on the same calendar date and not at
+the same instant. Do not publish an ISO-8601 datetime here; it will be refused.
+
+### Difficulty follows a weekly ramp
+
+A published week MUST rise in **rank** from its start to its end (D-116).
+Monday is the easiest board of the week and the weekend carries the hardest.
+
+This is a rule for whoever builds the document, not something the client
+enforces — it cannot, because it only ever sees one day at a time. The client's
+own fallback follows the same shape, so a player who outruns the schedule keeps
+the curve.
+
+**The ramp is not optional and not a stylistic preference.** The board is
+identical for every player, so its **rank** cannot scale to the individual the
+way **free play** does. A flat schedule at one **rank** is permanently
+unsolvable for a Greenhorn and permanently trivial for a Legend; a schedule that
+rotates all six guarantees a new player meets Legend boards on a counter whose
+entire job is to reward turning up.
+
+### What the client refuses
+
+Per **day**, never per document. One malformed entry loses that day and no
+other, and the day it loses falls back to the derived board — the same thing an
+absent publish does, so there is no failure a player can be shown.
+
+- An entry that is not an object
+- A `date` that is not `YYYY-MM-DD`
+- A missing or empty `puzzle_id`
+- A `puzzle_id` naming a puzzle the installed **pack**s do not contain
+
+The last is worth stating plainly because it is the one a publisher will
+actually hit: **publishing a schedule ahead of the pack that contains its
+puzzles is safe.** Those days quietly use the derived board until the **pack**
+reaches the device, then start using the named one. Nothing breaks and nothing
+is announced.
+
+A `daily` key that is not an object, or whose `days` is not an array, is refused
+whole — the client falls back to deriving every day.
+
+### What a schedule cannot do
+
+It cannot withhold a **daily challenge**. There is no representation for "no
+puzzle today": a date with no entry is a date the client derives a board for. A
+**streak** can therefore never be broken by a publishing mistake, which is the
+property constraint 1 needs and the reason the fallback exists at all.
+
+It cannot set a **rank** directly. The **rank** is whatever the named puzzle
+already carries, graded when the **pack** was built (D-32). A schedule that
+wants a Marshal board on a Thursday names a Marshal puzzle.
 
 ## What a value cannot do
 

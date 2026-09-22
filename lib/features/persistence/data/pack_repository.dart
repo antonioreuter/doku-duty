@@ -93,6 +93,28 @@ class PackRepository {
         .getSingleOrNull();
   }
 
+  /// A puzzle of [rank] chosen by [seed], deterministically.
+  ///
+  /// **Deliberately blind to what the player has solved.** [nextUnsolved] is
+  /// right for **free play**, where the point is to serve something new, and
+  /// wrong for the **daily challenge**, where the point is that everybody with
+  /// the same **pack** gets the same board — and what each player has solved is
+  /// the one thing guaranteed to differ between them (D-115).
+  ///
+  /// Ordered by id so the choice does not depend on insertion order, which a
+  /// **pack** top-up changes.
+  Future<Puzzle?> puzzleByRankAndSeed(Rank rank, int seed) async {
+    final rows =
+        await (_db.select(_db.puzzles)
+              ..where((p) => p.rank.equalsValue(rank))
+              ..orderBy(<OrderingTerm Function($PuzzlesTable)>[
+                (p) => OrderingTerm(expression: p.id),
+              ]))
+            .get();
+    if (rows.isEmpty) return null;
+    return rows[seed.abs() % rows.length];
+  }
+
   Future<void> markSolved(String puzzleId) {
     return _db
         .into(_db.solvedPuzzles)

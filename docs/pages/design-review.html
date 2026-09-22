@@ -1,0 +1,202 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doku Duty — design review: target vs. current</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --sand:#E4D4AE;--bone:#F5EBD6;--card:#FBF5E9;--ink:#2E2438;--soft:#64596B;--faint:#9A8FA0;--hair:#DCCDA8;
+ --gold:#F2B33D;--goldP:#FDEFC6;--goldD:#B47A15;
+ --indigo:#4A3F9E;--indigoP:#E6DEFA;--indigoD:#2F2670;
+ --turq:#1B6661;--red:#E05A2B;--redP:#FBDDD6;--redD:#A03A15;
+ --green:#4E9E62;--greenP:#CFE0BE;--greenD:#2F6E3F;--boneD:#C9B48C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:'Nunito Sans',system-ui,sans-serif;font-size:15px;line-height:1.6}
+.sheet{max-width:1280px;margin:0 auto;padding:0 20px 90px}
+.mast{padding:48px 0 22px}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:0 0 14px}
+h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(32px,6vw,54px);line-height:1;margin:0}
+.sub{max-width:70ch;margin:16px 0 0;color:var(--soft)}
+.note{max-width:900px;margin:22px 0 0;padding:14px 18px;border:2px solid var(--indigo);border-radius:10px;background:var(--indigoP);color:var(--indigoD);font-size:14px;line-height:1.55}
+.note b{color:var(--ink)}
+
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
+nav.toc a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:8px 14px;border:2px solid var(--ink);border-radius:16px;background:var(--card);box-shadow:0 3px 0 var(--boneD)}
+nav.toc a:hover{background:var(--gold)}
+
+section.part{margin:56px 0 0}
+.part>h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:26px;margin:0 0 6px}
+.part>.lede{color:var(--soft);max-width:74ch;margin:0 0 20px}
+
+.mockup-frame{border:3px solid var(--ink);border-radius:20px;background:var(--card);box-shadow:0 6px 0 var(--boneD);overflow:hidden}
+.mockup-frame iframe{display:block;width:100%;height:85vh;border:0;background:var(--sand)}
+
+.feature{background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--boneD);margin:0 0 26px;padding:22px 24px}
+.feature h3{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;margin:0 0 3px}
+.feature .maps-to{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:0 0 14px}
+.feature .src{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);margin:0 0 14px}
+
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+figure{margin:0;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--bone)}
+figure img{display:block;width:100%;height:auto;background:#fff;cursor:zoom-in}
+figcaption{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.03em;color:var(--soft);padding:7px 10px;border-top:2px solid var(--hair)}
+
+footer{margin:60px 0 0;padding-top:20px;border-top:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--soft)}
+
+dialog#lightbox{border:0;border-radius:16px;padding:0;background:var(--card);max-width:94vw;max-height:94vh}
+dialog#lightbox img{display:block;max-width:90vw;max-height:88vh}
+dialog#lightbox::backdrop{background:rgba(46,36,56,.72)}
+</style>
+
+<div class="sheet">
+<header class="mast">
+ <p class="kick">Working aid · not a spec</p>
+ <h1>Design review<br>target vs. current</h1>
+ <p class="sub">Everything the project has drawn or rendered for this game, in one page: the hand-built mockups in <code>screens.html</code> next to the actual widget-test golden images for every screen that has them. Built to compare before reworking the in-app layout.</p>
+ <div class="note">
+  <b>Reading this page.</b> The top part is <code>screens.html</code> — the layout and control labelling are still authoritative even though its cast artwork (Ruby, five characters) predates D-58. The bottom part is what the app <i>actually</i> renders today, captured by <code>flutter test --update-goldens</code>; each image is a real widget tree, not a drawing. Click any current-state image to zoom.
+ </div>
+ <nav class="toc">
+  <a href="#target">Target: screens.html</a>
+  <a href="#design-system">Design system</a>
+  <a href="#season-map">Season map</a>
+  <a href="#grid-input">Grid &amp; input</a>
+  <a href="#completion-effects">Completion effects</a>
+  <a href="#rank-progression">Rank progression</a>
+  <a href="#technique-tutorials">Technique tutorials</a>
+ </nav>
+</header>
+
+<section class="part" id="target">
+ <h2>Target — the nine screens (screens.html)</h2>
+ <p class="lede">Live-embedded, not screenshotted, so it always reflects the current file. Scroll within the frame.</p>
+ <div class="mockup-frame">
+  <iframe src="screens.html" title="Doku Duty screen specifications" loading="lazy"></iframe>
+ </div>
+</section>
+
+<section class="part" id="current-heading">
+ <h2>Current — actual widget renders</h2>
+ <p class="lede">Golden test images from <code>test/features/*/goldens/</code>. Each one is the pixel output of a real Flutter widget in the current codebase for a specific state.</p>
+</section>
+
+<section class="part" id="design-system">
+ <div class="feature">
+  <h3>Design system</h3>
+  <p class="maps-to">Maps to → Screen 09 · Palette and state roles</p>
+  <p class="src">test/features/design_system/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/design_system/goldens/palette.png" loading="lazy"><figcaption>palette.png</figcaption></figure>
+   <figure><img src="../../test/features/design_system/goldens/card.png" loading="lazy"><figcaption>card.png</figcaption></figure>
+   <figure><img src="../../test/features/design_system/goldens/pressable_rest.png" loading="lazy"><figcaption>pressable_rest.png</figcaption></figure>
+   <figure><img src="../../test/features/design_system/goldens/pressable_pressed.png" loading="lazy"><figcaption>pressable_pressed.png</figcaption></figure>
+   <figure><img src="../../test/features/design_system/goldens/season_default.png" loading="lazy"><figcaption>season_default.png</figcaption></figure>
+   <figure><img src="../../test/features/design_system/goldens/season_dusk.png" loading="lazy"><figcaption>season_dusk.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<section class="part" id="season-map">
+ <div class="feature">
+  <h3>Season map (trail)</h3>
+  <p class="maps-to">Maps to → Screen 01 · Territory map</p>
+  <p class="src">test/features/season_map/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/season_map/goldens/trail_new_player.png" loading="lazy"><figcaption>trail_new_player.png</figcaption></figure>
+   <figure><img src="../../test/features/season_map/goldens/trail_mid_season.png" loading="lazy"><figcaption>trail_mid_season.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<section class="part" id="grid-input">
+ <div class="feature">
+  <h3>Grid &amp; input</h3>
+  <p class="maps-to">Maps to → Screen 02 · Puzzle, Screen 03 · Notes and candidates</p>
+  <p class="src">test/features/grid_input/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/grid_input/goldens/grid_untouched.png" loading="lazy"><figcaption>grid_untouched.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/grid_part_filled.png" loading="lazy"><figcaption>grid_part_filled.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/grid_selected.png" loading="lazy"><figcaption>grid_selected.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/grid_selected_corner.png" loading="lazy"><figcaption>grid_selected_corner.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/grid_solved.png" loading="lazy"><figcaption>grid_solved.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/grid_repainted_season.png" loading="lazy"><figcaption>grid_repainted_season.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/highlight_four.png" loading="lazy"><figcaption>highlight_four.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/highlight_under_selection.png" loading="lazy"><figcaption>highlight_under_selection.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/highlight_other_season.png" loading="lazy"><figcaption>highlight_other_season.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/inks_board.png" loading="lazy"><figcaption>inks_board.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/inks_mixed_full_cell.png" loading="lazy"><figcaption>inks_mixed_full_cell.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/inks_reinked.png" loading="lazy"><figcaption>inks_reinked.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/notes_and_values.png" loading="lazy"><figcaption>notes_and_values.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/notes_one_and_nine.png" loading="lazy"><figcaption>notes_one_and_nine.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/pad_default.png" loading="lazy"><figcaption>pad_default.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/pad_notes_mode.png" loading="lazy"><figcaption>pad_notes_mode.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/pad_provisional_ink.png" loading="lazy"><figcaption>pad_provisional_ink.png</figcaption></figure>
+   <figure><img src="../../test/features/grid_input/goldens/pad_chain_test.png" loading="lazy"><figcaption>pad_chain_test.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<section class="part" id="completion-effects">
+ <div class="feature">
+  <h3>Completion effects</h3>
+  <p class="maps-to">Maps to → Screen 04 · Node complete, Screen 08 · Completion effects</p>
+  <p class="src">test/features/completion_effects/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/completion_effects/goldens/completion_fresh.png" loading="lazy"><figcaption>completion_fresh.png</figcaption></figure>
+   <figure><img src="../../test/features/completion_effects/goldens/completion_one_unit.png" loading="lazy"><figcaption>completion_one_unit.png</figcaption></figure>
+   <figure><img src="../../test/features/completion_effects/goldens/completion_three_units.png" loading="lazy"><figcaption>completion_three_units.png</figcaption></figure>
+   <figure><img src="../../test/features/completion_effects/goldens/completion_lasso.png" loading="lazy"><figcaption>completion_lasso.png</figcaption></figure>
+   <figure><img src="../../test/features/completion_effects/goldens/completion_tints_hidden.png" loading="lazy"><figcaption>completion_tints_hidden.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<section class="part" id="rank-progression">
+ <div class="feature">
+  <h3>Rank progression (picker)</h3>
+  <p class="maps-to">Maps to → Screen 06 · The cabinet</p>
+  <p class="src">test/features/rank_progression/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/rank_progression/goldens/picker_new_player.png" loading="lazy"><figcaption>picker_new_player.png</figcaption></figure>
+   <figure><img src="../../test/features/rank_progression/goldens/picker_mid_ladder.png" loading="lazy"><figcaption>picker_mid_ladder.png</figcaption></figure>
+   <figure><img src="../../test/features/rank_progression/goldens/picker_legend.png" loading="lazy"><figcaption>picker_legend.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<section class="part" id="technique-tutorials">
+ <div class="feature">
+  <h3>Technique tutorials (lessons)</h3>
+  <p class="maps-to">Not one of the original nine — added by add-technique-tutorials</p>
+  <p class="src">test/features/technique_tutorials/goldens/</p>
+  <div class="gallery">
+   <figure><img src="../../test/features/technique_tutorials/goldens/lesson_first_step.png" loading="lazy"><figcaption>lesson_first_step.png</figcaption></figure>
+   <figure><img src="../../test/features/technique_tutorials/goldens/lesson_placement.png" loading="lazy"><figcaption>lesson_placement.png</figcaption></figure>
+   <figure><img src="../../test/features/technique_tutorials/goldens/lesson_placed.png" loading="lazy"><figcaption>lesson_placed.png</figcaption></figure>
+   <figure><img src="../../test/features/technique_tutorials/goldens/lesson_marked.png" loading="lazy"><figcaption>lesson_marked.png</figcaption></figure>
+  </div>
+ </div>
+</section>
+
+<footer>Generated for a layout-improvement pass · sources: docs/pages/screens.html, test/features/*/goldens/*.png</footer>
+</div>
+
+<dialog id="lightbox">
+ <img id="lightbox-img" src="" alt="">
+</dialog>
+<script>
+ var dlg = document.getElementById('lightbox');
+ var dlgImg = document.getElementById('lightbox-img');
+ document.querySelectorAll('.gallery img').forEach(function(img){
+  img.addEventListener('click', function(){
+   dlgImg.src = img.src;
+   dlgImg.alt = img.alt;
+   dlg.showModal();
+  });
+ });
+ dlg.addEventListener('click', function(e){
+  if (e.target === dlg) dlg.close();
+ });
+</script>

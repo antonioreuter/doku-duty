@@ -24,6 +24,11 @@ void main() {
   final watched = <Directory>[
     Directory('lib/features/persistence'),
     Directory('lib/features/season_map/data'),
+    // `daily-challenge` writes the **calendar** and the **streak freeze**
+    // ledger, and a day lost to an app kill is a broken **streak** — a number
+    // a player may have held for a year, with no way to tell afterwards
+    // whether it was a bug or a day they genuinely missed.
+    Directory('lib/features/daily_challenge/data'),
   ];
 
   List<({String path, String source})> sources() =>

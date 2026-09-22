@@ -4884,6 +4884,716 @@ class BossAttemptsCompanion extends UpdateCompanion<BossAttempt> {
   }
 }
 
+class $CompletedDaysTable extends CompletedDays
+    with TableInfo<$CompletedDaysTable, CompletedDay> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CompletedDaysTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dayMeta = const VerificationMeta('day');
+  @override
+  late final GeneratedColumn<String> day = GeneratedColumn<String>(
+    'day',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 10,
+      maxTextLength: 10,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isVerifiedMeta = const VerificationMeta(
+    'isVerified',
+  );
+  @override
+  late final GeneratedColumn<bool> isVerified = GeneratedColumn<bool>(
+    'is_verified',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_verified" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _wasFrozenMeta = const VerificationMeta(
+    'wasFrozen',
+  );
+  @override
+  late final GeneratedColumn<bool> wasFrozen = GeneratedColumn<bool>(
+    'was_frozen',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("was_frozen" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    day,
+    isVerified,
+    wasFrozen,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'completed_days';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CompletedDay> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('day')) {
+      context.handle(
+        _dayMeta,
+        day.isAcceptableOrUnknown(data['day']!, _dayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayMeta);
+    }
+    if (data.containsKey('is_verified')) {
+      context.handle(
+        _isVerifiedMeta,
+        isVerified.isAcceptableOrUnknown(data['is_verified']!, _isVerifiedMeta),
+      );
+    }
+    if (data.containsKey('was_frozen')) {
+      context.handle(
+        _wasFrozenMeta,
+        wasFrozen.isAcceptableOrUnknown(data['was_frozen']!, _wasFrozenMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {day};
+  @override
+  CompletedDay map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CompletedDay(
+      day: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day'],
+      )!,
+      isVerified: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_verified'],
+      )!,
+      wasFrozen: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}was_frozen'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $CompletedDaysTable createAlias(String alias) {
+    return $CompletedDaysTable(attachedDatabase, alias);
+  }
+}
+
+class CompletedDay extends DataClass implements Insertable<CompletedDay> {
+  /// `YYYY-MM-DD`, local to the player. Zero-padded, so the stored form sorts
+  /// in date order and a month can be read as a range.
+  final String day;
+
+  /// False where the day was recorded with no known server-time offset — the
+  /// ordinary offline case, not a suspicion. Reconciliation may discard an
+  /// unverified day dated ahead of the server's own; it may never touch
+  /// anything else (`docs/TECH_STACK.md` §3b).
+  final bool isVerified;
+
+  /// Whether a **streak freeze** bridged this day rather than the player
+  /// playing it. Both kinds count toward the **streak**; only one of them is a
+  /// day they turned up for, and the **calendar** draws them differently.
+  final bool wasFrozen;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const CompletedDay({
+    required this.day,
+    required this.isVerified,
+    required this.wasFrozen,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['day'] = Variable<String>(day);
+    map['is_verified'] = Variable<bool>(isVerified);
+    map['was_frozen'] = Variable<bool>(wasFrozen);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  CompletedDaysCompanion toCompanion(bool nullToAbsent) {
+    return CompletedDaysCompanion(
+      day: Value(day),
+      isVerified: Value(isVerified),
+      wasFrozen: Value(wasFrozen),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory CompletedDay.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CompletedDay(
+      day: serializer.fromJson<String>(json['day']),
+      isVerified: serializer.fromJson<bool>(json['isVerified']),
+      wasFrozen: serializer.fromJson<bool>(json['wasFrozen']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'day': serializer.toJson<String>(day),
+      'isVerified': serializer.toJson<bool>(isVerified),
+      'wasFrozen': serializer.toJson<bool>(wasFrozen),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  CompletedDay copyWith({
+    String? day,
+    bool? isVerified,
+    bool? wasFrozen,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => CompletedDay(
+    day: day ?? this.day,
+    isVerified: isVerified ?? this.isVerified,
+    wasFrozen: wasFrozen ?? this.wasFrozen,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  CompletedDay copyWithCompanion(CompletedDaysCompanion data) {
+    return CompletedDay(
+      day: data.day.present ? data.day.value : this.day,
+      isVerified: data.isVerified.present
+          ? data.isVerified.value
+          : this.isVerified,
+      wasFrozen: data.wasFrozen.present ? data.wasFrozen.value : this.wasFrozen,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompletedDay(')
+          ..write('day: $day, ')
+          ..write('isVerified: $isVerified, ')
+          ..write('wasFrozen: $wasFrozen, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(day, isVerified, wasFrozen, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CompletedDay &&
+          other.day == this.day &&
+          other.isVerified == this.isVerified &&
+          other.wasFrozen == this.wasFrozen &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class CompletedDaysCompanion extends UpdateCompanion<CompletedDay> {
+  final Value<String> day;
+  final Value<bool> isVerified;
+  final Value<bool> wasFrozen;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const CompletedDaysCompanion({
+    this.day = const Value.absent(),
+    this.isVerified = const Value.absent(),
+    this.wasFrozen = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CompletedDaysCompanion.insert({
+    required String day,
+    this.isVerified = const Value.absent(),
+    this.wasFrozen = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : day = Value(day);
+  static Insertable<CompletedDay> custom({
+    Expression<String>? day,
+    Expression<bool>? isVerified,
+    Expression<bool>? wasFrozen,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (day != null) 'day': day,
+      if (isVerified != null) 'is_verified': isVerified,
+      if (wasFrozen != null) 'was_frozen': wasFrozen,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CompletedDaysCompanion copyWith({
+    Value<String>? day,
+    Value<bool>? isVerified,
+    Value<bool>? wasFrozen,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return CompletedDaysCompanion(
+      day: day ?? this.day,
+      isVerified: isVerified ?? this.isVerified,
+      wasFrozen: wasFrozen ?? this.wasFrozen,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (day.present) {
+      map['day'] = Variable<String>(day.value);
+    }
+    if (isVerified.present) {
+      map['is_verified'] = Variable<bool>(isVerified.value);
+    }
+    if (wasFrozen.present) {
+      map['was_frozen'] = Variable<bool>(wasFrozen.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompletedDaysCompanion(')
+          ..write('day: $day, ')
+          ..write('isVerified: $isVerified, ')
+          ..write('wasFrozen: $wasFrozen, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $StreakFreezeLedgersTable extends StreakFreezeLedgers
+    with TableInfo<$StreakFreezeLedgersTable, StreakFreezeLedger> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StreakFreezeLedgersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastSpentDayMeta = const VerificationMeta(
+    'lastSpentDay',
+  );
+  @override
+  late final GeneratedColumn<String> lastSpentDay = GeneratedColumn<String>(
+    'last_spent_day',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 10,
+      maxTextLength: 10,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    lastSpentDay,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'streak_freeze_ledgers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StreakFreezeLedger> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('last_spent_day')) {
+      context.handle(
+        _lastSpentDayMeta,
+        lastSpentDay.isAcceptableOrUnknown(
+          data['last_spent_day']!,
+          _lastSpentDayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StreakFreezeLedger map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StreakFreezeLedger(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      lastSpentDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_spent_day'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $StreakFreezeLedgersTable createAlias(String alias) {
+    return $StreakFreezeLedgersTable(attachedDatabase, alias);
+  }
+}
+
+class StreakFreezeLedger extends DataClass
+    implements Insertable<StreakFreezeLedger> {
+  /// Always [singletonId]. One player, one ledger.
+  final int id;
+
+  /// `YYYY-MM-DD` of the last spend, or null if one has never been spent — in
+  /// which case the player holds one, immediately (D-117).
+  final String? lastSpentDay;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const StreakFreezeLedger({
+    required this.id,
+    this.lastSpentDay,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || lastSpentDay != null) {
+      map['last_spent_day'] = Variable<String>(lastSpentDay);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  StreakFreezeLedgersCompanion toCompanion(bool nullToAbsent) {
+    return StreakFreezeLedgersCompanion(
+      id: Value(id),
+      lastSpentDay: lastSpentDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSpentDay),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory StreakFreezeLedger.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StreakFreezeLedger(
+      id: serializer.fromJson<int>(json['id']),
+      lastSpentDay: serializer.fromJson<String?>(json['lastSpentDay']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'lastSpentDay': serializer.toJson<String?>(lastSpentDay),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  StreakFreezeLedger copyWith({
+    int? id,
+    Value<String?> lastSpentDay = const Value.absent(),
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => StreakFreezeLedger(
+    id: id ?? this.id,
+    lastSpentDay: lastSpentDay.present ? lastSpentDay.value : this.lastSpentDay,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  StreakFreezeLedger copyWithCompanion(StreakFreezeLedgersCompanion data) {
+    return StreakFreezeLedger(
+      id: data.id.present ? data.id.value : this.id,
+      lastSpentDay: data.lastSpentDay.present
+          ? data.lastSpentDay.value
+          : this.lastSpentDay,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StreakFreezeLedger(')
+          ..write('id: $id, ')
+          ..write('lastSpentDay: $lastSpentDay, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, lastSpentDay, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StreakFreezeLedger &&
+          other.id == this.id &&
+          other.lastSpentDay == this.lastSpentDay &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class StreakFreezeLedgersCompanion extends UpdateCompanion<StreakFreezeLedger> {
+  final Value<int> id;
+  final Value<String?> lastSpentDay;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  const StreakFreezeLedgersCompanion({
+    this.id = const Value.absent(),
+    this.lastSpentDay = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+  });
+  StreakFreezeLedgersCompanion.insert({
+    this.id = const Value.absent(),
+    this.lastSpentDay = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+  });
+  static Insertable<StreakFreezeLedger> custom({
+    Expression<int>? id,
+    Expression<String>? lastSpentDay,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (lastSpentDay != null) 'last_spent_day': lastSpentDay,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+    });
+  }
+
+  StreakFreezeLedgersCompanion copyWith({
+    Value<int>? id,
+    Value<String?>? lastSpentDay,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+  }) {
+    return StreakFreezeLedgersCompanion(
+      id: id ?? this.id,
+      lastSpentDay: lastSpentDay ?? this.lastSpentDay,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (lastSpentDay.present) {
+      map['last_spent_day'] = Variable<String>(lastSpentDay.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StreakFreezeLedgersCompanion(')
+          ..write('id: $id, ')
+          ..write('lastSpentDay: $lastSpentDay, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4900,6 +5610,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SeasonStatesTable seasonStates = $SeasonStatesTable(this);
   late final $CompletedNodesTable completedNodes = $CompletedNodesTable(this);
   late final $BossAttemptsTable bossAttempts = $BossAttemptsTable(this);
+  late final $CompletedDaysTable completedDays = $CompletedDaysTable(this);
+  late final $StreakFreezeLedgersTable streakFreezeLedgers =
+      $StreakFreezeLedgersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4918,6 +5631,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     seasonStates,
     completedNodes,
     bossAttempts,
+    completedDays,
+    streakFreezeLedgers,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -7748,6 +8463,405 @@ typedef $$BossAttemptsTableProcessedTableManager =
       BossAttempt,
       PrefetchHooks Function()
     >;
+typedef $$CompletedDaysTableCreateCompanionBuilder =
+    CompletedDaysCompanion Function({
+      required String day,
+      Value<bool> isVerified,
+      Value<bool> wasFrozen,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$CompletedDaysTableUpdateCompanionBuilder =
+    CompletedDaysCompanion Function({
+      Value<String> day,
+      Value<bool> isVerified,
+      Value<bool> wasFrozen,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$CompletedDaysTableFilterComposer
+    extends Composer<_$AppDatabase, $CompletedDaysTable> {
+  $$CompletedDaysTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get wasFrozen => $composableBuilder(
+    column: $table.wasFrozen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CompletedDaysTableOrderingComposer
+    extends Composer<_$AppDatabase, $CompletedDaysTable> {
+  $$CompletedDaysTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get wasFrozen => $composableBuilder(
+    column: $table.wasFrozen,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CompletedDaysTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CompletedDaysTable> {
+  $$CompletedDaysTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get day =>
+      $composableBuilder(column: $table.day, builder: (column) => column);
+
+  GeneratedColumn<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get wasFrozen =>
+      $composableBuilder(column: $table.wasFrozen, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$CompletedDaysTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CompletedDaysTable,
+          CompletedDay,
+          $$CompletedDaysTableFilterComposer,
+          $$CompletedDaysTableOrderingComposer,
+          $$CompletedDaysTableAnnotationComposer,
+          $$CompletedDaysTableCreateCompanionBuilder,
+          $$CompletedDaysTableUpdateCompanionBuilder,
+          (
+            CompletedDay,
+            BaseReferences<_$AppDatabase, $CompletedDaysTable, CompletedDay>,
+          ),
+          CompletedDay,
+          PrefetchHooks Function()
+        > {
+  $$CompletedDaysTableTableManager(_$AppDatabase db, $CompletedDaysTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CompletedDaysTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CompletedDaysTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CompletedDaysTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> day = const Value.absent(),
+                Value<bool> isVerified = const Value.absent(),
+                Value<bool> wasFrozen = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompletedDaysCompanion(
+                day: day,
+                isVerified: isVerified,
+                wasFrozen: wasFrozen,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String day,
+                Value<bool> isVerified = const Value.absent(),
+                Value<bool> wasFrozen = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompletedDaysCompanion.insert(
+                day: day,
+                isVerified: isVerified,
+                wasFrozen: wasFrozen,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CompletedDaysTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CompletedDaysTable,
+      CompletedDay,
+      $$CompletedDaysTableFilterComposer,
+      $$CompletedDaysTableOrderingComposer,
+      $$CompletedDaysTableAnnotationComposer,
+      $$CompletedDaysTableCreateCompanionBuilder,
+      $$CompletedDaysTableUpdateCompanionBuilder,
+      (
+        CompletedDay,
+        BaseReferences<_$AppDatabase, $CompletedDaysTable, CompletedDay>,
+      ),
+      CompletedDay,
+      PrefetchHooks Function()
+    >;
+typedef $$StreakFreezeLedgersTableCreateCompanionBuilder =
+    StreakFreezeLedgersCompanion Function({
+      Value<int> id,
+      Value<String?> lastSpentDay,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+    });
+typedef $$StreakFreezeLedgersTableUpdateCompanionBuilder =
+    StreakFreezeLedgersCompanion Function({
+      Value<int> id,
+      Value<String?> lastSpentDay,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+    });
+
+class $$StreakFreezeLedgersTableFilterComposer
+    extends Composer<_$AppDatabase, $StreakFreezeLedgersTable> {
+  $$StreakFreezeLedgersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastSpentDay => $composableBuilder(
+    column: $table.lastSpentDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StreakFreezeLedgersTableOrderingComposer
+    extends Composer<_$AppDatabase, $StreakFreezeLedgersTable> {
+  $$StreakFreezeLedgersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastSpentDay => $composableBuilder(
+    column: $table.lastSpentDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StreakFreezeLedgersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StreakFreezeLedgersTable> {
+  $$StreakFreezeLedgersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get lastSpentDay => $composableBuilder(
+    column: $table.lastSpentDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$StreakFreezeLedgersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StreakFreezeLedgersTable,
+          StreakFreezeLedger,
+          $$StreakFreezeLedgersTableFilterComposer,
+          $$StreakFreezeLedgersTableOrderingComposer,
+          $$StreakFreezeLedgersTableAnnotationComposer,
+          $$StreakFreezeLedgersTableCreateCompanionBuilder,
+          $$StreakFreezeLedgersTableUpdateCompanionBuilder,
+          (
+            StreakFreezeLedger,
+            BaseReferences<
+              _$AppDatabase,
+              $StreakFreezeLedgersTable,
+              StreakFreezeLedger
+            >,
+          ),
+          StreakFreezeLedger,
+          PrefetchHooks Function()
+        > {
+  $$StreakFreezeLedgersTableTableManager(
+    _$AppDatabase db,
+    $StreakFreezeLedgersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StreakFreezeLedgersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StreakFreezeLedgersTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$StreakFreezeLedgersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> lastSpentDay = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+              }) => StreakFreezeLedgersCompanion(
+                id: id,
+                lastSpentDay: lastSpentDay,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> lastSpentDay = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+              }) => StreakFreezeLedgersCompanion.insert(
+                id: id,
+                lastSpentDay: lastSpentDay,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StreakFreezeLedgersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StreakFreezeLedgersTable,
+      StreakFreezeLedger,
+      $$StreakFreezeLedgersTableFilterComposer,
+      $$StreakFreezeLedgersTableOrderingComposer,
+      $$StreakFreezeLedgersTableAnnotationComposer,
+      $$StreakFreezeLedgersTableCreateCompanionBuilder,
+      $$StreakFreezeLedgersTableUpdateCompanionBuilder,
+      (
+        StreakFreezeLedger,
+        BaseReferences<
+          _$AppDatabase,
+          $StreakFreezeLedgersTable,
+          StreakFreezeLedger
+        >,
+      ),
+      StreakFreezeLedger,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7778,4 +8892,8 @@ class $AppDatabaseManager {
       $$CompletedNodesTableTableManager(_db, _db.completedNodes);
   $$BossAttemptsTableTableManager get bossAttempts =>
       $$BossAttemptsTableTableManager(_db, _db.bossAttempts);
+  $$CompletedDaysTableTableManager get completedDays =>
+      $$CompletedDaysTableTableManager(_db, _db.completedDays);
+  $$StreakFreezeLedgersTableTableManager get streakFreezeLedgers =>
+      $$StreakFreezeLedgersTableTableManager(_db, _db.streakFreezeLedgers);
 }

@@ -1,0 +1,453 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doku Duty — screens the narrative needs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --sand:#E4D4AE;--bone:#F5EBD6;--card:#FBF5E9;--ink:#2E2438;--soft:#64596B;--hair:#DCCDA8;
+ --gold:#F2B33D;--goldP:#FDEFC6;--goldD:#B47A15;--onGold:#4A3405;
+ --indigo:#4A3F9E;--indigoP:#E6DEFA;--indigoD:#2F2670;
+ --turq:#1B6661;--red:#E05A2B;--redP:#FBDDD6;--redD:#A03A15;
+ --green:#4E9E62;--greenP:#CFE0BE;--greenD:#2F6E3F;--boneD:#C9B48C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:15px;line-height:1.6}
+.sheet{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+.mast{padding:46px 0 8px}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:0 0 14px}
+h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(32px,5.5vw,52px);line-height:1.02;margin:0}
+.sub{max-width:70ch;margin:16px 0 0;color:var(--soft)}
+.diag{margin:24px 0 0;padding:16px 20px;border:3px solid var(--indigo);border-radius:14px;background:var(--indigoP);color:var(--indigoD);max-width:920px;box-shadow:4px 4px 0 var(--indigoD)}
+.diag b{color:var(--ink)}
+
+h2.part{font-family:'Fredoka',sans-serif;font-weight:600;font-size:25px;margin:54px 0 3px}
+.lede{color:var(--soft);max-width:74ch;margin:0 0 20px}
+.row{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.col h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 10px;color:var(--soft)}
+.why{max-width:460px}
+.why li{padding:11px 0;border-bottom:2px solid var(--hair);display:grid;grid-template-columns:70px 1fr;gap:13px;list-style:none}
+.why li:last-child{border-bottom:0}
+.why ul{margin:0;padding:0}
+.ref{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--indigo);padding-top:3px;letter-spacing:.04em}
+.nh{font-weight:600}
+.nb{color:var(--soft);font-size:13.5px}
+
+/* phone */
+.phone{width:320px;background:var(--bone);border:3px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:6px 6px 0 var(--boneD);flex:0 0 auto}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--goldP);border-bottom:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:var(--soft)}
+.tbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:var(--goldP);border-bottom:3px solid var(--ink)}
+.rbtn{width:28px;height:28px;border-radius:50%;background:var(--bone);border:3px solid var(--ink);box-shadow:2px 3px 0 var(--boneD);display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto}
+.tmid{text-align:center;line-height:1.2}
+.tmid b{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px}
+.tmid span{display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.chip{background:var(--gold);border:3px solid var(--ink);border-radius:14px;padding:2px 9px;box-shadow:2px 3px 0 var(--goldD);font-weight:600;font-size:12.5px;color:var(--onGold);flex:0 0 auto}
+
+.head{padding:15px 14px 12px;background:var(--sand);border-bottom:3px solid var(--ink);display:flex;align-items:center;gap:11px}
+.plank{flex:1;transform:rotate(-1.6deg);background:var(--bone);border:3px solid var(--ink);border-radius:8px;box-shadow:4px 4px 0 var(--boneD);padding:8px 12px 7px;position:relative}
+.plank:before,.plank:after{content:"";position:absolute;top:7px;width:5px;height:5px;border-radius:50%;background:var(--ink);opacity:.55}
+.plank:before{left:7px}.plank:after{right:7px}
+.plankname{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:1.05}
+.planksub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-top:2px}
+.streak{transform:rotate(3deg);flex:0 0 auto;background:var(--gold);border:3px solid var(--ink);border-radius:50%;width:44px;height:44px;box-shadow:3px 4px 0 var(--goldD);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.streak b{font-family:'Fredoka',sans-serif;font-size:16px;color:var(--onGold)}
+.streak span{font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.08em;color:var(--onGold);text-transform:uppercase}
+
+.map{background:var(--sand)}
+.map svg{display:block;width:100%}
+.prog{padding:10px 14px 12px;background:var(--sand);border-top:3px solid var(--ink)}
+.progtop{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-bottom:6px}
+.track{height:16px;background:var(--bone);border:3px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--boneD);overflow:hidden}
+.fill{height:100%;background:var(--gold);border-right:3px solid var(--ink)}
+
+.nav{display:flex;border-top:3px solid var(--ink);background:var(--goldP)}
+.nav div{flex:1;text-align:center;padding:8px 0 7px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.nav div.on{background:var(--gold);color:var(--onGold)}
+.nav svg{display:block;margin:0 auto 3px}
+
+/* character strip */
+.char{display:flex;gap:10px;align-items:flex-end;margin:11px 14px;transform:rotate(-1.2deg)}
+.char.r{transform:rotate(1deg)}
+.av{width:46px;height:46px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:var(--bone);box-shadow:3px 4px 0 var(--boneD);overflow:hidden}
+.av.ace{background:var(--red);box-shadow:3px 4px 0 var(--redD)}
+.av.burro{background:var(--sand);box-shadow:3px 4px 0 var(--boneD)}
+.bub{flex:1;border:3px solid var(--ink);border-radius:16px;padding:8px 12px;background:var(--bone);box-shadow:3px 4px 0 var(--boneD)}
+.bub.ace{background:var(--redP);box-shadow:3px 4px 0 #C99E92}
+.cn{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.cn.ace{color:var(--redD)}
+.bl{font-size:14px;line-height:1.3}
+/* Biscuit says nothing: an action, never speech */
+.act{flex:1;border:3px dashed var(--boneD);border-radius:16px;padding:9px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--soft)}
+
+/* telegram */
+.telegram{margin:26px 16px;background:var(--bone);border:3px solid var(--ink);border-radius:4px;box-shadow:5px 6px 0 var(--boneD);transform:rotate(-1.3deg);padding:0 0 14px;position:relative}
+.perf{border-bottom:2px dashed var(--boneD);margin:0 0 12px;padding:9px 0 8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft)}
+.tgto{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);padding:0 14px 8px;border-bottom:1.5px solid var(--hair);margin-bottom:11px}
+.tgbody{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.85;letter-spacing:.02em;padding:0 14px;text-transform:uppercase}
+.tgfoot{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);padding:12px 14px 0;margin-top:10px;border-top:1.5px solid var(--hair)}
+.stamp{position:absolute;right:12px;bottom:-14px;transform:rotate(-9deg);border:2.5px solid var(--redD);color:var(--redD);border-radius:6px;padding:3px 8px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;background:var(--bone)}
+.loadbar{margin:34px 26px 20px}
+
+/* banner + big beats */
+.banner{margin:16px 14px 6px;text-align:center;background:var(--gold);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 5px 0 var(--goldD);padding:7px 0 6px;transform:rotate(-1.4deg);font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--onGold)}
+.bigav{width:104px;height:104px;border-radius:50%;border:3px solid var(--ink);background:var(--red);box-shadow:5px 6px 0 var(--redD);margin:16px auto 0;display:flex;align-items:center;justify-content:center}
+.btnbig{margin:4px 14px 12px;background:var(--gold);border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--goldD);color:var(--onGold);text-align:center;font-weight:600;font-size:15px;padding:11px 0 10px}
+.btnq{margin:0 14px 14px;background:var(--bone);border:3px solid var(--ink);border-radius:18px;box-shadow:0 4px 0 var(--boneD);text-align:center;font-weight:600;font-size:14px;padding:9px 0 8px}
+.freebie{margin:0 14px 12px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.rankbig{font-family:'Fredoka',sans-serif;font-weight:600;font-size:34px;text-align:center;line-height:1;margin-top:10px}
+.ranknote{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-top:6px}
+.poster{width:120px;height:152px;border-radius:6px;border:3px solid var(--ink);box-shadow:5px 6px 0 var(--goldD);background:var(--gold);margin:16px auto 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;overflow:hidden}
+.pcap{width:100%;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--onGold);padding:4px 0 5px;border-top:2.5px solid var(--ink)}
+.closed{position:absolute;top:44px;left:-10px;right:-10px;transform:rotate(-11deg);text-align:center;border:3px solid var(--redD);color:var(--redD);background:rgba(245,235,214,.86);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:4px 0}
+
+/* mini unit grid */
+.unit{display:grid;grid-template-columns:repeat(3,1fr);border:3px solid var(--ink);border-radius:12px;overflow:hidden;box-shadow:4px 4px 0 var(--boneD);margin:16px 60px 0;background:var(--bone)}
+.uc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:26px;border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);background:var(--bone)}
+.uc.sel{background:var(--gold)}
+footer{margin:58px 0 0;padding-top:20px;border-top:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--soft)}
+</style>
+
+<div class="sheet">
+<header class="mast">
+ <p class="kick">Proposal · the story's surfaces</p>
+ <h1>Where the narrative<br>actually shows up</h1>
+ <p class="sub">A fair question. The arc in <code>docs/NARRATIVE-PROPOSAL.md</code> had almost nowhere to appear — so here are the six screens that carry it. Two of the four characters had never been drawn at all.</p>
+ <div class="diag">
+  <b>What the story had, before this page.</b> Ace appeared in the character strip and the reward beat. That is all.
+  <b>The Sheriff</b> — the entire emotional arc, the one who withholds for forty nodes — had no avatar and no screen.
+  <b>Number Four</b> appears nowhere in the codebase at all.
+  <b>The tally wall</b>, the thing that makes progress visible as story, was a line in the gags list.
+  <b>The telegrams</b> (D-62) fire on every load and did not exist.
+  A narrative with no surface is a document, not a game.
+ </div>
+</header>
+
+<h2 class="part">01 · The trail, carrying the case</h2>
+<p class="lede">Same trail, same 42 nodes, same data. Three additions turn a map into a story in progress: the case in the header, Ace's tally wall on the ground, and a signpost naming the act you are in.</p>
+
+<div class="row">
+ <div class="col">
+  <h3>The case in progress</h3>
+  <div class="phone">
+   <div class="statusbar"><span>9:41</span><span>Dust Gulch</span><span>◍ ◍ ◍</span></div>
+   <div class="head">
+    <div class="plank">
+     <div class="plankname">Dust Gulch</div>
+     <div class="planksub">Case 1 · the ledger · 19 days left</div>
+    </div>
+    <div class="streak"><b>7</b><span>days</span></div>
+   </div>
+   <div class="map">
+    <svg viewBox="0 0 320 330" role="img" aria-label="The trail with Ace's tally wall and an act signpost">
+     <!-- cactus -->
+     <g>
+      <ellipse cx="288" cy="142" rx="19" ry="4.5" fill="#C9B48C"/>
+      <g transform="translate(3,4)" fill="#2F6E3F">
+       <path d="M281 140 L281 112 C281 102 295 102 295 112 L295 140 Z"/>
+       <path d="M281 126 C271 126 269 117 269 109 C269 104 274 104 274 109 C274 115 276 119 281 119 Z"/>
+      </g>
+      <path d="M281 126 C271 126 269 117 269 109 C269 104 274 104 274 109 C274 115 276 119 281 119 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M281 140 L281 112 C281 102 295 102 295 112 L295 140 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M285 136 L285 114 M290 136 L290 114" stroke="#2F6E3F" stroke-width="2" stroke-linecap="round"/>
+     </g>
+
+     <!-- act signpost -->
+     <g transform="rotate(-4,252,196)">
+      <path d="M252 232 L252 186" stroke="#2E2438" stroke-width="5" stroke-linecap="round"/>
+      <g transform="translate(3,4)" fill="#C9B48C"><rect x="216" y="181" width="72" height="19" rx="3"/></g>
+      <rect x="216" y="181" width="72" height="19" rx="3" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+      <text x="252" y="195" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;fill:#64596B">THE PURSUIT</text>
+     </g>
+
+     <!-- Ace's tally wall -->
+     <g>
+      <ellipse cx="60" cy="268" rx="50" ry="5" fill="#C9B48C"/>
+      <g transform="translate(3,4)" fill="#C9B48C"><rect x="16" y="224" width="88" height="42" rx="3"/></g>
+      <rect x="16" y="224" width="88" height="42" rx="3" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+      <path d="M16 238 L104 238 M16 252 L104 252" stroke="#C9B48C" stroke-width="1.6"/>
+      <!-- 13 chalk marks, in fives -->
+      <g stroke="#2E2438" stroke-width="2.2" stroke-linecap="round">
+       <path d="M23 229 L21 235 M28 229 L26 235 M33 229 L31 235 M38 229 L36 235 M20 233 L39 230"/>
+       <path d="M48 229 L46 235 M53 229 L51 235 M58 229 L56 235 M63 229 L61 235 M45 233 L64 230"/>
+       <path d="M73 229 L71 235 M78 229 L76 235 M83 229 L81 235"/>
+      </g>
+      <text x="60" y="248" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.14em;fill:#64596B">ACE'S TALLY</text>
+      <text x="60" y="262" text-anchor="middle" style="font-family:Fredoka,sans-serif;font-size:14px;font-weight:600;fill:#2E2438">13</text>
+     </g>
+
+     <!-- trail -->
+     <path d="M245 40 C210 48 186 56 150 66 C112 78 90 80 66 96 C42 112 48 148 74 170 C100 190 138 188 168 196 C200 204 224 222 228 240 C232 254 220 262 206 268"
+           fill="none" stroke="#C9B48C" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.5 11"/>
+     <path d="M206 268 C180 280 148 290 124 300" fill="none" stroke="#C9B48C" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.5 11" opacity=".5"/>
+
+     <!-- completed nodes -->
+     <g><circle cx="248" cy="44" r="19" fill="#2F6E3F"/><circle cx="245" cy="40" r="19" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/><path d="M238 40 l5 6 l11 -12" fill="none" stroke="#2E2438" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+     <g><circle cx="153" cy="70" r="19" fill="#2F6E3F"/><circle cx="150" cy="66" r="19" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/><path d="M143 66 l5 6 l11 -12" fill="none" stroke="#2E2438" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+     <g><circle cx="69" cy="100" r="19" fill="#2F6E3F"/><circle cx="66" cy="96" r="19" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/><path d="M59 96 l5 6 l11 -12" fill="none" stroke="#2E2438" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+     <g><circle cx="171" cy="200" r="19" fill="#2F6E3F"/><circle cx="168" cy="196" r="19" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/><path d="M161 196 l5 6 l11 -12" fill="none" stroke="#2E2438" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+
+     <!-- chest node, opened -->
+     <g>
+      <g transform="translate(3,4)" fill="#B47A15"><path d="M54 169 Q74 149 94 169 Z"/><rect x="54" y="168" width="40" height="19" rx="4"/></g>
+      <path d="M54 164 Q74 142 94 162 L94 167 Q74 151 54 169 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="54" y="168" width="40" height="19" rx="4" fill="#F2B33D" stroke="#2E2438" stroke-width="3"/>
+      <rect x="69" y="172" width="9" height="10" rx="2.5" fill="#2E2438"/>
+     </g>
+
+     <!-- current node -->
+     <g><circle cx="209" cy="272" r="27" fill="#B47A15"/><circle cx="206" cy="268" r="27" fill="#F2B33D" stroke="#2E2438" stroke-width="3.5"/>
+      <text x="206" y="276" text-anchor="middle" style="font-family:Fredoka,sans-serif;font-size:21px;font-weight:600;fill:#4A3405">14</text></g>
+
+     <!-- not yet reached -->
+     <g opacity=".55">
+      <circle cx="127" cy="304" r="19" fill="#C9B48C"/><circle cx="124" cy="300" r="19" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+      <rect x="117" y="298" width="13" height="10" rx="2.5" fill="#2E2438"/>
+      <path d="M119.5 298 v-3.5 a4 4 0 0 1 8 0 v3.5" fill="none" stroke="#2E2438" stroke-width="2.4"/>
+     </g>
+    </svg>
+   </div>
+   <div class="prog">
+    <div class="progtop"><span>Ledger refiled</span><span>13 / 42 pages</span></div>
+    <div class="track"><div class="fill" style="width:31%"></div></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="col why">
+  <h3>Why these three</h3>
+  <ul>
+   <li><span class="ref">D-61</span><div><div class="nh">The tally wall is the season clock</div><div class="nb">Thirteen chalk marks on Ace's wall, sitting on the map where you cannot miss them. It already had to be cosmetic — this makes it <em>mean</em> something without it ever carrying consequence. Biscuit kicks marks off after a clean solve.</div></div></li>
+   <li><span class="ref">new</span><div><div class="nh">“Trail progress” becomes “Ledger refiled”</div><div class="nb">Identical number, identical bar, identical data. One label turns a completion metric into the case being solved. This is the cheapest narrative change in the entire proposal.</div></div></li>
+   <li><span class="ref">new</span><div><div class="nh">A signpost names the act</div><div class="nb">Diegetic, not a chapter card: a leaning plank reading <em>The pursuit</em>. It tells a returning player where they are in the story using the scenery that was going on the map anyway.</div></div></li>
+   <li><span class="ref">D-18</span><div><div class="nh">No data moves</div><div class="nb">Chests at 11, 21, 32, 42 and bosses at 22 and 41 are untouched. The acts sit on the layout that already exists.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part">02 · The telegram — every load, in character</h2>
+<p class="lede">D-62 has been in the bible since the frontier rewrite and has never been built. Loading is currently dead time; this is the highest-frequency, lowest-cost personality surface in the product, and it is where the case advances between nodes.</p>
+
+<div class="row">
+ <div class="col">
+  <h3>Loading screen</h3>
+  <div class="phone" style="min-height:560px;display:flex;flex-direction:column;justify-content:center;background:var(--sand)">
+   <div class="telegram">
+    <div class="perf">Western territorial telegraph</div>
+    <div class="tgto">To: deputy · dust gulch<br>From: office of the sheriff</div>
+    <div class="tgbody">
+     Ledger still missing stop<br>
+     Ace seen near old mine stop<br>
+     Was laughing stop<br>
+     Advise you hurry stop
+    </div>
+    <div class="tgfoot">Filed 09:41 · no reply expected</div>
+    <div class="stamp">Unpaid</div>
+   </div>
+   <div class="loadbar">
+    <div class="track"><div class="fill" style="width:62%"></div></div>
+   </div>
+  </div>
+ </div>
+
+ <div class="col why">
+  <h3>Why it carries the story</h3>
+  <ul>
+   <li><span class="ref">D-62</span><div><div class="nh">One line each, a pool of hundreds</div><div class="nb">Already decided, already budgeted, never shipped. Rotating notices — a stolen ledger, mandatory numeracy retraining, a stern word about hitching posts.</div></div></li>
+   <li><span class="ref">new</span><div><div class="nh">This is where the plot moves</div><div class="nb">A telegram between nodes is the only place the case can advance without interrupting play. Act-gated: the Act I pool is procedural, the Act III pool is close to panic. Same slot, same cost.</div></div></li>
+   <li><span class="ref">D-02</span><div><div class="nh">STOP does the heavy lifting</div><div class="nb">Telegraphese is naturally clipped, so the six-word rule stops being a constraint and starts being the format. It also translates cleanly — there is no idiom to lose.</div></div></li>
+   <li><span class="ref">constraint 5</span><div><div class="nh">It must never gate the first frame</div><div class="nb">This is decoration over a load that was happening anyway. If there is nothing to wait for, it does not appear.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part">03 · The boss — meeting Ace</h2>
+<p class="lede">Nodes 22 and 41. The two moments the antagonist is in front of you rather than commenting from the margin — and the screen that has to prove, at the season's most loaded beat, that there is nothing to lose.</p>
+
+<div class="row">
+ <div class="col">
+  <h3>Boss node 41 · the reckoning</h3>
+  <div class="phone">
+   <div class="tbar"><div class="rbtn">‹</div><div class="tmid"><b>Node 41</b><span>Legend rank</span></div><div style="width:28px"></div></div>
+   <div class="banner">The reckoning</div>
+   <div class="bigav">
+    <svg width="66" viewBox="0 0 40 40" aria-hidden="true">
+     <ellipse cx="20" cy="22" rx="13" ry="14" fill="#E4D4AE"/>
+     <path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/>
+     <circle cx="15" cy="19" r="1.9" fill="#2E2438"/><circle cx="25" cy="19" r="1.9" fill="#2E2438"/>
+     <path d="M9 13 l9 4 M31 13 l-9 4" stroke="#2E2438" stroke-width="1.8" stroke-linecap="round"/>
+     <path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/>
+     <path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/>
+    </svg>
+   </div>
+   <div class="char r" style="margin-top:14px">
+    <div class="av ace">
+     <svg width="27" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="22" rx="13" ry="14" fill="#E4D4AE"/>
+      <path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/>
+      <circle cx="15" cy="19" r="1.9" fill="#2E2438"/><circle cx="25" cy="19" r="1.9" fill="#2E2438"/>
+      <path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/>
+      <path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/>
+     </svg>
+    </div>
+    <div class="bub ace"><div class="cn ace">Ace</div><div class="bl">Don't hurry on my account.</div></div>
+   </div>
+   <div class="freebie">Unlimited attempts · nothing to lose</div>
+   <div class="btnbig">Begin</div>
+   <div class="btnq">Not yet</div>
+  </div>
+ </div>
+
+ <div class="col why">
+  <h3>Why it reads this way</h3>
+  <ul>
+   <li><span class="ref">D-22</span><div><div class="nh">“Nothing to lose” is printed on the screen</div><div class="nb">Retries are unlimited and free, so say so, in green, above the button. A boss screen that looks like a boss screen will make some players close the app — and the one thing this product sells is that it cannot punish you.</div></div></li>
+   <li><span class="ref">§5.1</span><div><div class="nh">A confrontation with no weapon in it</div><div class="nb">Ace is pleased to see you. The tension is entirely social, which is the only kind this game is allowed and the funnier option regardless.</div></div></li>
+   <li><span class="ref">new</span><div><div class="nh">“Not yet” is a real button</div><div class="nb">Backing out of a boss must be as easy as entering it, and must cost nothing. An unskippable confrontation is a failure state wearing a hat.</div></div></li>
+   <li><span class="ref">D-71</span><div><div class="nh">Only Ace gets a state colour</div><div class="nb">Sunset red is documented as “errors, duplicates, <em>Ace</em>”. Every other character sits on a surface token, which is why he reads as the antagonist instantly and why no ninth hue is needed.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part">04 · Case closed — and the Sheriff finally says it</h2>
+<p class="lede">Two beats that have never existed. Node 42 closes the case; reaching Legend closes the career arc. The Sheriff has withheld approval for forty nodes precisely so that this line can land.</p>
+
+<div class="row">
+ <div class="col">
+  <h3>Season close · node 42</h3>
+  <div class="phone">
+   <div class="tbar"><div style="width:28px"></div><div class="tmid"><b>Case closed</b><span>Dust Gulch · case 1</span></div><div style="width:28px"></div></div>
+   <div class="poster">
+    <svg width="96" height="104" viewBox="0 0 40 46" aria-hidden="true">
+     <ellipse cx="20" cy="27" rx="12" ry="13" fill="#E4D4AE"/>
+     <circle cx="15" cy="25" r="1.8" fill="#2E2438"/><circle cx="25" cy="25" r="1.8" fill="#2E2438"/>
+     <path d="M12 32 Q20 29 28 32 Q20 36 12 32 Z" fill="#2E2438"/>
+     <path d="M5 14 Q20 6 35 14 Q20 21 5 14 Z" fill="#2E2438"/>
+     <path d="M11 14 Q12 4 20 3 Q28 4 29 14 Z" fill="#2E2438"/>
+     <path d="M7 41 Q20 37 33 41 L33 46 L7 46 Z" fill="#4A3F9E"/>
+    </svg>
+    <div class="closed">Case closed</div>
+    <div class="pcap">Dust Gulch · the ledger</div>
+   </div>
+   <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--soft);margin-top:12px">42 / 42 pages refiled</div>
+   <div class="char">
+    <div class="av ace">
+     <svg width="27" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="22" rx="13" ry="14" fill="#E4D4AE"/>
+      <path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/>
+      <circle cx="15" cy="19" r="1.9" fill="#2E2438"/><circle cx="25" cy="19" r="1.9" fill="#2E2438"/>
+      <path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/>
+      <path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/>
+     </svg>
+    </div>
+    <div class="bub ace"><div class="cn ace">Ace</div><div class="bl">I'll want that back.</div></div>
+   </div>
+   <div class="char r" style="margin-top:-2px">
+    <div class="av burro">
+     <svg width="30" viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M11 14 C8 4 11 0 15 2 C18 3.5 16 12 16.5 16 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29 14 C32 4 29 0 25 2 C22 3.5 24 12 23.5 16 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="20" cy="24" rx="10" ry="12" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5"/>
+      <circle cx="16" cy="21" r="2.1" fill="#2E2438"/><circle cx="24" cy="21" r="2.1" fill="#2E2438"/>
+      <ellipse cx="20" cy="32" rx="7" ry="5" fill="#F5EBD6" stroke="#2E2438" stroke-width="2"/>
+      <circle cx="17.5" cy="31" r="1.1" fill="#2E2438"/><circle cx="22.5" cy="31" r="1.1" fill="#2E2438"/>
+     </svg>
+    </div>
+    <div class="act">Biscuit kicks the wall · tally 0</div>
+   </div>
+   <div class="btnbig">File it in the cabinet</div>
+   <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--soft);padding:0 0 14px">New territory in 3 days</div>
+  </div>
+ </div>
+
+ <div class="col">
+  <h3>Rank up · the payoff</h3>
+  <div class="phone">
+   <div class="tbar"><div style="width:28px"></div><div class="tmid"><b>Rank</b><span>Permanent record</span></div><div style="width:28px"></div></div>
+   <div style="text-align:center;padding:20px 0 0">
+    <svg width="104" height="104" viewBox="0 0 34 34">
+     <path transform="translate(2,3)" d="M16 2 L19.9 11 L29.7 11.7 L22.2 18 L24.6 27.6 L16 22.3 L7.4 27.6 L9.8 18 L2.3 11.7 L12.1 11 Z" fill="#B47A15"/>
+     <path d="M16 2 L19.9 11 L29.7 11.7 L22.2 18 L24.6 27.6 L16 22.3 L7.4 27.6 L9.8 18 L2.3 11.7 L12.1 11 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="2.4" stroke-linejoin="round"/>
+     <circle cx="16" cy="16" r="2.8" fill="#2E2438"/>
+    </svg>
+   </div>
+   <div class="rankbig">Legend</div>
+   <div class="ranknote">Rank never falls</div>
+   <div class="char" style="margin-top:18px">
+    <div class="av">
+     <svg width="28" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="23" rx="12" ry="13" fill="#E4D4AE"/>
+      <path d="M12 20 h5 M23 20 h5" stroke="#2E2438" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M10 27 Q20 23 30 27 Q24 33 20 30 Q16 33 10 27 Z" fill="#2E2438"/>
+      <path d="M2 14 Q20 5 38 14 Q20 22 2 14 Z" fill="#2E2438"/>
+      <path d="M10 14 Q11 3 20 2 Q29 3 30 14 Z" fill="#2E2438"/>
+      <path d="M20 5.5 l1.3 2.8 3 .2 -2.3 2 .8 3 -2.8 -1.7 -2.8 1.7 .8 -3 -2.3 -2 3 -.2 Z" fill="#F2B33D"/>
+     </svg>
+    </div>
+    <div class="bub"><div class="cn">The Sheriff</div><div class="bl">Good work, deputy.</div></div>
+   </div>
+   <div class="btnbig" style="margin-top:14px">Continue</div>
+  </div>
+  <p style="max-width:320px;color:var(--soft);font-size:13.5px;margin:14px 0 0">Three words, once per career. Every other line he has ever said was a filing status — which is the only reason this one is worth anything.</p>
+ </div>
+
+ <div class="col why">
+  <h3>The two arcs closing</h3>
+  <ul>
+   <li><span class="ref">D-17</span><div><div class="nh">Season closes; rank does not</div><div class="nb">The case goes on the wall and the territory rotates. The rank is permanent and the Sheriff is keyed to it, so his approval survives the season that earned it.</div></div></li>
+   <li><span class="ref">D-59</span><div><div class="nh">Biscuit gets an action, never a bubble</div><div class="nb">His beat is drawn with a dashed frame and stage direction, not speech — the wordless rule made visible in the layout so nobody is ever tempted to give him a line.</div></div></li>
+   <li><span class="ref">gags</span><div><div class="nh">The tally reaches zero, once</div><div class="nb">Whatever Ace collected across six weeks, Biscuit clears it at the close. The warmest beat in the game and it costs one animation.</div></div></li>
+   <li><span class="ref">new</span><div><div class="nh">Ace's exit line is season two's opening</div><div class="nb">“I'll want that back” makes rotation feel like an episode ending rather than content being taken away.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part">05 · Number Four, who has never appeared</h2>
+<p class="lede">The digit with opinions and a bounty. It exists in the bible and in no line of code. It is what makes the duplicate-reaction gag (D-42) read as a world rather than a gimmick — if the numbers are people, two sevens noticing each other is a scene.</p>
+
+<div class="row">
+ <div class="col">
+  <h3>Four objects</h3>
+  <div class="phone">
+   <div class="tbar"><div class="rbtn">‹</div><div class="tmid"><b>Node 14</b><span>Sheriff rank</span></div><div class="chip">04:12</div></div>
+   <div class="unit">
+    <div class="uc">2</div><div class="uc"></div><div class="uc">9</div>
+    <div class="uc"></div><div class="uc sel">4</div><div class="uc">7</div>
+    <div class="uc">6</div><div class="uc">1</div><div class="uc"></div>
+   </div>
+   <div class="char" style="margin-top:20px">
+    <div class="av">
+     <svg width="36" viewBox="0 0 40 40" aria-hidden="true">
+      <text x="20" y="32" text-anchor="middle" paint-order="stroke"
+            stroke="#2E2438" stroke-width="4" stroke-linejoin="round"
+            style="font-family:Fredoka,sans-serif;font-size:31px;font-weight:600;fill:#E4D4AE">4</text>
+     </svg>
+    </div>
+    <div class="bub"><div class="cn">Number Four</div><div class="bl">Under protest.</div></div>
+   </div>
+   <div style="padding:6px 14px 16px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)">The placement is correct · Four is not disputing that</div>
+  </div>
+ </div>
+
+ <div class="col why">
+  <h3>The rule that keeps him legal</h3>
+  <ul>
+   <li><span class="ref">D-60</span><div><div class="nh">Unhelpful in tone, never in content</div><div class="nb">Four objects to <em>working conditions</em> and placement aesthetics — never to correctness. He is never wrong, because no character in this game is ever allowed to be. The caption under the strip states it so a player never second-guesses a correct move.</div></div></li>
+   <li><span class="ref">D-42</span><div><div class="nh">He makes the duplicate gag land</div><div class="nb">Digits reacting to each other in horror is the replacement for the conventional red flash. It only works if the numbers have already been established as people, and Four is the character that does that establishing.</div></div></li>
+   <li><span class="ref">note</span><div><div class="nh">No face at avatar size</div><div class="nb">I tried giving the numeral eyes and a mouth at 46px and it read as a pair of goggles. A bold outlined digit is unmistakably Four and survives the size; the face belongs in the full rig, where there is room for it. Worth remembering for the whole cast — avatar crops are silhouettes, not portraits.</div></div></li>
+   <li><span class="ref">D-40</span><div><div class="nh">He lives below the grid like everyone else</div><div class="nb">A digit that talks while you solve risks the spirit of the never-cover-the-grid rule even from the strip. Open question in the proposal: does Four ever speak from inside a cell? My answer is no.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part">What this changes in the backlog</h2>
+<p class="lede">Almost nothing new. The surfaces above land in changes that already exist and already own this work.</p>
+<ul class="why" style="max-width:880px">
+ <li><span class="ref">change 20</span><div><div class="nh">add-character-system</div><div class="nb">Owns the reaction table and the rig. The Sheriff and Number Four avatars, the strip for all four characters, and the act dimension on the trigger table all belong here. This change is unblocked today.</div></div></li>
+ <li><span class="ref">change 22</span><div><div class="nh">add-running-gags</div><div class="nb">Already names the tally, the telegram loading screens and the wanted posters. The tally wall on the trail and the telegram screen are this change, drawn.</div></div></li>
+ <li><span class="ref">change 15</span><div><div class="nh">season-map, already archived</div><div class="nb">The header label, the “ledger refiled” progress copy and the act signpost are edits to a screen that shipped. They would need a small follow-up change rather than a new capability.</div></div></li>
+ <li><span class="ref">new</span><div><div class="nh">Season close has no owner</div><div class="nb">Node 42, the case-closed beat and the rotation moment are in no backlog item I can find. That is a gap worth naming before season two is a real thing.</div></div></li>
+</ul>
+
+<footer>Proposal only · nothing in <code>lib/</code> changed · companion to docs/NARRATIVE-PROPOSAL.md and docs/pages/screens-redesign.html</footer>
+</div>

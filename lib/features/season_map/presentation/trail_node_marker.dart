@@ -63,13 +63,17 @@ class TrailNodeMarker extends StatelessWidget {
   /// The **current node** is drawn larger, and that is the primary signal
   /// rather than a flourish: someone returning after three days finds their
   /// place without reading anything (`docs/pages/screens.html` §4).
-  static const double _currentDiameter = 60;
-  static const double _diameter = 44;
+  ///
+  /// Public because [TrailPathPainter] anchors the connecting line to the
+  /// circle, and a private copy of 44 and 60 in a second file is how the two
+  /// would drift apart.
+  static const double currentDiameter = 60;
+  static const double diameter = 44;
 
   @override
   Widget build(BuildContext context) {
     final isCurrent = state == NodeState.current;
-    final diameter = isCurrent ? _currentDiameter : _diameter;
+    final circle = isCurrent ? currentDiameter : diameter;
 
     return Semantics(
       button: onTap != null,
@@ -84,15 +88,15 @@ class TrailNodeMarker extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Container(
-              width: diameter,
-              height: diameter,
+              width: circle,
+              height: circle,
               decoration: BoxDecoration(
                 color: _fill,
                 shape: BoxShape.circle,
                 border: Border.all(color: DokuColours.duskInk, width: 3),
               ),
               child: Center(
-                child: Icon(_glyph, size: diameter * 0.45, color: _onFill),
+                child: Icon(_glyph, size: circle * 0.45, color: _onFill),
               ),
             ),
             const SizedBox(height: 4),
@@ -100,6 +104,13 @@ class TrailNodeMarker extends StatelessWidget {
               'Node $position',
               style: TypeRole.label.style,
               textAlign: TextAlign.center,
+              // The label paints wider than the marker at large text scales
+              // rather than widening it. The marker's width is what the
+              // **trail**'s connecting line anchors to, so a label that grew
+              // the box would walk the circle away from the line — and there
+              // is nothing beside a marker for the overflow to collide with.
+              softWrap: false,
+              overflow: TextOverflow.visible,
             ),
           ],
         ),

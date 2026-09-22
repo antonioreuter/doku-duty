@@ -1849,3 +1849,221 @@ back to red on the way past.
 two jobs, and the one it loses is the one that matters: a duplicate digit and
 "you are here" would read the same, in a product whose error feedback is
 deliberately gentle enough to be missed.
+
+### D-113 · The trail path is decoration and carries no state
+
+The line linking the 42 **node**s on the **trail** is drawn identically along
+its whole length. The stretch behind completed **node**s is indistinguishable
+from the stretch behind **node**s the player has not reached, and it is excluded
+from semantics so a screen reader never announces it.
+
+**Rationale.** The obvious design is a path that fills in behind the player, and
+it is wrong here. `season-map`'s own requirement — *node state carries a signal
+that is not colour* — already has the marker carrying walked-ness three ways: by
+colour, by glyph, and by size, with the **current node** drawn largest so a
+returning player finds their place without reading anything (D-112,
+`docs/pages/screens.html` §4). A path that also encoded progress would be a
+fourth signal for information that is not ambiguous, and it would have to spend
+a colour token's documented job to do it: `badgeGold` is "selection, focus,
+reward, progress" and `cactusGreen` is completion, so a progress-coloured path
+gives one of them a second job, which constraint 4 forbids. Decoration that
+signals nothing needs no second non-colour channel under constraint 5, because
+there is no state to carry.
+
+The line's job is to make 42 markers read as one walked route rather than a
+scattered list. `docs/pages/screens.html` Screen 01 asks for "a winding trail
+linking nodes", and `add-season-map` supplied the winding — markers alternate
+left and right — but not the linking.
+
+**The token is `inkSoft`, and `hairline` is specifically wrong.** `hairline` is
+the obvious choice, being the tint already used for lines, and it measures
+**1.07:1** against `sand` — the page background the **trail** sits on. It is
+invisible there. It reads correctly as an interior grid line only because a grid
+cell is `bone`. `inkSoft` is the derived tint of `duskInk` and measures 4.50:1
+on `sand`, against `duskInk`'s own 10.05:1 for the marker contours — so the
+markers are drawn in primary ink and the connector in secondary ink, which is
+the hierarchy the drawing wants. Both are derived tints, which constraint 4
+states are not a route around the count of eight.
+
+**What breaks if reversed.** Two different ways. Giving the line a progress
+colour puts a second job on `badgeGold` or `cactusGreen`, and the one it costs
+is the one that matters — on a **trail** where completion is already green, a
+green path and a green marker stop being distinguishable at a glance. Switching
+the line to `hairline` on the grounds that hairline is what lines use erases it
+from the screen entirely, with no test failing and nothing to see in the diff.
+
+### D-114 · Every trail marker is laid out in a uniform anchor box
+
+A **node** marker on the **trail** is laid out inside a fixed 60px-wide box,
+and its label paints wider than that box rather than widening it. The 60px
+**current node** fills the box exactly; a 44px marker is centred within it and
+therefore sits about 6px further from the screen edge than it would if it sized
+itself.
+
+**Rationale.** `add-trail-path` needed a point on each row that the connecting
+line could meet, and the obvious anchor — the marker's own horizontal centre —
+is not a stable quantity. A marker is a circle above a label, and the label is
+the wider of the two, so the marker's width is the rendered width of the string
+"Node 42". That grows with the text scale, which means the circle walks inward
+as text grows while any line anchored to a fixed inset stays put. At 3x the line
+would visibly miss the circle; by 5x it would be pointing at empty ground.
+
+Fixing the box makes the anchor exact at every text scale and for both marker
+sizes, which is what lets [D-113]'s line be pure geometry with no state input of
+any kind. The 6px shift is the price and it is paid once, invisibly: the
+alternation, the vertical rhythm, the target size, and the **current node**'s
+position are all unchanged.
+
+**This was not in the `add-trail-path` proposal**, which said the change would
+not touch marker spacing. It is recorded here rather than left in that
+change's archived *Not doing* section, because the constraint it creates is
+live: anything that later gives a marker an intrinsic width — a longer label, a
+badge, a **stamp** count — reintroduces the drift this removed.
+
+**What breaks if reversed.** Letting the marker size itself again puts the
+trail's line back on a moving target. Nothing fails at 1x, which is the problem:
+it looks correct in every golden and every default-scale screenshot, and comes
+apart only for the players who have already told the OS they need larger text.
+
+### D-115 · The daily names a puzzle, and falls back to the pack when it runs out
+
+A published schedule names the **daily challenge**'s puzzle for each date, with
+a long compiled-in run as fallback. When no entry covers today — a player
+offline for months, a lapsed publish, or a named puzzle the installed **pack**s
+do not contain — the board is derived from the installed **pack** by a seed
+fixed by the date, and the player is told nothing is missing.
+
+**Rationale.** The **daily challenge** promises one thing a **season** never
+did: that everyone is solving the same board. D-110 made a **node** name a
+**rank** so a **pack** top-up could not strand it, and said in as many words
+that the daily is a separate layer on a different mechanism *for exactly this
+reason*. So the daily must name a puzzle. D-32 supplies it — puzzles are
+pre-generated and shipped, which is what makes an identical daily possible
+without on-device generation.
+
+That leaves the horizon. A schedule is finite, and full offline play is
+mandatory and not negotiable. A player who takes the app on a six-month posting
+somewhere without signal must still get a daily, and a **streak** they have held
+for a year must not end because a document expired. Withholding the puzzle would
+make the absence of a network into a failure state, which constraint 1 forbids
+as plainly as it forbids a life counter.
+
+So sameness yields, and it yields to the right thing. Two players deep enough
+into the fallback to diverge are not comparing boards — there are no
+leaderboards in v1, and the players affected are by definition the ones least
+connected to anyone. The promise is kept for every player it is observable by,
+and quietly relaxed for the ones it is not.
+
+**The fallback is silent on purpose.** Telling a player "today's puzzle is not
+the real one" converts an invisible degradation into a visible deprivation, for
+no action they can take.
+
+**What breaks if reversed.** Deriving *always* — the simpler design — makes the
+daily differ between any two players whose **pack**s differ, which a top-up
+guarantees. That discards the capability's only distinguishing promise to save a
+document. Refusing to fall back at all trades it the other way: the promise is
+absolute and the **daily challenge** stops existing for exactly the players who
+most need something to do offline.
+
+### D-116 · The daily's rank follows a weekly ramp and never scales to the player
+
+A published week of the **daily challenge** rises in **rank** from its start to
+its end. Every player gets that day's board at that day's **rank**, whatever
+their own.
+
+**Rationale.** The board is identical for everyone (D-115), so its **rank**
+cannot follow the player the way **free play** does — the two requirements are
+mutually exclusive and sameness is the one the capability exists for.
+
+A fixed **rank** every day fails both ends of the ladder at once: permanently
+unsolvable for a Greenhorn, permanently trivial for a Legend. Rotating all six
+guarantees a new player meets Legend boards on a counter whose entire job is to
+reward showing up, which is the most direct way to make a habit feel like a
+rebuke. A ramp gives every player several days a week they can finish, puts the
+hard board where there is time for it, and lets a strong player look forward to
+the end of the week.
+
+It is a **publishing** rule rather than client logic, so the shape is data. The
+same argument the **season** settled applies: a difficulty curve hard-coded in
+the client cannot be retuned against retention without a release.
+
+**A daily above the player's rank still opens.** D-103 forbids making any
+**rank** harder to reach than another, and a marked-but-open board is what
+`grid-input` and the **trail** already do.
+
+**What breaks if reversed.** Scaling the **rank** to the player is the obvious
+kindness and it silently deletes the capability: once two players hold different
+boards, the **calendar**, the **streak**, and every later comparison are
+measuring different things, and D-32's whole argument for pre-generation goes
+with it.
+
+### D-117 · One streak freeze, regenerating weekly, never banked
+
+A **streak freeze** is granted every 7 days. At most one is held at a time, a
+second is never accumulated, and it is consumed automatically on the first
+missed day without the player being asked.
+
+**Rationale.** D-20 settled that a freeze exists and that it applies itself —
+a freeze the player must remember to use is a trap, not a safety net, because
+the moment it is needed is the moment they were not opening the app. This
+decision settles the accrual D-20 left open.
+
+Banking was the tempting option and is wrong. A player holding three freezes can
+miss three days and keep a **streak**, and at that point the number has stopped
+measuring "consecutive days" and started measuring "days minus credits", which
+no player can compute and which makes a long **streak** mean less the longer it
+runs. The counter's only value is that it is honest.
+
+One held, regenerating weekly, gives the protection D-20 asked for — an illness,
+a flight, a bad week — without letting absence compound. A player who misses a
+day and then misses another has stopped having a **streak**, and pretending
+otherwise helps nobody.
+
+**Consumption is announced after the fact, never offered in advance.** Being
+asked "use your freeze?" turns the safety net into a decision under loss
+aversion, which is the shape of exactly the mechanic this game refuses.
+
+**What breaks if reversed.** Banking makes the **streak** unfalsifiable and the
+**calendar** unreadable — a gap on the grid might be a break or might not, and
+only the freeze ledger knows. Requiring the player to spend it manually
+reintroduces D-20's trap through the back door.
+
+### D-118 · Anything rendered from the clock is injected, never read from the wall
+
+A value a player reads off the screen that derives from the current time is
+taken from `nowProvider` (`lib/features/platform_shell/application/clock_provider.dart`),
+not from `DateTime.now()`. Stored `updatedAt` stamps are exempt and keep calling
+`DateTime.now()` at the point of writing.
+
+**Rationale.** The **trail** header showed "N days left" from
+`season.daysRemainingAt(DateTime.now())`, and `trail_golden_test.dart` captured
+the result as an image. The golden therefore encoded the day it was generated:
+it passed that afternoon and failed the following morning, and would have gone
+on failing every morning for the six weeks of the **season** before the line
+vanished entirely.
+
+It shipped twice without being noticed — `add-season-map` wrote it and
+`add-trail-path` regenerated the images over it — because in both cases the
+goldens were generated and checked within the same day. That is the property
+that makes this class of bug worth a decision rather than a fix: it is invisible
+to the person who introduces it, by construction.
+
+**A test that fails daily is worse than no test.** It gets ignored, then
+regenerated to silence it, and an ignored golden has stopped guarding the thing
+it was written for. The eight colour tokens and their derived tints are checked
+by golden (`openspec/config.yaml`), so this was on a path to eroding a guard
+that matters.
+
+**The exemption is deliberate.** An `updatedAt` on a row is a fact about when
+that row was written and has no business being overridable — making it injectable
+would let a test write a false history into the same tables constraint 9 exists
+to protect. The rule is about *display*, not records.
+
+**The daily challenge does not use this.** Dates there come from `DailyClock`,
+which carries the server-time offset and the verified flag `docs/TECH_STACK.md`
+§3b requires. A bare wall clock is precisely what that capability may not trust
+(D-115, D-117), and `nowProvider` is a bare wall clock with a seam in it.
+
+**What breaks if reversed.** Reading the clock directly in a widget puts the
+date into every golden that contains it, and the failure arrives on a day nobody
+is working on that code, attached to a diff that does not mention time.

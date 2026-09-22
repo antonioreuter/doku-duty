@@ -1,0 +1,749 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doku Duty — trail redesign proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --sand:#E4D4AE;--bone:#F5EBD6;--card:#FBF5E9;--ink:#2E2438;--soft:#64596B;--hair:#DCCDA8;
+ --gold:#F2B33D;--goldP:#FDEFC6;--goldD:#B47A15;--onGold:#4A3405;
+ --indigo:#4A3F9E;--indigoP:#E6DEFA;--indigoD:#2F2670;
+ --turq:#1B6661;--red:#E05A2B;--redP:#FBDDD6;--redD:#A03A15;
+ --green:#4E9E62;--greenP:#CFE0BE;--greenD:#2F6E3F;--boneD:#C9B48C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:15px;line-height:1.6}
+.sheet{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+.mast{padding:48px 0 8px}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin:0 0 14px}
+h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(34px,6vw,56px);line-height:1;margin:0}
+.sub{max-width:68ch;margin:16px 0 0;color:var(--soft)}
+
+.diag{margin:26px 0 0;padding:16px 20px;border:3px solid var(--red);border-radius:14px;background:var(--redP);color:#3D0D06;max-width:900px;box-shadow:4px 4px 0 var(--redD)}
+.diag b{color:var(--ink)}
+
+h2.part{font-family:'Fredoka',sans-serif;font-weight:600;font-size:27px;margin:52px 0 4px}
+.lede{color:var(--soft);max-width:72ch;margin:0 0 22px}
+
+.compare{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.col{flex:0 0 auto}
+.col h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 10px;color:var(--soft)}
+.col h3 em{font-style:normal;color:var(--ink);font-weight:500}
+
+/* ---- the phone ---- */
+.phone{width:320px;background:var(--bone);border:3px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:6px 6px 0 var(--boneD)}
+.phone img{display:block;width:100%}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--goldP);border-bottom:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:var(--soft)}
+
+/* header: a leaning plank, not a text block */
+.head{padding:16px 14px 12px;background:var(--sand);border-bottom:3px solid var(--ink);display:flex;align-items:center;gap:12px}
+.plank{flex:1;transform:rotate(-1.6deg);background:var(--bone);border:3px solid var(--ink);border-radius:8px;box-shadow:4px 4px 0 var(--boneD);padding:8px 12px 7px;position:relative}
+.plank:before,.plank:after{content:"";position:absolute;top:7px;width:5px;height:5px;border-radius:50%;background:var(--ink);opacity:.55}
+.plank:before{left:7px}.plank:after{right:7px}
+.plankname{font-family:'Fredoka',sans-serif;font-weight:600;font-size:21px;line-height:1.05}
+.planksub{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-top:1px}
+.streak{transform:rotate(3deg);flex:0 0 auto;background:var(--gold);border:3px solid var(--ink);border-radius:50%;width:46px;height:46px;box-shadow:3px 4px 0 var(--goldD);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.streak b{font-family:'Fredoka',sans-serif;font-size:17px;color:var(--onGold)}
+.streak span{font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.08em;color:var(--onGold);text-transform:uppercase}
+
+.map{background:var(--sand);display:block}
+.map svg{display:block;width:100%}
+
+/* progress: a chunky track with real depth */
+.prog{padding:10px 14px 12px;background:var(--sand);border-top:3px solid var(--ink)}
+.progtop{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-bottom:6px}
+.track{height:16px;background:var(--bone);border:3px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--boneD);overflow:hidden}
+.fill{height:100%;background:var(--gold);border-right:3px solid var(--ink)}
+
+.nav{display:flex;border-top:3px solid var(--ink);background:var(--goldP)}
+.nav div{flex:1;text-align:center;padding:8px 0 7px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.nav div.on{background:var(--gold);color:var(--onGold)}
+.nav svg{display:block;margin:0 auto 3px}
+
+/* ---- notes ---- */
+.notes{list-style:none;margin:0;padding:0;max-width:520px}
+.notes li{padding:13px 0;border-bottom:2px solid var(--hair);display:grid;grid-template-columns:76px 1fr;gap:14px}
+.notes li:last-child{border-bottom:0}
+.ref{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--indigo);padding-top:3px;letter-spacing:.04em}
+.nh{font-weight:600}
+.nb{color:var(--soft);font-size:14px}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;max-width:320px}
+.lg{display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);background:var(--card);border:2px solid var(--ink);border-radius:20px;padding:4px 10px 4px 5px}
+
+.kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:8px}
+.kitcard{background:var(--card);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--boneD);padding:16px 18px}
+.kitcard h4{font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;margin:0 0 6px}
+.kitcard p{margin:0;color:var(--soft);font-size:14px}
+.kitcard .cite{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--indigo);display:block;margin-top:8px;letter-spacing:.04em}
+
+footer{margin:58px 0 0;padding-top:20px;border-top:3px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--soft)}
+
+/* ---- screen nav ---- */
+.snav{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0}
+.snav a{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:7px 13px;border:2px solid var(--ink);border-radius:16px;background:var(--card);box-shadow:0 3px 0 var(--boneD)}
+.snav a:hover{background:var(--gold)}
+.nb2{color:var(--soft);font-size:13.5px;max-width:336px;margin:14px 0 0}
+.tagline{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);border:2px solid var(--red);border-radius:12px;padding:3px 9px;margin-bottom:10px}
+
+/* ---- top bar ---- */
+.tbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:var(--goldP);border-bottom:3px solid var(--ink)}
+.rbtn{width:28px;height:28px;border-radius:50%;background:var(--bone);border:3px solid var(--ink);box-shadow:2px 3px 0 var(--boneD);display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;flex:0 0 auto}
+.tmid{text-align:center;line-height:1.2}
+.tmid b{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px}
+.tmid span{display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.chip{background:var(--gold);border:3px solid var(--ink);border-radius:14px;padding:2px 9px;box-shadow:2px 3px 0 var(--goldD);font-weight:600;font-size:12.5px;color:var(--onGold);font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+/* ---- sudoku grid: clean by rule, depth only on the outer frame ---- */
+.sgrid{display:grid;grid-template-columns:repeat(9,1fr);border:3px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:4px 4px 0 var(--boneD);background:var(--bone)}
+.sc{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);background:var(--bone)}
+.sc.soft{font-weight:500;color:var(--soft)}
+.sc.br{border-right:2.5px solid var(--ink)}
+.sc.bb{border-bottom:2.5px solid var(--ink)}
+.sc.sel{background:var(--gold)}
+.sc.hl{background:var(--indigoP)}
+.sc.done{background:var(--greenP)}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%}
+.mini i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:7.5px;font-weight:500;color:var(--indigo);line-height:1}
+.mini i.p{color:var(--turq)}
+
+/* ---- character strip: a stage, not a container ---- */
+.char{display:flex;gap:10px;align-items:flex-end;margin:10px 14px 12px;transform:rotate(-1.2deg)}
+.av{width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:var(--red);box-shadow:3px 4px 0 var(--redD)}
+.bub{flex:1;border:3px solid var(--ink);border-radius:16px;padding:8px 12px;background:var(--redP);box-shadow:3px 4px 0 #C99E92}
+.cn{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--redD)}
+.bl{font-size:13.5px;line-height:1.35}
+
+/* ---- pad ---- */
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.key{background:var(--bone);border:3px solid var(--ink);border-radius:14px;text-align:center;padding:7px 0 6px;box-shadow:3px 4px 0 var(--boneD);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+.key svg{display:block;margin:3px auto 2px}
+.tools{display:flex;gap:6px;margin-top:8px}
+.tool{flex:1;text-align:center;padding:8px 0 7px;background:var(--bone);border:3px solid var(--ink);border-radius:14px;box-shadow:3px 4px 0 var(--boneD);font-size:11.5px;font-weight:600}
+.tool.on{background:var(--indigo);color:#F3EFFF;box-shadow:1px 1px 0 var(--indigoD);transform:translateY(3px)}
+
+/* ---- rank ladder ---- */
+.rank{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:2px solid var(--hair)}
+.rank:last-of-type{border-bottom:0}
+.rankname{font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;line-height:1.1}
+.ranksub{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-top:3px}
+.yours{background:var(--gold);border:2.5px solid var(--ink);border-radius:12px;padding:1px 8px;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--onGold);box-shadow:2px 2px 0 var(--goldD);display:inline-block;transform:rotate(-2.5deg);margin-top:4px}
+
+/* ---- reward beat ---- */
+.reward{margin:14px;padding:20px 14px;text-align:center;border:3px solid var(--ink);border-radius:20px;background:var(--greenP);box-shadow:5px 5px 0 var(--greenD);transform:rotate(-1.1deg)}
+.rt{font-family:'Fredoka',sans-serif;font-weight:600;font-size:23px;color:#1C4A28;line-height:1.1}
+.btnbig{margin:2px 14px 12px;background:var(--gold);border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--goldD);color:var(--onGold);text-align:center;font-weight:600;font-size:15px;padding:11px 0 10px}
+.adslot{margin:0 14px 12px;padding:12px;border-radius:16px;border:3px dashed var(--soft);text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);line-height:1.6;opacity:.75}
+.offer{margin:0 14px 14px;padding:10px 12px;border:3px solid var(--ink);border-radius:16px;background:var(--goldP);box-shadow:4px 4px 0 var(--boneD);display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px}
+.offer span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
+
+/* ---- cabinet ---- */
+.shelf{border-bottom:2px solid var(--hair);padding:11px 14px}
+.sl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:9px;opacity:.85}
+.posters{display:flex;gap:8px;align-items:center}
+.poster{width:46px;height:58px;border-radius:5px;border:3px solid var(--ink);box-shadow:3px 4px 0 var(--goldD);background:var(--gold);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;flex:0 0 auto}
+.poster.gap{background:transparent;border-style:dashed;border-color:var(--soft);box-shadow:none;color:var(--soft);font-family:'IBM Plex Mono',monospace;font-size:11px;align-items:center;opacity:.7}
+.dot{width:40px;height:40px;border-radius:50%;border:3px solid var(--ink);background:var(--gold);box-shadow:3px 3px 0 var(--goldD);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:var(--onGold);flex:0 0 auto}
+.dot.gap{background:transparent;border-style:dashed;border-color:var(--soft);box-shadow:none;color:var(--soft);font-size:12px;opacity:.7}
+.stat{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1.5px solid var(--hair)}
+.stat:last-child{border-bottom:0}
+.stat span:last-child{font-family:'IBM Plex Mono',monospace;font-size:12px}
+</style>
+
+<div class="sheet">
+<header class="mast">
+ <p class="kick">Proposal · five screens</p>
+ <h1>Putting the cartoon<br>back in the game</h1>
+ <p class="sub">The app renders its mechanics correctly and its personality not at all. Everything below is drawn with the eight palette tokens and needs no commissioned art — it is vector and layout work that ports straight to Flutter widgets and a <code>CustomPainter</code>.</p>
+ <div class="diag">
+  <b>Why it looks plain — three causes, all fixable in code.</b>
+  <b>1.</b> Every node is a Material Design icon — <code>Icons.grid_on</code>, <code>Icons.lock_outline</code>, <code>Icons.card_giftcard</code>. Stock Google glyphs are the single biggest reason nothing reads as a cartoon.
+  <b>2.</b> There are no offset shadows anywhere. <code>DESIGN.md</code> §4 makes a 4px solid shadow mandatory on “every card, button, node, and the grid itself” — the marker is a flat <code>Container</code> with a border. Flat fill is what the doc calls “the fastest way to look cheap”.
+  <b>3.</b> The props and the cast were never built. <code>trail_screen.dart</code> admits it in a comment: <i>“the artwork the mockup draws around it (the cactus, the wagon, Biscuit) is still <code>add-running-gags</code>.”</i> That is backlog change 22, behind change 20 — the whole of Milestone 3, titled <b>“the reason it exists — done when: the game is funny.”</b>
+ </div>
+ <nav class="snav">
+  <a href="#s01">01 · Trail</a>
+  <a href="#s02">02 · Puzzle</a>
+  <a href="#s03">03 · Free play</a>
+  <a href="#s04">04 · Node complete</a>
+  <a href="#s05">05 · Cabinet</a>
+  <a href="#kit">The shared kit</a>
+ </nav>
+</header>
+
+<h2 class="part" id="s01">01 · Trail</h2>
+<p class="lede">Left is the current golden test render. Right is the same trail, same data, same eight tokens, same accessibility rules — redrawn.</p>
+
+<div class="compare">
+
+ <div class="col">
+  <h3>Now — <em>trail_mid_season.png</em></h3>
+  <div class="phone">
+   <img src="../../test/features/season_map/goldens/trail_mid_season.png" alt="Current trail screen: green circles with square icons and Node N labels">
+  </div>
+ </div>
+
+ <div class="col">
+  <h3>Proposed — <em>same data, redrawn</em></h3>
+  <div class="phone">
+
+   <div class="statusbar"><span>9:41</span><span>Dust Gulch</span><span>◍ ◍ ◍</span></div>
+
+   <div class="head">
+    <div class="plank">
+     <div class="plankname">Dust Gulch</div>
+     <div class="planksub">Season 1 · 19 days left</div>
+    </div>
+    <div class="streak"><b>7</b><span>days</span></div>
+   </div>
+
+   <div class="map">
+    <svg viewBox="0 0 320 400" role="img" aria-label="A winding trail through Dust Gulch with completed nodes, a chest, the current node, Biscuit the burro, a cactus and a wagon">
+
+     <!-- ============ ground props, behind the trail ============ -->
+
+     <!-- saguaro cactus -->
+     <g>
+      <ellipse cx="284" cy="158" rx="22" ry="5" fill="#C9B48C"/>
+      <g transform="translate(3,4)" fill="#2F6E3F">
+       <path d="M276 156 L276 124 C276 113 292 113 292 124 L292 156 Z"/>
+       <path d="M276 140 C265 140 263 130 263 121 C263 115 269 115 269 121 C269 128 271 132 276 132 Z"/>
+       <path d="M292 134 C301 134 303 127 303 119 C303 113 297 113 297 119 C297 125 296 128 292 128 Z"/>
+      </g>
+      <path d="M276 140 C265 140 263 130 263 121 C263 115 269 115 269 121 C269 128 271 132 276 132 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M292 134 C301 134 303 127 303 119 C303 113 297 113 297 119 C297 125 296 128 292 128 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M276 156 L276 124 C276 113 292 113 292 124 L292 156 Z" fill="#4E9E62" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M281 150 L281 126" stroke="#2F6E3F" stroke-width="2" stroke-linecap="round"/>
+      <path d="M287 150 L287 126" stroke="#2F6E3F" stroke-width="2" stroke-linecap="round"/>
+     </g>
+
+     <!-- buckboard wagon -->
+     <g>
+      <ellipse cx="44" cy="264" rx="33" ry="5" fill="#C9B48C"/>
+      <g transform="translate(3,4)" fill="#C9B48C">
+       <path d="M20 240 Q44 212 68 240 Z"/>
+       <rect x="18" y="238" width="52" height="18" rx="4"/>
+      </g>
+      <path d="M20 240 Q44 212 68 240 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M31 232 Q32 224 36 219" fill="none" stroke="#C9B48C" stroke-width="2"/>
+      <path d="M44 228 L44 216" fill="none" stroke="#C9B48C" stroke-width="2"/>
+      <path d="M57 232 Q56 224 52 219" fill="none" stroke="#C9B48C" stroke-width="2"/>
+      <rect x="18" y="238" width="52" height="18" rx="4" fill="#E4D4AE" stroke="#2E2438" stroke-width="3"/>
+      <path d="M22 247 L66 247" stroke="#C9B48C" stroke-width="2"/>
+      <circle cx="29" cy="258" r="9" fill="#E4D4AE" stroke="#2E2438" stroke-width="3"/>
+      <circle cx="61" cy="258" r="11" fill="#E4D4AE" stroke="#2E2438" stroke-width="3"/>
+      <circle cx="29" cy="258" r="2.4" fill="#2E2438"/>
+      <circle cx="61" cy="258" r="2.6" fill="#2E2438"/>
+      <path d="M61 247 L61 269 M50 258 L72 258" stroke="#C9B48C" stroke-width="2"/>
+     </g>
+
+     <!-- rocks and scrub -->
+     <g>
+      <ellipse cx="254" cy="356" rx="28" ry="5" fill="#C9B48C"/>
+      <path d="M232 354 L238 338 L248 333 L259 340 L264 354 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M238 338 L246 345 L264 354 M248 333 L246 345" fill="none" stroke="#C9B48C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M265 354 L269 344 L276 342 L282 348 L283 354 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M269 344 L275 349 L283 354" fill="none" stroke="#C9B48C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+     <g stroke="#4E9E62" stroke-width="3.5" stroke-linecap="round" fill="none">
+      <path d="M160 338 L158 328"/><path d="M165 338 L168 329"/><path d="M162 339 L162 327"/>
+      <path d="M30 122 L28 113"/><path d="M35 122 L38 114"/><path d="M32 123 L32 112"/>
+     </g>
+
+     <!-- ============ the trail itself ============ -->
+     <!-- walked: solid dots. ahead: the same dots, lighter. -->
+     <path d="M250 44 C222 52 196 54 162 62 C130 72 102 76 74 88 C48 100 44 132 58 158 C70 180 112 174 148 182 C186 190 214 190 238 202 C262 214 268 248 246 264 C238 270 228 272 216 276"
+           fill="none" stroke="#C9B48C" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.5 11"/>
+     <path d="M216 276 C190 286 146 290 118 300 C92 310 72 332 60 364"
+           fill="none" stroke="#C9B48C" stroke-width="7" stroke-linecap="round" stroke-dasharray="0.5 11" opacity=".5"/>
+
+     <!-- ============ nodes ============ -->
+
+     <!-- completed × 5 : green disc, hard shadow, hand-drawn tick -->
+     <g>
+      <circle cx="253" cy="48" r="21" fill="#2F6E3F"/>
+      <circle cx="250" cy="44" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+      <path d="M242 44 l6 7 l12 -13" fill="none" stroke="#2E2438" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+     <g>
+      <circle cx="165" cy="66" r="21" fill="#2F6E3F"/>
+      <circle cx="162" cy="62" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+      <path d="M154 62 l6 7 l12 -13" fill="none" stroke="#2E2438" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+     <g>
+      <circle cx="77" cy="92" r="21" fill="#2F6E3F"/>
+      <circle cx="74" cy="88" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+      <path d="M66 88 l6 7 l12 -13" fill="none" stroke="#2E2438" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+     <g>
+      <circle cx="151" cy="186" r="21" fill="#2F6E3F"/>
+      <circle cx="148" cy="182" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+      <path d="M140 182 l6 7 l12 -13" fill="none" stroke="#2E2438" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+     <g>
+      <circle cx="241" cy="206" r="21" fill="#2F6E3F"/>
+      <circle cx="238" cy="202" r="21" fill="#4E9E62" stroke="#2E2438" stroke-width="3"/>
+      <path d="M230 202 l6 7 l12 -13" fill="none" stroke="#2E2438" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+     </g>
+
+     <!-- chest node, opened : a chest silhouette, not a circle -->
+     <g>
+      <g transform="translate(3,4)" fill="#B47A15">
+       <path d="M36 157 Q58 135 80 157 Z"/>
+       <rect x="36" y="156" width="44" height="21" rx="4"/>
+      </g>
+      <path d="M36 152 Q58 128 80 150 L80 155 Q58 137 36 157 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="36" y="156" width="44" height="21" rx="4" fill="#F2B33D" stroke="#2E2438" stroke-width="3"/>
+      <rect x="53" y="160" width="10" height="11" rx="2.5" fill="#2E2438"/>
+      <path d="M40 171 L50 171 M66 171 L76 171" stroke="#B47A15" stroke-width="2" stroke-linecap="round"/>
+     </g>
+
+     <!-- Biscuit, standing at the current node -->
+     <g transform="translate(138,246)">
+      <ellipse cx="0" cy="31" rx="29" ry="5" fill="#C9B48C"/>
+      <!-- far legs -->
+      <rect x="-21" y="12" width="9" height="20" rx="4.5" fill="#C9B48C" stroke="#2E2438" stroke-width="2.5"/>
+      <rect x="9" y="12" width="9" height="20" rx="4.5" fill="#C9B48C" stroke="#2E2438" stroke-width="2.5"/>
+      <!-- tail -->
+      <path d="M24 -8 Q34 -2 32 9" fill="none" stroke="#2E2438" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="32" cy="13" rx="4.5" ry="6.5" fill="#C9B48C" stroke="#2E2438" stroke-width="2.5"/>
+      <!-- body -->
+      <ellipse cx="0" cy="0" rx="26" ry="17" fill="#E4D4AE" stroke="#2E2438" stroke-width="3"/>
+      <!-- neck -->
+      <path d="M-16 -12 C-24 -15 -30 -23 -31 -31 L-19 -34 C-16 -24 -12 -16 -10 -9 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <!-- near legs -->
+      <rect x="-16" y="12" width="10" height="22" rx="5" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5"/>
+      <rect x="4" y="12" width="10" height="22" rx="5" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5"/>
+      <path d="M-15 31 L-7 31 M5 31 L13 31" stroke="#2E2438" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- saddle blanket -->
+      <path d="M-8 -16 L12 -14 L10 -3 L-10 -5 Z" fill="#4A3F9E" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M-6 -10 L8 -8.5" stroke="#E6DEFA" stroke-width="2" stroke-linecap="round"/>
+      <!-- head -->
+      <g transform="rotate(-14,-32,-32)">
+       <ellipse cx="-32" cy="-32" rx="11.5" ry="13.5" fill="#E4D4AE" stroke="#2E2438" stroke-width="3"/>
+       <!-- ears: asymmetric, one forward one tipped back -->
+       <path d="M-40 -42 C-45 -54 -42 -61 -37 -60 C-33 -59 -34 -48 -33 -42 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+       <path d="M-39.5 -48 C-40.5 -53 -39.5 -56 -38 -56" fill="none" stroke="#C9B48C" stroke-width="2" stroke-linecap="round"/>
+       <path d="M-29 -43 C-27 -55 -22 -59 -20 -57 C-18 -55 -23 -47 -24 -41 Z" fill="#E4D4AE" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/>
+       <path d="M-26.5 -48 C-25.5 -52 -23.5 -54.5 -22.5 -54" fill="none" stroke="#C9B48C" stroke-width="2" stroke-linecap="round"/>
+       <!-- pale muzzle, the thing that says burro -->
+       <ellipse cx="-37" cy="-22" rx="8" ry="6.5" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5"/>
+       <ellipse cx="-40" cy="-23.5" rx="1.7" ry="1.3" fill="#2E2438"/>
+       <path d="M-41 -19 Q-37 -16.5 -33.5 -19" fill="none" stroke="#2E2438" stroke-width="2" stroke-linecap="round"/>
+       <!-- eye and brow -->
+       <circle cx="-32" cy="-36" r="2.9" fill="#2E2438"/>
+       <path d="M-35.5 -41 Q-32 -42.5 -28.5 -41" fill="none" stroke="#2E2438" stroke-width="2" stroke-linecap="round"/>
+       <!-- forelock -->
+       <path d="M-24 -42 L-18.5 -38 M-22 -47 L-16 -44" stroke="#2E2438" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+     </g>
+
+     <!-- CURRENT node : bigger, gold, carries its number -->
+     <g>
+      <circle cx="219" cy="280" r="30" fill="#B47A15"/>
+      <circle cx="216" cy="276" r="30" fill="#F2B33D" stroke="#2E2438" stroke-width="3.5"/>
+      <text x="216" y="285" text-anchor="middle" style="font-family:Fredoka,sans-serif;font-size:24px;font-weight:600;fill:#4A3405">14</text>
+     </g>
+
+     <!-- not yet reached -->
+     <g opacity=".55">
+      <circle cx="121" cy="304" r="21" fill="#C9B48C"/>
+      <circle cx="118" cy="300" r="21" fill="#F5EBD6" stroke="#2E2438" stroke-width="3"/>
+      <rect x="111" y="298" width="14" height="11" rx="2.5" fill="#2E2438"/>
+      <path d="M113.5 298 v-4 a4.5 4.5 0 0 1 9 0 v4" fill="none" stroke="#2E2438" stroke-width="2.5"/>
+     </g>
+
+     <!-- boss node : a star, and it keeps Ace's red at every state -->
+     <g>
+      <path d="M63 342 L69.5 359.1 L87.7 360 L73.5 371.4 L78.3 389 L63 379 L47.7 389 L52.5 371.4 L38.3 360 L56.5 359.1 Z" fill="#A03A15"/>
+      <path d="M60 338 L66.5 355.1 L84.7 356 L70.5 367.4 L75.3 385 L60 375 L44.7 385 L49.5 367.4 L35.3 356 L53.5 355.1 Z" fill="#E05A2B" stroke="#2E2438" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="54" y="361" width="12" height="9.5" rx="2" fill="#2E2438" opacity=".75"/>
+      <path d="M56 361 v-3.5 a4 4 0 0 1 8 0 v3.5" fill="none" stroke="#2E2438" stroke-width="2.2" opacity=".75"/>
+     </g>
+
+    </svg>
+   </div>
+
+   <div class="prog">
+    <div class="progtop"><span>Trail progress</span><span>13 / 42</span></div>
+    <div class="track"><div class="fill" style="width:31%"></div></div>
+   </div>
+
+   <div class="nav">
+    <div class="on">
+     <svg width="17" height="15" viewBox="0 0 17 15"><path d="M3 12 C3 7 6 6 6 3 C6 1 8 1 9 2 C11 4 9 6 10 8 C11 10 14 9 14 12" fill="none" stroke="#4A3405" stroke-width="2.4" stroke-linecap="round"/></svg>
+     Trail
+    </div>
+    <div>
+     <svg width="17" height="15" viewBox="0 0 17 15"><path d="M8.5 1.5 L10.4 6.3 L15.5 6.6 L11.5 9.8 L12.9 14.6 L8.5 11.8 L4.1 14.6 L5.5 9.8 L1.5 6.6 L6.6 6.3 Z" fill="none" stroke="#64596B" stroke-width="2" stroke-linejoin="round"/></svg>
+     Daily
+    </div>
+    <div>
+     <svg width="17" height="15" viewBox="0 0 17 15"><path d="M2 5 Q8.5 -0.5 15 5 Z M2 5 h13 v8 H2 Z" fill="none" stroke="#64596B" stroke-width="2" stroke-linejoin="round"/></svg>
+     Store
+    </div>
+    <div>
+     <svg width="17" height="15" viewBox="0 0 17 15"><rect x="2" y="1.5" width="13" height="12" rx="2" fill="none" stroke="#64596B" stroke-width="2"/><path d="M5 5 h7 M5 8 h7" stroke="#64596B" stroke-width="2" stroke-linecap="round"/></svg>
+     Cabinet
+    </div>
+   </div>
+
+  </div>
+
+  <div class="legend">
+   <div class="lg"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="11" cy="11" r="8" fill="#2F6E3F"/><circle cx="9" cy="9" r="8" fill="#4E9E62" stroke="#2E2438" stroke-width="2"/></svg>Done</div>
+   <div class="lg"><svg width="22" height="20" viewBox="0 0 22 20"><circle cx="12" cy="11" r="9" fill="#B47A15"/><circle cx="10" cy="9" r="9" fill="#F2B33D" stroke="#2E2438" stroke-width="2"/></svg>You are here</div>
+   <div class="lg"><svg width="24" height="20" viewBox="0 0 24 20"><rect x="4" y="8" width="17" height="9" rx="2" fill="#F2B33D" stroke="#2E2438" stroke-width="2"/><path d="M4 8 Q12 0 21 8" fill="#F2B33D" stroke="#2E2438" stroke-width="2"/></svg>Chest</div>
+   <div class="lg"><svg width="22" height="20" viewBox="0 0 22 20"><path d="M11 2 L13.4 8.4 L20.2 8.7 L14.9 12.9 L16.7 19.4 L11 15.7 L5.3 19.4 L7.1 12.9 L1.8 8.7 L8.6 8.4 Z" fill="#E05A2B" stroke="#2E2438" stroke-width="2" stroke-linejoin="round"/></svg>Boss · Ace</div>
+  </div>
+ </div>
+</div>
+
+<h3 style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;margin:38px 0 4px">What changed on the trail</h3>
+<p class="lede">Nine changes. None of them needs an illustrator, a Rive rig, or a new colour.</p>
+
+<ul class="notes">
+ <li><span class="ref">DESIGN.md §4</span><div><div class="nh">Solid offset shadows on everything</div><div class="nb">4px hard shadow in the depth shade — <code>#2F6E3F</code> under green, <code>#B47A15</code> under gold, <code>#C9B48C</code> under sand. This is the single biggest change and it is three lines per shape. “Blur reads corporate; solid offset reads toy.”</div></div></li>
+ <li><span class="ref">DESIGN.md §3</span><div><div class="nh">Thick contour, thin interior</div><div class="nb">3px outer, 2px inside — the cactus ribs, the wagon planks, the wheel spokes. The current marker uses one uniform 3px border, which the doc names as “the most common tell of lifeless vector art”.</div></div></li>
+ <li><span class="ref">§7 · change 22</span><div><div class="nh">Biscuit stands at the current node</div><div class="nb">He is not decoration — he <em>is</em> the “you are here” marker, and he walks down the trail as you progress. Drawn in sand and ink with an indigo blanket, so he costs no new hue. The mockup’s brown burro is not palette-legal; a dun burro is, and is also what a burro looks like.</div></div></li>
+ <li><span class="ref">§4 · D-112</span><div><div class="nh">Node shape carries type, colour carries state</div><div class="nb">A chest is chest-shaped, a boss is a sheriff’s star, a puzzle is a disc. Today all four are circles distinguished by a Material icon. Shape-coding means the trail still reads in greyscale — which is the accessibility rule the code already honours, done better.</div></div></li>
+ <li><span class="ref">screens.html</span><div><div class="nh">“Node 1 … Node 42” is deleted</div><div class="nb">Forty-two labels turn a territory into a list. The number belongs inside the current node only; a tick says “done” and a padlock says “not yet”. The screen-reader label keeps every word it has today — this changes the visual only.</div></div></li>
+ <li><span class="ref">DESIGN.md §4</span><div><div class="nh">Nothing perfectly aligned</div><div class="nb">The name plank sits at −1.6°, the streak badge at +3°. The doc asks for 0.5–2° on cards and bubbles; the current screen is on a perfect grid.</div></div></li>
+ <li><span class="ref">screens.html</span><div><div class="nh">The header is a wooden sign, not a text block</div><div class="nb">A plank with two nail heads, an offset shadow, and the season below it. Same three pieces of information, one piece of scenery instead of three stacked <code>Text</code> widgets.</div></div></li>
+ <li><span class="ref">ART-PROMPTS B</span><div><div class="nh">Props alongside the trail</div><div class="nb">Cactus, buckboard wagon, rocks, scrub. <code>ART-PROMPTS.md</code> §B calls these “ships as-is” and “the cheap seasonal variable” — they rotate per season while the rig stays. At this size they are vector shapes, not illustrations.</div></div></li>
+ <li><span class="ref">screens.html</span><div><div class="nh">Progress is a track, not a sentence</div><div class="nb">“Trail progress 11 / 42” as plain body text is the least game-like way to show progress. A gold fill in an ink-bordered track with depth costs nothing and reads instantly.</div></div></li>
+</ul>
+
+<h2 class="part" id="s02">02 · Puzzle — the core loop</h2>
+<p class="lede">Where players spend almost all of their time. The grid itself is deliberately left alone — <code>DESIGN.md</code> §4 forbids depth treatment on cells, because thick borders on nine columns destroy readability. Everything <em>around</em> the grid is the opportunity.</p>
+
+<div class="compare">
+ <div class="col">
+  <h3>Now — <em>pad_default.png</em></h3>
+  <div class="phone" style="padding:18px 0">
+   <img src="../../test/features/grid_input/goldens/pad_default.png" alt="Current pad: bone keys with soft shadows and a missing-glyph box on the erase key">
+  </div>
+  <p class="nb2"><b>There is no golden for the assembled puzzle screen.</b> The grid and the pad are each tested in isolation, so no test — and no person — has ever looked at the whole screen at once. That is worth fixing on its own.</p>
+  <p class="nb2"><b>The erase key renders as a tofu box.</b> Bottom-right of the pad: <code>□</code>. A glyph the bundled font does not have. It is in a committed golden, so the golden froze the bug.</p>
+ </div>
+
+ <div class="col">
+  <h3>Proposed — <em>the whole screen</em></h3>
+  <div class="phone">
+   <div class="tbar">
+    <div class="rbtn">‹</div>
+    <div class="tmid"><b>Node 14</b><span>Sheriff rank</span></div>
+    <div class="chip">04:12</div>
+   </div>
+   <div style="padding:13px 14px 4px"><div class="sgrid" id="g1"></div></div>
+
+   <div class="char">
+    <div class="av">
+     <svg width="27" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="22" rx="13" ry="14" fill="#E4D4AE"/>
+      <path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/>
+      <circle cx="15" cy="19" r="1.9" fill="#2E2438"/>
+      <circle cx="25" cy="19" r="1.9" fill="#2E2438"/>
+      <path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/>
+      <path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/>
+     </svg>
+    </div>
+    <div class="bub"><div class="cn">Ace</div><div class="bl">That's one for the wall.</div></div>
+   </div>
+
+   <div style="padding:0 14px 14px">
+    <div class="pad">
+     <div class="key">1</div><div class="key">2</div><div class="key">3</div><div class="key">4</div><div class="key">5</div>
+     <div class="key">6</div><div class="key">7</div><div class="key">8</div><div class="key">9</div>
+     <div class="key">
+      <svg width="21" height="15" viewBox="0 0 22 16" aria-label="Erase"><path d="M7 1.5 L20.5 1.5 L20.5 14.5 L7 14.5 L1.5 8 Z" fill="none" stroke="#2E2438" stroke-width="2.2" stroke-linejoin="round"/><path d="M11 5.5 L16.5 10.5 M16.5 5.5 L11 10.5" stroke="#2E2438" stroke-width="2.1" stroke-linecap="round"/></svg>
+     </div>
+    </div>
+    <div class="tools">
+     <div class="tool on">Notes</div><div class="tool">Fill notes</div><div class="tool">Undo</div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<ul class="notes">
+ <li><span class="ref">D-40 · change 20</span><div><div class="nh">The character strip is the whole point</div><div class="nb">Ace slides up, holds 2.5 seconds, leaves. Empty the rest of the time — “a stage, not a container”. This is the single feature that separates the product from every other sudoku app, it is specified in <code>screens.html</code> Screen 02, and it does not exist in the build. Milestone 3 is named after it.</div></div></li>
+ <li><span class="ref">DESIGN.md §3</span><div><div class="nh">The pad keys have no outline</div><div class="nb">Bone keys on a sand ground with no contour and a soft shadow — the two things §3 and §4 explicitly forbid. A 3px ink contour and a hard 4px offset is the whole fix, and it is what makes a key look pressable.</div></div></li>
+ <li><span class="ref">D-100 · D-101</span><div><div class="nh">The tools row is already right</div><div class="nb">Named in words, three by default, the rest appearing only when relevant. Keep it. Only the pressed state needs the §4 treatment — dropped 4px, depth down to 1px.</div></div></li>
+ <li><span class="ref">D-10 · D-11</span><div><div class="nh">The two inks earn their own showcase</div><div class="nb">Settled notes in indigo, provisional in turquoise, in fixed 3×3 slots that never reflow. Almost nobody ships this and the screen does nothing to show it off. The grid above holds both.</div></div></li>
+ <li><span class="ref">screens.html</span><div><div class="nh">The top bar carries the stakes</div><div class="nb">Node number, rank, and a gold timer chip with depth — not an empty <code>AppBar</code>. The back control is a pressable disc, which is also the only affordance on the screen that currently has none.</div></div></li>
+</ul>
+
+<h2 class="part" id="s03">03 · Free play — the rank ladder</h2>
+<p class="lede">This is the worst screen in the app, and the easiest win. Six ranks are the game's entire progression fantasy — Greenhorn to Legend — and they render as a bulleted text list.</p>
+
+<div class="compare">
+ <div class="col">
+  <h3>Now — <em>picker_mid_ladder.png</em></h3>
+  <div class="phone">
+   <img src="../../test/features/rank_progression/goldens/picker_mid_ladder.png" alt="Current free play screen: a plain text list of six rank names">
+  </div>
+ </div>
+
+ <div class="col">
+  <h3>Proposed — <em>a wall of tin stars</em></h3>
+  <div class="phone">
+   <div class="tbar">
+    <div class="rbtn">‹</div>
+    <div class="tmid"><b>Free play</b><span>Any rank, any time</span></div>
+    <div class="chip">Sheriff</div>
+   </div>
+
+   <div class="rank">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#B47A15"/><path d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <div><div class="rankname">Greenhorn</div><div class="ranksub">Naked singles</div></div>
+   </div>
+   <div class="rank">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#B47A15"/><path d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <div><div class="rankname">Deputy</div><div class="ranksub">Hidden singles</div></div>
+   </div>
+   <div class="rank" style="background:var(--goldP)">
+    <svg width="42" height="42" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 2 L19.9 11 L29.7 11.7 L22.2 18 L24.6 27.6 L16 22.3 L7.4 27.6 L9.8 18 L2.3 11.7 L12.1 11 Z" fill="#B47A15"/><path d="M16 2 L19.9 11 L29.7 11.7 L22.2 18 L24.6 27.6 L16 22.3 L7.4 27.6 L9.8 18 L2.3 11.7 L12.1 11 Z" fill="#F2B33D" stroke="#2E2438" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="2.8" fill="#2E2438"/></svg>
+    <div><div class="rankname">Sheriff</div><div class="ranksub">Pointing pairs</div><div class="yours">Your rank</div></div>
+   </div>
+   <div class="rank">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#C9B48C"/><path d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <div><div class="rankname">Marshal</div><div class="ranksub">Naked triples · above your rank</div></div>
+   </div>
+   <div class="rank">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#C9B48C"/><path d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <div><div class="rankname">Ranger</div><div class="ranksub">X-wing · above your rank</div></div>
+   </div>
+   <div class="rank">
+    <svg width="34" height="34" viewBox="0 0 34 34"><path transform="translate(2,3)" d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#C9B48C"/><path d="M16 3 L19.6 11.4 L28.7 12.1 L21.8 18 L24 26.9 L16 22 L8 26.9 L10.2 18 L3.3 12.1 L12.4 11.4 Z" fill="#F5EBD6" stroke="#2E2438" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <div><div class="rankname">Legend</div><div class="ranksub">Chains · above your rank</div></div>
+   </div>
+
+   <div class="nav">
+    <div>
+     <svg width="17" height="15" viewBox="0 0 17 15"><path d="M3 12 C3 7 6 6 6 3 C6 1 8 1 9 2 C11 4 9 6 10 8 C11 10 14 9 14 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+     Trail
+    </div>
+    <div class="on">
+     <svg width="17" height="15" viewBox="0 0 17 15"><rect x="2" y="1.5" width="13" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6.3 1.5v12M10.7 1.5v12M2 5.5h13M2 9.5h13" stroke="currentColor" stroke-width="1.3"/></svg>
+     Free play
+    </div>
+   </div>
+  </div>
+  <p class="nb2">Rank names are D-57. The technique under each one is my guess at the mapping — read it from the grader before building, do not trust this page for it.</p>
+ </div>
+</div>
+
+<ul class="notes">
+ <li><span class="ref">D-103</span><div><div class="nh">Above your rank is a label, never a lock</div><div class="nb">Marshal upward stays full-strength, fully tappable, same target, same route — exactly as the code already does it. A bone star instead of a gold one says “not yet earned” without saying “you may not”. Greying these out would be the easy mistake and it would break constraint 1.</div></div></li>
+ <li><span class="ref">D-57</span><div><div class="nh">A rank is a badge, not a row of text</div><div class="nb">Six tin stars, earned ones in gold, your own larger and on a goldPale band with a crooked “your rank” tag. The ladder becomes something to look at rather than a menu to read.</div></div></li>
+ <li><span class="ref">D-07</span><div><div class="nh">Say what the rank means</div><div class="nb">A rank is the hardest technique the puzzle requires — so name the technique under the rank. “Sheriff rank” alone tells a new player nothing; “Sheriff · pointing pairs” teaches the ladder for free.</div></div></li>
+</ul>
+
+<h2 class="part" id="s04">04 · Node complete — the reward beat</h2>
+<p class="lede">The most commercially sensitive screen in the product, and the one with no implementation and no golden at all. <code>screens.html</code> calls the category leader's worst habit “congratulating the player then immediately serving an ad”, and the fix is a tap between the two.</p>
+
+<div class="compare">
+ <div class="col">
+  <h3>Proposed — <em>nothing exists to compare</em></h3>
+  <div class="phone">
+   <div class="tbar"><div style="width:28px"></div><div class="tmid"><b>Node 14 cleared</b></div><div style="width:28px"></div></div>
+   <div class="reward">
+    <div class="sl" style="margin-bottom:6px">Filed with the territory</div>
+    <div class="rt">Pointing pairs</div>
+    <div style="font-size:12.5px;color:var(--soft);margin-top:7px">Technique unlocked · 06:44 · personal best</div>
+   </div>
+   <div class="char" style="transform:rotate(1deg)">
+    <div class="av">
+     <svg width="27" viewBox="0 0 40 40" aria-hidden="true">
+      <ellipse cx="20" cy="22" rx="13" ry="14" fill="#E4D4AE"/>
+      <path d="M7 23 Q20 17 33 23 Q31 34 20 36 Q9 34 7 23 Z" fill="#4A3F9E"/>
+      <circle cx="15" cy="20" r="2" fill="#2E2438"/><circle cx="25" cy="20" r="2" fill="#2E2438"/>
+      <path d="M9 14 l9 4 M31 14 l-9 4" stroke="#2E2438" stroke-width="2"/>
+      <path d="M4 12 Q20 4 36 12 Q20 19 4 12 Z" fill="#2E2438"/>
+      <path d="M11 12 Q12 2 20 1 Q28 2 29 12 Z" fill="#2E2438"/>
+     </svg>
+    </div>
+    <div class="bub"><div class="cn">Ace</div><div class="bl">Beginner's luck, deputy.</div></div>
+   </div>
+   <div class="btnbig">Continue</div>
+   <div class="adslot">Interstitial fires here<br>after the tap · if one is due</div>
+   <div class="offer"><b style="font-weight:600">Double this chest</b><span>Watch · 30s</span></div>
+   <div class="nav" data-nav="0"></div>
+  </div>
+ </div>
+
+ <div class="col" style="max-width:520px">
+  <h3>Why this screen matters most</h3>
+  <ul class="notes">
+   <li><span class="ref">D-24</span><div><div class="nh">Celebration, tap, then ad</div><div class="nb">Never before the tap. An ad on the reward beat reads as an ambush; after an explicit tap it reads as a transition. The dashed slot marks exactly where it is allowed to fire.</div></div></li>
+   <li><span class="ref">D-22</span><div><div class="nh">There is no failure variant</div><div class="nb">Boss retries are unlimited and free. At the season's most loaded moment there is nothing to lose — which is the entire positioning in one screen.</div></div></li>
+   <li><span class="ref">D-26</span><div><div class="nh">Ace closes the loop</div><div class="nb">He tallies your mistakes and cheats at numbers, so he is the right voice for a grudging compliment. A reward screen with no character attached is a receipt.</div></div></li>
+   <li><span class="ref">§4</span><div><div class="nh">The card sits crooked</div><div class="nb">−1.1° on the reward card, +1° on the speech bubble. Perfect alignment on a celebration is the tell that nobody is enjoying it.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part" id="s05">05 · The cabinet — the retention engine</h2>
+<p class="lede">The only layer that never resets. Territories rotate out; this is what makes rotation feel like accumulation instead of loss. Not built — <code>trophy-cabinet</code> is a later backlog change — but it is worth seeing now, because it is the one screen that is pure personality by design.</p>
+
+<div class="compare">
+ <div class="col">
+  <h3>Proposed — <em>a wall with visible gaps</em></h3>
+  <div class="phone">
+   <div class="tbar">
+    <div class="rbtn">‹</div>
+    <div class="tmid"><b>Deputy record</b><span>Permanent</span></div>
+    <div class="chip">Sheriff</div>
+   </div>
+   <div class="shelf">
+    <div class="sl">Wanted posters · one per territory</div>
+    <div class="posters">
+     <div class="poster">
+      <svg width="40" height="50" viewBox="0 0 40 50" aria-hidden="true">
+       <ellipse cx="20" cy="31" rx="12" ry="13" fill="#E4D4AE"/>
+       <circle cx="15" cy="29" r="1.8" fill="#2E2438"/><circle cx="25" cy="29" r="1.8" fill="#2E2438"/>
+       <path d="M12 36 Q20 33 28 36 Q20 40 12 36 Z" fill="#2E2438"/>
+       <path d="M5 18 Q20 10 35 18 Q20 25 5 18 Z" fill="#2E2438"/>
+       <path d="M11 18 Q12 8 20 7 Q28 8 29 18 Z" fill="#2E2438"/>
+       <path d="M7 45 Q20 41 33 45 L33 50 L7 50 Z" fill="#4A3F9E"/>
+      </svg>
+     </div>
+     <div class="poster">
+      <svg width="40" height="50" viewBox="0 0 40 50" aria-hidden="true">
+       <ellipse cx="20" cy="31" rx="12" ry="13" fill="#E4D4AE"/>
+       <circle cx="15" cy="29" r="1.8" fill="#2E2438"/><circle cx="25" cy="29" r="1.8" fill="#2E2438"/>
+       <path d="M13 37 Q20 39 27 37" fill="none" stroke="#2E2438" stroke-width="2" stroke-linecap="round"/>
+       <path d="M4 17 Q20 8 36 17 Q20 25 4 17 Z" fill="#2E2438"/>
+       <path d="M10 17 Q11 6 20 5 Q29 6 30 17 Z" fill="#2E2438"/>
+       <path d="M7 45 Q20 41 33 45 L33 50 L7 50 Z" fill="#1B6661"/>
+      </svg>
+     </div>
+     <div class="poster gap">III</div><div class="poster gap">IV</div><div class="poster gap">V</div>
+    </div>
+   </div>
+   <div class="shelf">
+    <div class="sl">Daily · august</div>
+    <div class="posters">
+     <div class="dot">★</div><div class="dot gap">28</div><div class="dot gap">29</div><div class="dot gap">30</div>
+    </div>
+   </div>
+   <div class="shelf" style="border-bottom:0">
+    <div class="sl">Technique record</div>
+    <div class="stat"><span>Hidden singles</span><span>0:41 avg</span></div>
+    <div class="stat"><span>Pointing pairs</span><span>1:58 avg</span></div>
+    <div class="stat"><span>Naked triples</span><span>4:12 avg</span></div>
+    <div class="stat"><span>X-wing</span><span style="color:var(--redD)">Not yet filed</span></div>
+   </div>
+   <div class="nav" data-nav="3"></div>
+  </div>
+ </div>
+
+ <div class="col" style="max-width:520px">
+  <h3>Why gaps beat absence</h3>
+  <ul class="notes">
+   <li><span class="ref">D-21</span><div><div class="nh">Unearned posters show as empty frames</div><div class="nb">Visible gaps drive return far better than hiding what is unearned — without shaming, because an empty frame states a fact and makes no accusation. Dashed, low-emphasis, numbered.</div></div></li>
+   <li><span class="ref">D-45</span><div><div class="nh">Every poster is the player's own deputy</div><div class="nb">The avatar composites into each one — hats, moustaches, kerchiefs, badges. Cheap to produce, seen constantly, and it makes the store's output the thing on the wall.</div></div></li>
+   <li><span class="ref">D-17</span><div><div class="nh">Three independent layers, three shelves</div><div class="nb">Permanent, seasonal, daily. The shelf metaphor does the explaining that a tab bar would have to do with words.</div></div></li>
+  </ul>
+ </div>
+</div>
+
+<h2 class="part" id="kit">The shared kit</h2>
+<p class="lede">You said this is true of all the screens, and it is — because the cause is shared. These five moves are the house style, and they apply everywhere.</p>
+
+<div class="kit">
+ <div class="kitcard">
+  <h4>Retire the Material icons</h4>
+  <p>Every glyph in the app is a stock Google icon. Drawn glyphs — a boot, a star, a chest, a lasso — are what make a toolbar look like a game instead of a settings screen.<span class="cite">grid_input · season_map · rank_progression</span></p>
+ </div>
+ <div class="kitcard">
+  <h4>Depth on all chrome</h4>
+  <p>4–5px offset shadow at rest, 4px travel and 1px depth when pressed. The doc says this alone “is most of why a casual game feels good to tap”. Never on grid cells.<span class="cite">DESIGN.md §4</span></p>
+ </div>
+ <div class="kitcard">
+  <h4>Overshoot, never fade</h4>
+  <p><code>easeOutBack</code> at ~15%. Things pop, drop, or slide in from where they came from. A fade is the default and the default is what reads as plain.<span class="cite">DESIGN.md §4 · §5</span></p>
+ </div>
+ <div class="kitcard">
+  <h4>Paper grain, visibly</h4>
+  <p><code>PaperGrain</code> exists and is wired up, but it does not survive into the goldens. If it is too faint to photograph it is too faint to matter.<span class="cite">design_system/paper_grain.dart</span></p>
+ </div>
+ <div class="kitcard">
+  <h4>One open question: the display face</h4>
+  <p>Only Nunito ships. A frontier game with no display face for titles has no voice above 20px. <code>DESIGN.md</code> §2 rules out slab and tuscan below 12px — but a title plank is a logo, and the doc allows western lettering there.<span class="cite">D-74 · needs a decision</span></p>
+ </div>
+</div>
+
+<footer>Proposal only · nothing in <code>lib/</code> changed · drawn with the eight tokens of docs/DESIGN.md §1</footer>
+</div>
+
+<script>
+(function(){
+ // A representative Sheriff-rank board: givens, player entries, both note inks,
+ // one selection, and candidate highlighting on 7.
+ var board =
+   "53..7...." + "6..195..." + ".98....6." +
+   "8...6...3" + "4..8.3..1" + "7...2...6" +
+   ".6....28." + "...419..5" + "....8..79";
+ var own = {2:"4", 15:"7", 74:"3"};              // player-entered, not givens
+ var notes = {                                    // s = settled (indigo), p = provisional (turquoise)
+   22:{s:[1,2,4]}, 23:{s:[2,4]}, 30:{s:[1,2,7]}, 33:{s:[4,5,9]},
+   47:{s:[1],p:[3,8]}, 57:{s:[3,5,7]}, 64:{s:[2,6,7]}, 73:{p:[2,6]}
+ };
+ var selected = 21, lit = 7;
+
+ var g = document.getElementById("g1");
+ if (g) {
+  for (var i = 0; i < 81; i++) {
+   var r = Math.floor(i / 9), c = i % 9;
+   var cell = document.createElement("div");
+   cell.className = "sc";
+   if (c % 3 === 2 && c !== 8) cell.classList.add("br");
+   if (r % 3 === 2 && r !== 8) cell.classList.add("bb");
+
+   var given = board[i] !== "." ? board[i] : null;
+   var value = given || own[i] || null;
+   var n = notes[i];
+   var holdsLit = (value === String(lit)) ||
+                  (n && n.s && n.s.indexOf(lit) !== -1);
+
+   if (i === selected) cell.classList.add("sel");
+   else if (holdsLit) cell.classList.add("hl");
+
+   if (value) {
+    if (!given) cell.classList.add("soft");       // player entry reads lighter than a given
+    cell.textContent = value;
+   } else if (n) {
+    var mini = document.createElement("div");
+    mini.className = "mini";
+    for (var d = 1; d <= 9; d++) {                // fixed 3x3 slots — never reflow
+     var slot = document.createElement("i");
+     if (n.s && n.s.indexOf(d) !== -1) slot.textContent = d;
+     else if (n.p && n.p.indexOf(d) !== -1) { slot.textContent = d; slot.className = "p"; }
+     mini.appendChild(slot);
+    }
+    cell.appendChild(mini);
+   }
+   g.appendChild(cell);
+  }
+ }
+
+ // One nav, reused on every screen, with the active item moved.
+ var src = document.querySelector(".phone .nav");
+ if (src) {
+  document.querySelectorAll("[data-nav]").forEach(function(el){
+   el.innerHTML = src.innerHTML;
+   el.querySelectorAll("svg [stroke]").forEach(function(node){
+    node.setAttribute("stroke", "currentColor");
+   });
+   var idx = parseInt(el.getAttribute("data-nav"), 10);
+   Array.prototype.forEach.call(el.children, function(kid, k){
+    kid.classList.toggle("on", k === idx);
+   });
+  });
+ }
+})();
+</script>

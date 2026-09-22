@@ -9,6 +9,7 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
 import 'package:doku_duty/features/season_map/domain/node_type.dart';
+import 'package:doku_duty/features/platform_shell/application/clock_provider.dart';
 import 'package:doku_duty/features/season_map/domain/season_one.dart';
 import 'package:doku_duty/features/season_map/domain/trail_progress.dart';
 import 'package:doku_duty/features/season_map/presentation/trail_node_marker.dart';
@@ -313,6 +314,65 @@ void main() {
       // Still on the trail, still able to tap it again.
       expect(find.byType(TrailScreen), findsOneWidget);
       expect(markerAt(tester, 1).onTap, isNotNull);
+    });
+  });
+
+  group('the countdown is read from an injected clock', () {
+    // The guard for a bug that shipped twice unnoticed. The header used to call
+    // `DateTime.now()` directly, so `trail_golden_test.dart` captured whatever
+    // "N days left" read on the afternoon it was generated and failed the next
+    // morning — every morning, for the life of the **season**. A golden that
+    // fails daily gets ignored, and an ignored golden guards nothing.
+    //
+    // If anyone reverts the header to the wall clock, these overrides stop
+    // having any effect and this test fails.
+    Widget appAt(DateTime now) => ProviderScope(
+      overrides: [
+        flavourConfigProvider.overrideWithValue(FlavourConfig.dev),
+        appDatabaseProvider.overrideWith((ref) => db),
+        packInstallationProvider.overrideWith(
+          (ref) async => PackInstallOutcome.alreadyInstalled,
+        ),
+        nowProvider.overrideWithValue(() => now),
+      ],
+      child: const DokuDutyApp(),
+    );
+
+    String? daysTextAfter(WidgetTester tester) {
+      final finder = find.byKey(const ValueKey<String>('trail-days-remaining'));
+      if (finder.evaluate().isEmpty) return null;
+      return tester.widget<Text>(finder).data;
+    }
+
+    testWidgets('the same day always renders the same countdown', (
+      tester,
+    ) async {
+      await tester.pumpWidget(appAt(SeasonOne.startsAt));
+      await tester.pumpAndSettle();
+      final first = daysTextAfter(tester);
+
+      await tester.pumpWidget(appAt(SeasonOne.startsAt));
+      await tester.pumpAndSettle();
+
+      expect(daysTextAfter(tester), first);
+      expect(first, isNotNull);
+    });
+
+    testWidgets('a later day renders a smaller countdown', (tester) async {
+      await tester.pumpWidget(appAt(SeasonOne.startsAt));
+      await tester.pumpAndSettle();
+      final atStart = daysTextAfter(tester);
+
+      await tester.pumpWidget(
+        appAt(SeasonOne.startsAt.add(const Duration(days: 10))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        daysTextAfter(tester),
+        isNot(atStart),
+        reason: 'the header ignored the injected clock',
+      );
     });
   });
 }

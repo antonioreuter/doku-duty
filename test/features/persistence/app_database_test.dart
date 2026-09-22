@@ -19,7 +19,7 @@ void main() {
       // counts. Asserted by number rather than loosely, so a schema change has
       // to change a test that names the version — and, with it, produce a
       // snapshot and a migration.
-      expect(db.schemaVersion, 5);
+      expect(db.schemaVersion, 6);
       // Force the connection open — schemaVersion alone is a Dart getter and
       // would pass without sqlite ever being touched.
       await db.customSelect('SELECT 1').get();

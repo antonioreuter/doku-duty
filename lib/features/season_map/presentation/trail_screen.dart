@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
 import '../../grid_input/application/grid_providers.dart';
+import '../../platform_shell/application/clock_provider.dart';
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../rank_progression/domain/player_rank.dart';
@@ -12,6 +13,7 @@ import '../domain/node_type.dart';
 import '../domain/season.dart';
 import '../domain/trail_progress.dart';
 import 'trail_node_marker.dart';
+import 'trail_path_painter.dart';
 
 /// The **trail** — the spine of the session.
 ///
@@ -81,7 +83,11 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
           key: const ValueKey<String>('trail-path'),
           padding: const EdgeInsets.only(bottom: 16),
           children: <Widget>[
-            _TrailHeader(season: season, progress: progress.value),
+            _TrailHeader(
+              season: season,
+              progress: progress.value,
+              now: ref.watch(nowProvider)(),
+            ),
             for (final node in season.nodes)
               _TrailRow(
                 node: node,
@@ -95,6 +101,8 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
                     node.rank != null &&
                     PlayerRank.above(playerRank.value!).contains(node.rank),
                 onTap: _openerFor(node, progress.value),
+                isFirst: node.position == season.nodes.first.position,
+                isLast: node.position == season.nodes.last.position,
               ),
           ],
         ),
@@ -170,14 +178,22 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
 }
 
 class _TrailHeader extends StatelessWidget {
-  const _TrailHeader({required this.season, required this.progress});
+  const _TrailHeader({
+    required this.season,
+    required this.progress,
+    required this.now,
+  });
 
   final Season season;
   final TrailProgress? progress;
 
+  /// Passed in rather than read from the wall clock, so a golden of this header
+  /// is a golden of the header and not of the day it was taken.
+  final DateTime now;
+
   @override
   Widget build(BuildContext context) {
-    final daysRemaining = season.daysRemainingAt(DateTime.now());
+    final daysRemaining = season.daysRemainingAt(now);
     final completed = progress?.completedCount;
 
     return Padding(
@@ -221,6 +237,8 @@ class _TrailRow extends StatelessWidget {
     required this.state,
     required this.isAbovePlayerRank,
     required this.onTap,
+    required this.isFirst,
+    required this.isLast,
   });
 
   final SeasonNode node;
@@ -228,27 +246,60 @@ class _TrailRow extends StatelessWidget {
   final bool isAbovePlayerRank;
   final VoidCallback? onTap;
 
-  /// The trail winds. Alternating the alignment is what makes it a path rather
-  /// than a list, and it costs nothing to lay out — the artwork the mockup
-  /// draws around it (the cactus, the wagon, Biscuit) is `add-running-gags`.
+  /// Whether this row starts or ends the **trail**, so the line stops rather
+  /// than running off either end of the **season**.
+  final bool isFirst;
+  final bool isLast;
+
+  /// The trail winds. Alternating the alignment gives it the *shape* of a path;
+  /// [TrailPathPainter] draws the line that does the *linking*, which is what
+  /// `docs/pages/screens.html` Screen 01 asks for and what this comment claimed
+  /// alternation alone achieved until `add-trail-path`. The artwork the mockup
+  /// draws around it (the cactus, the wagon, Biscuit) is still
+  /// `add-running-gags`.
+  bool get _isLeft => node.position.isOdd;
+
   Alignment get _alignment =>
-      node.position.isOdd ? Alignment.centerLeft : Alignment.centerRight;
+      _isLeft ? Alignment.centerLeft : Alignment.centerRight;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
-      child: Align(
-        alignment: _alignment,
-        child: TrailNodeMarker(
-          // On the marker itself rather than on anything inside it, so a test
-          // asking for node 14 gets the widget that knows node 14's state.
-          key: ValueKey<String>('trail-node-${node.position}'),
-          position: node.position,
-          type: node.type,
-          state: state,
-          isAbovePlayerRank: isAbovePlayerRank,
-          onTap: onTap,
+    return CustomPaint(
+      // Behind the marker, never over it — the painter draws first and the
+      // child paints on top.
+      painter: TrailPathPainter(
+        isLeft: _isLeft,
+        isFirst: isFirst,
+        isLast: isLast,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: TrailPathPainter.rowInset,
+          vertical: TrailPathPainter.rowVerticalPad,
+        ),
+        child: Align(
+          alignment: _alignment,
+          child: SizedBox(
+            // A uniform anchor box (D-114), so the line meets a 44px circle
+            // and the 60px **current node** at the same distance from the
+            // edge, and goes on doing so as the label grows with the text
+            // scale. Without it the marker's width is the rendered width of
+            // "Node 42", and the line drifts off the circle at 3x and beyond
+            // — failing for exactly the players who asked for larger text,
+            // while every default-scale golden still looks right.
+            width: TrailPathPainter.anchorWidth,
+            child: TrailNodeMarker(
+              // On the marker itself rather than on anything inside it, so a
+              // test asking for node 14 gets the widget that knows node 14's
+              // state.
+              key: ValueKey<String>('trail-node-${node.position}'),
+              position: node.position,
+              type: node.type,
+              state: state,
+              isAbovePlayerRank: isAbovePlayerRank,
+              onTap: onTap,
+            ),
+          ),
         ),
       ),
     );

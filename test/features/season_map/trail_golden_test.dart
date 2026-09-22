@@ -14,6 +14,7 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
 import 'package:doku_duty/features/season_map/domain/season.dart';
 import 'package:doku_duty/features/season_map/domain/season_one.dart';
+import 'package:doku_duty/features/platform_shell/application/clock_provider.dart';
 import 'package:doku_duty/features/season_map/presentation/trail_screen.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +59,11 @@ void main() {
       packInstallationProvider.overrideWith(
         (ref) async => PackInstallOutcome.alreadyInstalled,
       ),
+      // Pinned to the day **season** one opens, so the header reads the same
+      // number for ever. Without this the golden captures "N days left" as it
+      // stood the afternoon it was generated and fails the next morning — which
+      // is exactly what happened, a day after these images were last taken.
+      nowProvider.overrideWithValue(() => SeasonOne.startsAt),
     ],
     child: const DokuDutyApp(),
   );

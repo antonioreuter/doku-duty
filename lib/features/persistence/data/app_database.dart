@@ -227,6 +227,72 @@ class SeasonStates extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+/// Which days the **daily challenge** was completed.
+///
+/// **A set of dates, never a count.** The **streak** is recomputed from these
+/// rows on demand (`docs/TECH_STACK.md` §3b), because two devices holding two
+/// numbers cannot be reconciled while two sets of days union cleanly. Storing
+/// the number as well would create a second source of truth that can drift from
+/// the days it claims to describe, with nothing able to detect it.
+///
+/// As with **completed node**s there is no `completed` boolean and no way to
+/// unset a row: a day is completed by its row existing, so the schema has no
+/// representation for taking one back (constraint 1).
+class CompletedDays extends Table {
+  /// `YYYY-MM-DD`, local to the player. Zero-padded, so the stored form sorts
+  /// in date order and a month can be read as a range.
+  TextColumn get day => text().withLength(min: 10, max: 10)();
+
+  /// False where the day was recorded with no known server-time offset — the
+  /// ordinary offline case, not a suspicion. Reconciliation may discard an
+  /// unverified day dated ahead of the server's own; it may never touch
+  /// anything else (`docs/TECH_STACK.md` §3b).
+  BoolColumn get isVerified => boolean().withDefault(const Constant(false))();
+
+  /// Whether a **streak freeze** bridged this day rather than the player
+  /// playing it. Both kinds count toward the **streak**; only one of them is a
+  /// day they turned up for, and the **calendar** draws them differently.
+  BoolColumn get wasFrozen => boolean().withDefault(const Constant(false))();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{day};
+}
+
+/// When a **streak freeze** was last spent.
+///
+/// One row, and a date rather than a count. How many are held is derived from
+/// this (D-117: one at a time, regenerating every 7 days, never banked), for
+/// the same reason the **streak** is derived from the **calendar** — a stored
+/// count can drift out of step with the events that produced it, and a date
+/// cannot. It also means there is no number in the schema for a bug to
+/// increment twice.
+/// Named for the generated row class, not for elegance: a table `FreezeLedgers`
+/// would generate a `FreezeLedger` data class that collides with the domain
+/// type of the same name, and the two would go on colliding in every file that
+/// needed both.
+class StreakFreezeLedgers extends Table {
+  /// Always [singletonId]. One player, one ledger.
+  IntColumn get id => integer()();
+
+  /// `YYYY-MM-DD` of the last spend, or null if one has never been spent — in
+  /// which case the player holds one, immediately (D-117).
+  TextColumn get lastSpentDay =>
+      text().withLength(min: 10, max: 10).nullable()();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  static const int singletonId = 0;
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
 /// Which **node**s the player has completed, in which **season**.
 ///
 /// Keyed by **season** id as well as position, and that is what makes rotation
@@ -415,6 +481,8 @@ class Notes extends Table {
     SeasonStates,
     CompletedNodes,
     BossAttempts,
+    CompletedDays,
+    StreakFreezeLedgers,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -486,6 +554,28 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(schema.completedNodes);
         await m.createTable(schema.bossAttempts);
       },
+      // Version 6 adds the **daily challenge**'s **calendar** and the **streak
+      // freeze** ledger. Two new tables and nothing else moves, so every saved
+      // game, note, statistic, setting, **solve record**, seen **lesson** and
+      // **season** completion carries over untouched — which task 4.2 asserts
+      // rather than assumes.
+      //
+      // They arrive *empty*, and here that direction is not merely safe but
+      // required. An empty **calendar** means a player upgrading has a
+      // **streak** of zero and has completed no day, which is true: there was
+      // no **daily challenge** before this version for them to have played.
+      // Arriving pre-filled would credit days that never happened and put a
+      // number on screen the player could not account for.
+      //
+      // The ledger arrives empty too, which by D-117 means `lastSpentDay` is
+      // null and every upgrading player holds one **streak freeze** from the
+      // moment they open the app. That is the intended reading, not an
+      // accident of the default: the safety net exists for the player whose
+      // second day goes wrong, and an upgrade is somebody's first day.
+      from5To6: (m, schema) async {
+        await m.createTable(schema.completedDays);
+        await m.createTable(schema.streakFreezeLedgers);
+      },
     ),
   );
 
@@ -516,5 +606,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 }
