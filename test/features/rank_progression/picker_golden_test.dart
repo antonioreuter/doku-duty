@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:doku_duty/features/design_system/presentation/doku_type.dart';
-import 'package:doku_duty/features/grid_input/presentation/rank_picker_screen.dart';
+import 'package:doku_duty/features/grid_input/presentation/free_play_screen.dart';
 import 'package:doku_duty/features/mistake_model/domain/attempt.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/application/settings_providers.dart';
@@ -20,6 +20,8 @@ import 'package:doku_duty/features/platform_shell/presentation/app.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
+
+import '../../support/home_navigation.dart';
 
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
@@ -86,8 +88,10 @@ void main() {
 
     await tester.pumpWidget(_app(db));
     await tester.pumpAndSettle();
+    // The app opens on the **trail**; **free play** is the other tab (D-111).
+    await goToFreePlay(tester);
     await expectLater(
-      find.byType(RankPickerScreen),
+      find.byType(FreePlayScreen),
       matchesGoldenFile('goldens/$name.png'),
     );
   }

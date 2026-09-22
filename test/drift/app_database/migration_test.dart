@@ -10,6 +10,7 @@ import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
+import 'generated/schema_v5.dart' as v5;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -541,6 +542,147 @@ void main() {
         // existing install, silently and permanently — nothing ever un-sees a
         // lesson.
         expect(await rows('SELECT lesson_id FROM seen_lessons'), isEmpty);
+      },
+    );
+  });
+
+  test('migration from v4 to v5 keeps everything and starts the trail at one', () async {
+    // The v4 snapshot sits below drift's type mapping: a stamp is ISO-8601
+    // text (D-76) and a boolean is the integer sqlite stores.
+    final stamp = DateTime.utc(2026, 9, 20, 11).toIso8601String();
+    const grid =
+        '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+    // A player well into the game: a puzzle in progress with a **mistake**
+    // against it, a hypothesis on the board, a **solve record** behind them, a
+    // technique counted, and a **lesson** already seen. Version 5 adds three
+    // tables and moves nothing, so every one of these must come through.
+    final oldSaves = <v4.PuzzleSavesData>[
+      v4.PuzzleSavesData(
+        puzzleId: 'p1',
+        placedValues: grid,
+        elapsedMs: 742000,
+        isComplete: 0,
+        updatedAt: stamp,
+        pendingUpload: 1,
+        deviceOrigin: 'test-device',
+        mistakes: 2,
+      ),
+    ];
+
+    final oldNotes = <v4.NotesData>[
+      v4.NotesData(
+        puzzleId: 'p1',
+        cell: 40,
+        digit: 7,
+        kind: 'provisional',
+        origin: 'manual',
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSolved = <v4.SolvedPuzzlesData>[
+      v4.SolvedPuzzlesData(
+        puzzleId: 'q-sheriff',
+        solvedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldTechniques = <v4.TechniqueStatsData>[
+      v4.TechniqueStatsData(
+        technique: 'nakedPair',
+        puzzlesRequiring: 3,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldLifetime = <v4.LifetimeStatsData>[
+      v4.LifetimeStatsData(
+        id: 0,
+        puzzlesSolved: 41,
+        perfectSolves: 12,
+        totalPlayMs: 9000000,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSeenLessons = <v4.SeenLessonsData>[
+      v4.SeenLessonsData(
+        lessonId: 'notes',
+        seenAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    await verifier.testWithDataIntegrity(
+      oldVersion: 4,
+      newVersion: 5,
+      createOld: v4.DatabaseAtV4.new,
+      createNew: v5.DatabaseAtV5.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.notes, oldNotes);
+        batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        batch.insertAll(oldDb.solvedPuzzles, oldSolved);
+        batch.insertAll(oldDb.techniqueStats, oldTechniques);
+        batch.insertAll(oldDb.lifetimeStats, oldLifetime);
+        batch.insertAll(oldDb.seenLessons, oldSeenLessons);
+      },
+      validateItems: (newDb) async {
+        Future<List<Map<String, Object?>>> rows(String sql) async {
+          final result = await newDb.customSelect(sql).get();
+          return <Map<String, Object?>>[for (final r in result) r.data];
+        }
+
+        final saves = await rows(
+          'SELECT puzzle_id, placed_values, elapsed_ms, mistakes, device_origin '
+          'FROM puzzle_saves',
+        );
+        expect(saves, hasLength(1));
+        expect(saves.single['placed_values'], grid);
+        expect(saves.single['elapsed_ms'], 742000);
+        expect(saves.single['mistakes'], 2);
+
+        final notes = await rows(
+          'SELECT puzzle_id, cell, digit, kind, origin FROM notes',
+        );
+        expect(notes.single['cell'], 40);
+        expect(notes.single['kind'], 'provisional');
+
+        // The permanent layer, which rotation must never touch and a migration
+        // certainly must not (D-17).
+        final solved = await rows('SELECT puzzle_id FROM solved_puzzles');
+        expect(solved.single['puzzle_id'], 'q-sheriff');
+
+        final techniques = await rows(
+          'SELECT technique, puzzles_requiring FROM technique_stats',
+        );
+        expect(techniques.single['puzzles_requiring'], 3);
+
+        final lifetime = await rows(
+          'SELECT puzzles_solved, perfect_solves FROM lifetime_stats',
+        );
+        expect(lifetime.single['puzzles_solved'], 41);
+        expect(lifetime.single['perfect_solves'], 12);
+
+        final seen = await rows('SELECT lesson_id FROM seen_lessons');
+        expect(seen.single['lesson_id'], 'notes');
+
+        // The direction that matters, and it is the opposite of the one the
+        // **lesson** table needed. An upgrading player has completed no
+        // **node**, so they stand at **node** 1 of season one with everything
+        // above still theirs. Arriving with rows would hand them a **season**
+        // they never walked; arriving with a **season** already in force would
+        // pin them to whichever one happened to be compiled in at upgrade time.
+        expect(await rows('SELECT position FROM completed_nodes'), isEmpty);
+        expect(await rows('SELECT season_id FROM season_states'), isEmpty);
+        expect(await rows('SELECT attempts FROM boss_attempts'), isEmpty);
       },
     );
   });

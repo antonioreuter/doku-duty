@@ -16,6 +16,8 @@ import 'package:doku_duty/features/platform_shell/presentation/app.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 
+import '../../support/home_navigation.dart';
+
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
 const String _solution =
@@ -112,6 +114,8 @@ void main() {
     await tester.pumpWidget(_app(db));
     await tester.pumpAndSettle();
 
+    await goToFreePlay(tester);
+
     // Scoped to the Deputy tile: the other five **rank**s hold no puzzle in
     // this pack and say so from the start, which is the ordinary absence
     // constraint 1 asks for rather than anything this test is about.
@@ -154,6 +158,8 @@ void main() {
 
     await tester.pumpWidget(_app(db));
     await tester.pumpAndSettle();
+
+    await goToFreePlay(tester);
 
     await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
     await tester.pumpAndSettle();

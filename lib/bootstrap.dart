@@ -11,6 +11,7 @@ import 'features/platform_shell/application/flavour_provider.dart';
 import 'features/platform_shell/application/orientation.dart';
 import 'features/platform_shell/domain/flavour.dart';
 import 'features/platform_shell/presentation/app.dart';
+import 'features/season_map/application/season_providers.dart';
 
 /// The single startup path, shared by the three entry points.
 ///
@@ -32,6 +33,9 @@ Future<void> bootstrap(FlavourConfig config) async {
       persistedReduceEffectsOverride,
       persistedStrictModeOverride,
       persistedHideCompletionTintsOverride,
+      // The territory paints the app. Same reasoning as the three above: wired
+      // here so `design-system` does not import `season-map`.
+      seasonThemeOverride,
     ],
   );
 

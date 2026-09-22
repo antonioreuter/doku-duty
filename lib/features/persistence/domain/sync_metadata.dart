@@ -42,4 +42,18 @@ const List<String> syncableTables = <String>[
   // one device should not be taught again on another (D-17). Cheap to sync —
   // a row is an id and nothing else.
   'seen_lessons',
+  // Where the player is on the **trail**, and what they have completed on it.
+  //
+  // Seasonal rather than permanent (D-17), and synced all the same: a player
+  // who walks eleven **node**s on a phone and opens a tablet should not be back
+  // at **node** 1. The merge is the easy kind — `completed_nodes` is a set, so
+  // it unions, and `season_states` is one row naming the **season** in force.
+  //
+  // `boss_attempts` is a counter and takes the maximum, like the lifetime
+  // counters beside it. It is synced for `add-trophy-cabinet`'s statistics and
+  // for no other reason — nothing reads it to decide whether an attempt may
+  // happen (D-22).
+  'season_states',
+  'completed_nodes',
+  'boss_attempts',
 ];

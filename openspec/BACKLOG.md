@@ -14,19 +14,21 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ---
 
-## Status — 2026-09-19
+## Status — 2026-09-20
 
-**Fifteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
-half done.** Items carry a **Done** line naming the archive directory they landed
-in; anything without one is not built. Two of the finished items still carry an
-**OUTSTANDING** note — read those before treating the capability as settled, because
-what is outstanding in both cases is a *measurement*, not code.
+**Sixteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
+two-thirds done.** Items carry a **Done** line naming the archive directory they landed
+in; anything without one is not built. Three of the finished items — 6, 11 and
+15 — still carry an **OUTSTANDING** note; read those before treating the
+capability as settled, because what is outstanding in all three cases is a
+*measurement on physical hardware*, not code. One session with a mid-tier
+Android phone and a Developer-Mode iPhone closes all of them.
 
 | Milestone | Items | State |
 |---|---|---|
 | 0 — Foundation | 1–4 | Complete |
 | 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
-| 2 — A reason to come back | 12–17 | 12, 13 done; 14–17 open |
+| 2 — A reason to come back | 12–17 | 12, 13, 15 done; 14, 16, 17 open |
 | *(unlabelled)* — the perk economy | 18, 19 | Not started |
 | 3 — The reason it exists | 20–23 | Not started |
 | 4 — The business | 24–29 | Not started |
@@ -164,8 +166,9 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 
 *Done when: there is a season to progress through, a daily habit, and a permanent record.*
 
-**Half done — 12 and 13 are archived, 14 through 17 are open.** 14 and 15 are
-both unblocked: 15 was waiting on 12, and 14 only ever needed 3 and 5.
+**Two-thirds done — 12, 13 and 15 are archived; 14, 16 and 17 are open.** 14 was
+never blocked (it only ever needed 3 and 5). 16 now waits on 14 alone, and 17 is
+unblocked by 15 landing.
 
 ### 12. `add-rank-progression`
 **Done** — `openspec/changes/archive/2026-09-19-add-rank-progression/`.
@@ -186,9 +189,13 @@ puzzle recorded nothing at all; and the **rank** picker cached what was next, so
 it went on offering a puzzle the player had solved. Any later screen that caches
 a progression read needs the same invalidation (D-105).
 
-**`rank_picker_screen.dart` is scaffolding change 15 deletes.** The mark's
-presentation lives there; the rule lives in the capability and survives. Carry
-the mark onto the map.
+**`rank_picker_screen.dart` is scaffolding change 15 promotes — not, as this
+line said until change 15 ran, scaffolding it deletes.** The mark's presentation
+lives there; the rule lives in the capability and survives. Carry the mark onto
+the map. The screen itself stays: a **trail** walked in order puts Legend forty
+**node**s away, so deleting the only by-**rank** route would void both D-103 and
+`grid-input`'s "a puzzle can be reached at any rank". It becomes **free play**
+behind the navigation (D-111).
 
 ### 13. `add-technique-tutorials`
 **Done** — `openspec/changes/archive/2026-09-19-add-technique-tutorials/`.
@@ -223,18 +230,50 @@ One puzzle per day, identical for all players, month-grid calendar, streak count
 **Watch for:** the freeze must apply automatically. A freeze the player has to remember to use is a trap, not a safety net.
 
 ### 15. `add-season-map`
+**Done** — `openspec/changes/archive/2026-09-20-add-season-map/`.
 **Capabilities:** `season-map`
 42-node territory map, node types (puzzle, variant, chest, boss), front-loaded reward pacing, non-expiring nodes, unlimited free boss retries, season rotation (D-18, D-19, D-22).
 **Depends on:** 12, 3.
 **Watch for:** build seasons as data from the start. If season one is hard-coded, the six-week cadence dies in month two.
 
+**It reversed this list's own instruction about change 12.** The line under 12
+said this change would *delete* `rank_picker_screen.dart`; it promotes it to
+**free play** instead (D-111). A **trail** walked in order (D-108) puts Legend
+forty **node**s away, so deleting the only by-**rank** route would have voided
+both D-103 and `grid-input`'s "a puzzle can be reached at any rank" on the day
+it landed. The **trail** is the spine; **free play** keeps the ladder open.
+
+**Three seams are named rather than silent**, each with a test that says which
+change owns it: a **chest node** completes and mints no **stamp** (18), a **boss
+node** completes and files no trophy (16), and a **variant node** is typed as one
+and plays a classic board (17). D-19's pacing is carried by the **variant node**
+positions for now, because the rewards it was written about do not exist yet —
+worth revisiting when 18 lands.
+
+**A season is a publish, not a release.** The document lives under
+`remote-config` with season one compiled in, and `lib/features/remote_config/PUBLISHING.md`
+is the specification the first upload is checked against. A **node** names a
+**rank**, never a puzzle (D-110), which is what lets a **pack** be topped up
+mid-**season**.
+
+**OUTSTANDING — the device checks.** `integration_test/season_map_test.dart` is
+the runner and passes on the iOS simulator (safe area 62/34pt, navigation clear
+of the home indicator, all 42 **node**s reachable, a completion surviving a real
+SQLite round trip). It was **not** taken on the physical iPhone — the connected
+device reports Developer Mode off — and **not** on Android, because none is
+attached. The mid-tier Android profile carried against changes 6 and 11 is
+unchanged and still wants the same session.
+
 ### 16. `add-trophy-cabinet`
 **Capabilities:** `trophy-cabinet`
+**Unblocked once 14 lands** — 15 and 12 are archived.
 Permanent trophies and medals, unearned seasonal awards shown as unfiled rather than hidden, lifetime and per-technique statistics (D-17, D-21).
 **Depends on:** 15, 14, 12.
 
 ### 17. `add-puzzle-variants`
 **Capabilities:** `puzzle-engine`, `grid-input`
+**Unblocked** — 6 and 15 are both archived. The six **variant node**s exist and
+play classic boards until this change gives the **season** a rule.
 One rule variant beyond classic for the season's variant nodes — killer recommended for v1.
 **Depends on:** 6, 15.
 **Watch for:** scope. One variant, properly. Not four.

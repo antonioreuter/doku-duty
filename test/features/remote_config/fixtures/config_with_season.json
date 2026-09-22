@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "ads.interstitial_node_interval": 3,
+  "ads.interstitial_minimum_gap_seconds": 90,
+  "ads.interstitials_per_session": 6,
+  "season": {
+    "id": "copper-hollow",
+    "name": "Copper Hollow",
+    "starts_at": "2026-11-02T00:00:00Z",
+    "length_days": 42,
+    "nodes": [
+      {
+        "type": "puzzle",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "puzzle",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "variant",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "puzzle",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "variant",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "puzzle",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "puzzle",
+        "rank": "greenhorn"
+      },
+      {
+        "type": "variant",
+        "rank": "deputy"
+      },
+      {
+        "type": "puzzle",
+        "rank": "deputy"
+      },
+      {
+        "type": "puzzle",
+        "rank": "deputy"
+      },
+      {
+        "type": "chest"
+      },
+      {
+        "type": "puzzle",
+        "rank": "deputy"
+      },
+      {
+        "type": "puzzle",
+        "rank": "deputy"
+      },
+      {
+        "type": "puzzle",
+        "rank": "deputy"
+      },
+      {
+        "type": "puzzle",
+        "rank": "sheriff"
+      },
+      {
+        "type": "puzzle",
+        "rank": "sheriff"
+      },
+      {
+        "type": "puzzle",
+        "rank": "sheriff"
+      },
+      {
+        "type": "variant",
+        "rank": "sheriff"
+      },
+      {
+        "type": "puzzle",
+        "rank": "sheriff"
+      },
+      {
+        "type": "puzzle",
+        "rank": "sheriff"
+      },
+      {
+        "type": "chest"
+      },
+      {
+        "type": "boss",
+        "rank": "sheriff"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "variant",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "marshal"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "chest"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "ranger"
+      },
+      {
+        "type": "puzzle",
+        "rank": "legend"
+      },
+      {
+        "type": "variant",
+        "rank": "legend"
+      },
+      {
+        "type": "boss",
+        "rank": "legend"
+      },
+      {
+        "type": "chest"
+      }
+    ]
+  }
+}

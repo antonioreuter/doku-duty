@@ -8,7 +8,7 @@ import 'package:doku_duty/features/grid_input/domain/puzzle_session.dart';
 import 'package:doku_duty/features/grid_input/application/grid_providers.dart';
 import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
-import 'package:doku_duty/features/grid_input/presentation/rank_picker_screen.dart';
+import 'package:doku_duty/features/grid_input/presentation/free_play_screen.dart';
 import 'package:doku_duty/features/grid_input/presentation/settings_screen.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/application/settings_providers.dart';
@@ -24,6 +24,8 @@ import 'package:doku_duty/features/platform_shell/application/flavour_provider.d
 import 'package:doku_duty/features/platform_shell/domain/flavour.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
+
+import '../../support/home_navigation.dart';
 
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
@@ -91,8 +93,8 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
-        await tester.pumpAndSettle();
+        await goToFreePlay(tester);
+        await openRank(tester, 'deputy');
 
         expect(
           tester.takeException(),
@@ -114,6 +116,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
 
@@ -139,6 +143,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
 
@@ -159,6 +165,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
 
       // "Sheriff rank", never a bare rank name: Sheriff and Deputy are
       // characters too, and the player is the Deputy (D-57).
@@ -182,6 +190,8 @@ void main() {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
 
+      await goToFreePlay(tester);
+
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
 
@@ -199,12 +209,14 @@ void main() {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
 
+      await goToFreePlay(tester);
+
       expect(find.text('Nothing left here for now'), findsNWidgets(5));
 
       // Tapping an exhausted rank does nothing at all — no error, no dialog.
       await tester.tap(find.byKey(const ValueKey<String>('rank-legend')));
       await tester.pumpAndSettle();
-      expect(find.byType(RankPickerScreen), findsOneWidget);
+      expect(find.byType(FreePlayScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -216,6 +228,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
 
       await tester.tap(find.byKey(const ValueKey<String>('rank-marshal')));
       await tester.pumpAndSettle();
@@ -246,8 +260,15 @@ void main() {
 
       await tester.pumpWidget(_app(db));
 
-      expect(find.text('Greenhorn rank'), findsOneWidget);
-      expect(find.text('Nothing left here for now'), findsNothing);
+      // `skipOffstage: false`: the app opens on the **trail**, and **free
+      // play** is the other half of the `IndexedStack` (D-111). The claim is
+      // that the rows are *built* on the first frame without a **pack** read —
+      // not that they are the frame the player is looking at.
+      expect(find.text('Greenhorn rank', skipOffstage: false), findsOneWidget);
+      expect(
+        find.text('Nothing left here for now', skipOffstage: false),
+        findsNothing,
+      );
     });
   });
 
@@ -258,6 +279,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -280,6 +303,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -298,6 +323,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -325,6 +352,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -344,6 +373,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -366,6 +397,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('open-settings')));
       await tester.pumpAndSettle();
 
@@ -409,6 +442,7 @@ void main() {
     Future<void> openPuzzle(WidgetTester tester, AppDatabase db) async {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
     }
@@ -509,6 +543,7 @@ void main() {
       await SettingsRepository(db).write(AppSetting.strictMode, value: true);
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
 
@@ -667,7 +702,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey<String>('attempt-leave')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(RankPickerScreen), findsOneWidget);
+      expect(find.byType(FreePlayScreen), findsOneWidget);
       // Still offered, because a failed attempt is not a solve.
       expect(find.byKey(const ValueKey<String>('rank-deputy')), findsOneWidget);
       expect(await PackRepository(db).nextUnsolved(Rank.deputy), isNotNull);
@@ -681,6 +716,7 @@ void main() {
     Future<void> openPuzzle(WidgetTester tester, AppDatabase db) async {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+      await goToFreePlay(tester);
       await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
       await tester.pumpAndSettle();
     }

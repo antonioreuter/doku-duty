@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:doku_duty/features/platform_shell/application/flavour_provider.dart';
 import 'package:doku_duty/features/platform_shell/domain/flavour.dart';
 import 'package:doku_duty/features/platform_shell/presentation/app.dart';
-import 'package:doku_duty/features/grid_input/presentation/rank_picker_screen.dart';
+import 'package:doku_duty/features/grid_input/presentation/free_play_screen.dart';
+import 'package:doku_duty/features/season_map/presentation/trail_screen.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:drift/native.dart';
@@ -23,8 +24,8 @@ class _NoNetworkOverrides extends HttpOverrides {
 }
 
 void main() {
-  // In memory, because the rank picker reads the pack a frame after the first
-  // one. The real opener wants an application-support directory, which a host
+  // In memory, because the **trail** reads progress, and **free play** reads
+  // the pack, a frame after the first one. The real opener wants an application-support directory, which a host
   // test does not have — and what these tests are about is the shell, not
   // storage.
   Widget shellFor(FlavourConfig config) => ProviderScope(
@@ -37,11 +38,14 @@ void main() {
     child: const DokuDutyApp(),
   );
 
-  testWidgets('launches straight to the single route', (tester) async {
+  testWidgets('launches straight to the trail', (tester) async {
     await tester.pumpWidget(shellFor(FlavourConfig.prod));
     await tester.pumpAndSettle();
 
-    expect(find.byType(RankPickerScreen), findsOneWidget);
+    expect(find.byType(TrailScreen), findsOneWidget);
+    // **Free play** is built alongside it and offstage, so switching to it
+    // costs no rebuild and loses no scroll position (D-111).
+    expect(find.byType(FreePlayScreen, skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('the first frame needs no network', (tester) async {
@@ -54,7 +58,7 @@ void main() {
 
     expect(overrides.wasAsked, isFalse);
     expect(tester.takeException(), isNull);
-    expect(find.byType(RankPickerScreen), findsOneWidget);
+    expect(find.byType(TrailScreen), findsOneWidget);
   });
 
   testWidgets(
@@ -64,22 +68,38 @@ void main() {
 
       // No pumpAndSettle: a splash animation or a timed gate would leave the
       // screen absent here, and would also make pumpAndSettle time out.
-      expect(find.byType(RankPickerScreen), findsOneWidget);
+      expect(find.byType(TrailScreen), findsOneWidget);
     },
   );
 
-  // `add-grid-and-input` replaced the empty placeholder with the temporary
-  // rank picker. What the shell must still never do is reach for content on
-  // the way to the first frame: the six rows come from `Rank.values`, and which
-  // puzzle is next is read from the database a frame later.
+  // `add-grid-and-input` replaced the empty placeholder with a **rank** picker;
+  // `add-season-map` replaced that as home with the **trail**. What the shell
+  // must still never do is reach for content on the way to the first frame: the
+  // 42 **node**s come from the **season**, which is compiled in or already in
+  // memory, and completion state is read from the database a frame later.
   testWidgets('the first frame needs no content', (tester) async {
     await tester.pumpWidget(shellFor(FlavourConfig.prod));
 
-    expect(find.byType(RankPickerScreen), findsOneWidget);
-    expect(find.text('Greenhorn rank'), findsOneWidget);
-    expect(find.text('Legend rank'), findsOneWidget);
+    expect(find.byType(TrailScreen), findsOneWidget);
+    expect(find.text('Dust Gulch'), findsOneWidget);
+    expect(find.text('Node 1'), findsOneWidget);
     expect(
-      find.text('Nothing left here for now'),
+      find.text('Trail progress'),
+      findsOneWidget,
+      reason: 'the header is there, with no count until progress is read',
+    );
+  });
+
+  // The other half of the same rule, on the other tab. **Free play** is built
+  // on the first frame too, and must be just as content-free on it.
+  testWidgets('free play needs no content on the first frame', (tester) async {
+    await tester.pumpWidget(shellFor(FlavourConfig.prod));
+
+    Finder offstage(String text) => find.text(text, skipOffstage: false);
+    expect(offstage('Greenhorn rank'), findsOneWidget);
+    expect(offstage('Legend rank'), findsOneWidget);
+    expect(
+      offstage('Nothing left here for now'),
       findsNothing,
       reason: 'absence is only known once the pack has been read',
     );

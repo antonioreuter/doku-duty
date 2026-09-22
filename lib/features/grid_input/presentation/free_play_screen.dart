@@ -7,23 +7,29 @@ import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../rank_progression/domain/player_rank.dart';
+import '../../season_map/application/season_providers.dart';
 import '../application/grid_providers.dart';
 
-/// Six entries, one per **rank**.
+/// **Free play** — six entries, one per **rank**.
 ///
-/// **Scaffolding.** `add-season-map` deletes this screen: a player is meant to
-/// reach a puzzle through a node on a territory map, not a list of difficulty
-/// tiers. It exists so that all six **rank**s are reachable and testable before
-/// the map arrives, and so that this change can be played rather than only
-/// tested.
-class RankPickerScreen extends ConsumerStatefulWidget {
-  const RankPickerScreen({super.key});
+/// The **trail** is the spine of the session; this is what keeps the ladder
+/// open beside it (D-111). It is not scaffolding, and the distinction matters:
+/// a **trail** is walked in order (D-108), so on a fresh **season** a Legend
+/// puzzle is forty **node**s away. Deleting this screen would make
+/// `grid-input`'s "a puzzle can be reached at any rank" false and re-impose
+/// exactly the gate D-103 refused, wearing a map instead of a list.
+///
+/// A puzzle solved here writes a **solve record** like any other and advances
+/// no **season**, which is what keeps D-17's permanent and seasonal layers the
+/// separate things they are.
+class FreePlayScreen extends ConsumerStatefulWidget {
+  const FreePlayScreen({super.key});
 
   @override
-  ConsumerState<RankPickerScreen> createState() => _RankPickerScreenState();
+  ConsumerState<FreePlayScreen> createState() => _FreePlayScreenState();
 }
 
-class _RankPickerScreenState extends ConsumerState<RankPickerScreen> {
+class _FreePlayScreenState extends ConsumerState<FreePlayScreen> {
   /// Whether the first frame has been painted.
   ///
   /// The six rows come from `Rank.values` and need nothing, so they are on
@@ -54,7 +60,7 @@ class _RankPickerScreenState extends ConsumerState<RankPickerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Doku Duty', style: TypeRole.screenTitle.style),
+        title: Text('Free play', style: TypeRole.screenTitle.style),
         actions: <Widget>[
           IconButton(
             key: const ValueKey<String>('open-settings'),
@@ -80,6 +86,7 @@ class _RankPickerScreenState extends ConsumerState<RankPickerScreen> {
                 isAbovePlayer:
                     playerRank.hasValue &&
                     PlayerRank.above(playerRank.value!).contains(rank),
+                onOpen: () => ref.read(activeNodeProvider.notifier).clear(),
               ),
           ],
         ),
@@ -94,11 +101,15 @@ class _RankTile extends StatelessWidget {
     required this.puzzle,
     required this.isLoaded,
     required this.isAbovePlayer,
+    required this.onOpen,
   });
 
   final Rank rank;
   final StoredPuzzle? puzzle;
   final bool isLoaded;
+
+  /// Run just before the puzzle opens. See the tap handler below.
+  final VoidCallback onOpen;
 
   /// Whether this **rank** is harder than the one the player has reached.
   ///
@@ -139,7 +150,16 @@ class _RankTile extends StatelessWidget {
                   Text(note, style: TypeRole.label.style),
               ],
             ),
-      onTap: puzzle == null ? null : () => Routes.goPuzzle(context, puzzle!.id),
+      onTap: puzzle == null
+          ? null
+          : () {
+              // A board opened here belongs to no **node**, so completing it
+              // advances no **season** (D-111). Cleared rather than assumed
+              // absent: the player may have opened a **node**, come back, and
+              // chosen a **rank** instead.
+              onOpen();
+              Routes.goPuzzle(context, puzzle!.id);
+            },
     );
   }
 

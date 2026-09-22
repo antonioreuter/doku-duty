@@ -23,6 +23,8 @@ import 'package:doku_duty/features/technique_tutorials/domain/lesson.dart';
 import 'package:doku_duty/features/technique_tutorials/domain/lesson_catalogue.dart';
 import 'package:doku_duty/features/technique_tutorials/presentation/lesson_view.dart';
 
+import '../../support/home_navigation.dart';
+
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
 const String _solution =
@@ -81,6 +83,7 @@ Future<void> _open(WidgetTester tester, AppDatabase db, Rank rank) async {
   _tall(tester);
   await tester.pumpWidget(_app(db));
   await tester.pumpAndSettle();
+  await goToFreePlay(tester);
   await tester.tap(find.byKey(ValueKey<String>('rank-${rank.name}')));
   await tester.pumpAndSettle();
 }
@@ -234,6 +237,7 @@ void main() {
       _tall(tester);
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+      await goToFreePlay(tester);
 
       for (final rank in Rank.values) {
         await tester.tap(find.byKey(ValueKey<String>('rank-${rank.name}')));

@@ -17,6 +17,8 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 
+import '../../support/home_navigation.dart';
+
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
 const String _solution =
@@ -53,9 +55,12 @@ Widget _app(AppDatabase db) => ProviderScope(
   child: const DokuDutyApp(),
 );
 
-Finder _markOn(Rank rank) => find.descendant(
-  of: find.byKey(ValueKey<String>('rank-${rank.name}')),
-  matching: find.textContaining('Above your rank'),
+Finder _markOn(Rank rank, {bool skipOffstage = true}) => find.descendant(
+  of: find.byKey(
+    ValueKey<String>('rank-${rank.name}'),
+    skipOffstage: skipOffstage,
+  ),
+  matching: find.textContaining('Above your rank', skipOffstage: skipOffstage),
 );
 
 Future<void> _solvedAt(AppDatabase db, Rank rank) =>
@@ -76,6 +81,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
 
       expect(_markOn(Rank.greenhorn), findsNothing);
       for (final rank in <Rank>[
@@ -100,6 +107,8 @@ void main() {
         await tester.pumpWidget(_app(db));
         await tester.pumpAndSettle();
 
+        await goToFreePlay(tester);
+
         for (final rank in <Rank>[
           Rank.greenhorn,
           Rank.deputy,
@@ -122,8 +131,10 @@ void main() {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
 
+      await goToFreePlay(tester);
+
       for (final rank in Rank.values) {
-        expect(_markOn(rank), findsNothing);
+        expect(_markOn(rank, skipOffstage: false), findsNothing);
       }
     });
   });
@@ -137,6 +148,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
       expect(_markOn(Rank.legend), findsOneWidget);
 
       // One tap. No confirmation to accept, no warning to dismiss, no gate
@@ -176,6 +189,8 @@ void main() {
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
 
+      await goToFreePlay(tester);
+
       for (final rank in Rank.values) {
         final tile = tester.widget<ListTile>(
           find.byKey(ValueKey<String>('rank-${rank.name}')),
@@ -195,6 +210,8 @@ void main() {
 
       await tester.pumpWidget(_app(db));
       await tester.pumpAndSettle();
+
+      await goToFreePlay(tester);
 
       // The words are the signal. A screen reader reaches the same sentence a
       // sighted player reads, and removing every colour from the tile would
@@ -220,9 +237,16 @@ void main() {
       // One frame only: nothing has been read from the database yet.
       await tester.pump();
 
+      // `skipOffstage: false`, because the app opens on the **trail** and
+      // **free play** is the other half of the `IndexedStack` (D-111). The
+      // claim being tested is that the six rows are *built* on the first frame
+      // without a database read — not that they are the frame the player sees.
       for (final rank in Rank.values) {
         expect(
-          find.byKey(ValueKey<String>('rank-${rank.name}')),
+          find.byKey(
+            ValueKey<String>('rank-${rank.name}'),
+            skipOffstage: false,
+          ),
           findsOneWidget,
           reason: '${rank.name} was not on the first frame',
         );
@@ -231,10 +255,11 @@ void main() {
       // row is openable, so a player is never briefly told less than the truth
       // in a direction that would stop them.
       for (final rank in Rank.values) {
-        expect(_markOn(rank), findsNothing);
+        expect(_markOn(rank, skipOffstage: false), findsNothing);
       }
 
       await tester.pumpAndSettle();
+      await goToFreePlay(tester);
       expect(_markOn(Rank.legend), findsOneWidget);
     });
   });

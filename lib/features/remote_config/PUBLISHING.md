@@ -19,10 +19,92 @@ own.
 | `ads.interstitial_node_interval` | integer | Completed nodes between interstitials |
 | `ads.interstitial_minimum_gap_seconds` | integer | Seconds between interstitials |
 | `ads.interstitials_per_session` | integer | Interstitials in one session |
+| `season` | object | The **season** the **trail** shows. Absent is valid and common — see below |
 
 Whole numbers may be written as `3`, `3.0`, or `"3"` — all three are accepted,
 because a hand-edited file will eventually contain each of them. A fractional
 number is rejected in favour of the default rather than rounded.
+
+## The season
+
+`season` is the one structured key. Absent, the client walks the **season**
+compiled into the binary, which is a complete 42-**node** trail — so a document
+with no `season` is not a degraded one, and the first upload need not carry one
+at all. Publishing a `season` is how a **season** is rotated without a release
+(D-109).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `season.id` | string | Stable identity. **Progress is keyed to it** |
+| `season.name` | string | The territory, shown on the **trail**. "Copper Hollow" |
+| `season.starts_at` | string | ISO-8601. The same instant for every player |
+| `season.length_days` | integer | Whole days. Six weeks is 42 (D-18) |
+| `season.nodes` | array | Exactly 42 objects, in trail order |
+| `season.palette` | object | Optional. What this territory repaints |
+
+Each entry in `season.nodes` carries a `type` — `puzzle`, `variant`, `chest`, or
+`boss` — and, for every type but `chest`, a `rank`: one of `greenhorn`,
+`deputy`, `sheriff`, `marshal`, `ranger`, `legend`.
+
+**A node names a rank, never a puzzle (D-110).** There is no key for a puzzle
+id, a seed, or a grid, and adding one has no effect — the client resolves a
+puzzle of the node's **rank** from the installed **pack** when the node is
+opened. That is what lets a **pack** be topped up mid-**season** without
+stranding a node or reverting a completion.
+
+### The palette
+
+`season.palette` is optional, and absent is not a degradation — a **season**
+with no palette wears the default surfaces. It takes `bone` and `sand`, and
+optionally `hairline` and `surface_depth`, each as `0xRRGGBB` written either as
+a number or as a `"#RRGGBB"` string.
+
+**Those four are the whole list, and no fifth key does anything.** The six state
+colours — ink, focus, candidate, provisional, error, completion — are fixed
+across every **season** so the grid never has to be relearned (D-55, constraint
+4). A document asking for a different completion green is not rejected; there is
+simply nowhere for the value to go, and it is ignored like any other
+unrecognised key. A palette missing `bone` or `sand`, or carrying a value that
+is not a colour, falls back to the default surfaces rather than taking the
+**season** down with it.
+
+### What the client refuses
+
+A `season` is checked against D-18 before it is used, and a **season** that
+fails any of these is **ignored whole** — the **season** already in force
+continues, every other key in the document still applies, and the player is told
+nothing:
+
+- Not exactly 42 nodes
+- Not exactly 30 `puzzle`, 6 `variant`, 4 `chest`, 2 `boss`
+- A `chest` anywhere but nodes 11, 21, 32, 42
+- A `boss` anywhere but nodes 22 and 41
+- A node of any type but `chest` with no `rank`, or with one that does not
+  resolve
+- A `type` that does not resolve
+- A missing or empty `id` or `name`, an unparseable `starts_at`, or a
+  `length_days` that is not a positive whole number
+
+It is refused rather than repaired on purpose. Trimming 44 nodes to 42, or
+padding 40 up to it, would produce a **season** nobody authored and no reviewer
+saw — and every player would walk it.
+
+`test/features/remote_config/fixtures/config_with_season.json` is a valid
+document carrying a **season**, byte for byte, and is exercised by the test
+suite.
+
+### Changing the season a player is already walking
+
+Progress is keyed to `season.id`. Publishing a **season** with a **new** id
+rotates: the player starts at node 1 of the new trail, and their permanent
+progress — **rank**, **technique unlock**s, statistics, seen **lesson**s — is
+untouched (D-17). Their old **season**'s completions are kept, not deleted.
+
+Publishing changes under an **existing** id does not rotate, and is the one
+thing to be careful with: the completions already written still refer to
+positions 1…42, so **node** 7 becoming a different **rank** changes what a
+player who has passed it already did. Editing a live **season** in place is for
+fixing a typo in its `name`; anything structural should be a new `id`.
 
 ## What a value cannot do
 

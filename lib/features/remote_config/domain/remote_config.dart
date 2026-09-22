@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../season_map/domain/season.dart';
 import 'config_value.dart';
 
 /// A parsed config: every value, always answerable.
@@ -8,7 +9,11 @@ import 'config_value.dart';
 /// int — it cannot tell whether a fetch has happened, succeeded, or failed, and
 /// it never waits.
 class RemoteConfig {
-  const RemoteConfig({required this.values, required this.schemaVersion});
+  const RemoteConfig({
+    required this.values,
+    required this.schemaVersion,
+    this.season,
+  });
 
   /// Everything at its compiled-in default. What a fresh install runs on, with
   /// no network and no cache.
@@ -17,6 +22,7 @@ class RemoteConfig {
       for (final value in ConfigValue.values) value: value.defaultValue,
     },
     schemaVersion: null,
+    season: null,
   );
 
   final Map<ConfigValue, int> values;
@@ -30,6 +36,21 @@ class RemoteConfig {
   /// blank the config for every player on an older build the moment a key is
   /// added.
   final int? schemaVersion;
+
+  /// The published **season**, or null when none was published or the one that
+  /// was could not be read.
+  ///
+  /// **Null is not an error and not an empty season.** It means the caller uses
+  /// the compiled-in `SeasonOne`, exactly as every [ConfigValue] falls back to
+  /// its own compiled-in number. That is what makes a **season** a publish
+  /// rather than a release (D-109) without making the network a dependency: an
+  /// install that has never been online walks a full 42-**node** trail.
+  ///
+  /// A [Season] here has already been through [SeasonDefinition], so it
+  /// composes. A published document that does not compose leaves this null and
+  /// the rest of the config standing — one key at a time, as the existing
+  /// requirement demands.
+  final Season? season;
 
   int operator [](ConfigValue value) => values[value] ?? value.defaultValue;
 }
@@ -69,7 +90,24 @@ abstract final class RemoteConfigParser {
     return RemoteConfig(
       values: parsed,
       schemaVersion: _asInt(decoded['schema_version']),
+      season: _season(decoded['season']),
     );
+  }
+
+  /// The published **season**, or null if there is not a usable one here.
+  ///
+  /// A malformed **season** is the same answer as an absent one, on purpose. A
+  /// **season** is the one key whose failure is the most visible — it is the
+  /// whole trail — and refusing the *document* over it would take the ad caps
+  /// down with it. So it degrades like any other key: this one falls back, the
+  /// others stand, and the player is told nothing.
+  static Season? _season(Object? raw) {
+    if (raw == null) return null;
+    final parsed = SeasonDefinition.fromJson(raw);
+    return switch (parsed) {
+      ValidSeason(:final season) => season,
+      MalformedSeason() => null,
+    };
   }
 
   /// Accepts what JSON actually produces. A number written without a decimal

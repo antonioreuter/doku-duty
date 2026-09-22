@@ -14,6 +14,7 @@ import '../../puzzle_engine/domain/grid.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../puzzle_engine/domain/technique.dart';
 import '../../rank_progression/data/progression_repository.dart';
+import '../../season_map/application/season_providers.dart';
 import '../application/puzzle_controller.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
@@ -185,11 +186,20 @@ final class RepositoryBoardSink implements BoardSink {
     this._notes,
     this._progression, {
     this._onSolveRecorded,
+    this._nodeCompletion,
   });
 
   final PuzzleSaveRepository _saves;
   final NoteRepository _notes;
   final ProgressionRepository _progression;
+
+  /// What else to write inside the **solve record**'s transaction, if anything.
+  ///
+  /// Returns null in **free play**, where a solved board belongs to no **node**
+  /// and advances no **season** (D-111). On the **trail** it returns the write
+  /// that completes the **node** — inside the transaction, so a failure leaves
+  /// neither and the **node** still reads as the **current node**.
+  final Future<void> Function()? Function()? _nodeCompletion;
 
   /// Called once a **solve record** has been written.
   ///
@@ -287,6 +297,7 @@ final class RepositoryBoardSink implements BoardSink {
       puzzleId: puzzleId,
       techniquesRequired: techniquesRequired,
       attempt: attempt,
+      alsoInTransaction: _nodeCompletion?.call(),
       // Display-only and never advanced (D-06), exactly as `elapsed` above.
       // **Whoever adds the timer must thread it through here too**, or the
       // lifetime play total stays at zero with no symptom until someone reads
@@ -323,9 +334,28 @@ final boardSinkProvider = Provider<BoardSink>(
     // player's **rank** itself. The picker sits under the puzzle in the
     // navigation stack and stays mounted, so it keeps its listener and nothing
     // would re-read on its own.
+    // On the **trail**, the **node** the board was opened from. Read at the
+    // moment of completion rather than captured when the sink was built, so a
+    // player who leaves a **node**, plays in **free play**, and comes back
+    // completes the **node** they are actually on.
+    nodeCompletion: () {
+      final position = ref.read(activeNodeProvider);
+      if (position == null) return null;
+      final seasonId = ref.read(currentSeasonProvider).id;
+      final seasons = ref.read(seasonRepositoryProvider);
+      return () => seasons.completeNode(seasonId: seasonId, position: position);
+    },
+    // Every read derived from the **solve record** is now stale: which puzzle
+    // is next at each **rank**, the player's **rank**, and where they stand on
+    // the **trail**. D-105 was found by a test and not by reasoning — both the
+    // **trail** and **free play** sit under the puzzle in the navigation stack
+    // and stay mounted, so each keeps its listener and nothing would re-read on
+    // its own.
     onSolveRecorded: () {
       ref.invalidate(nextPuzzleByRankProvider);
       ref.invalidate(playerRankProvider);
+      ref.invalidate(trailProgressProvider);
+      ref.invalidate(nodePuzzleProvider);
     },
   ),
 );

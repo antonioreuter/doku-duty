@@ -3778,6 +3778,1112 @@ class SeenLessonsCompanion extends UpdateCompanion<SeenLesson> {
   }
 }
 
+class $SeasonStatesTable extends SeasonStates
+    with TableInfo<$SeasonStatesTable, SeasonState> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SeasonStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seasonIdMeta = const VerificationMeta(
+    'seasonId',
+  );
+  @override
+  late final GeneratedColumn<String> seasonId = GeneratedColumn<String>(
+    'season_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    seasonId,
+    startedAt,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'season_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SeasonState> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('season_id')) {
+      context.handle(
+        _seasonIdMeta,
+        seasonId.isAcceptableOrUnknown(data['season_id']!, _seasonIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seasonIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SeasonState map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SeasonState(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      seasonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $SeasonStatesTable createAlias(String alias) {
+    return $SeasonStatesTable(attachedDatabase, alias);
+  }
+}
+
+class SeasonState extends DataClass implements Insertable<SeasonState> {
+  /// Always [singletonId]. One **season** in force, one row.
+  final int id;
+
+  /// The **season**'s id, matching the definition's own.
+  final String seasonId;
+
+  /// When this **season** became the one in force. Not the **season**'s start
+  /// date, which the definition carries — this is when *this player* began it.
+  final DateTime startedAt;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const SeasonState({
+    required this.id,
+    required this.seasonId,
+    required this.startedAt,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['season_id'] = Variable<String>(seasonId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  SeasonStatesCompanion toCompanion(bool nullToAbsent) {
+    return SeasonStatesCompanion(
+      id: Value(id),
+      seasonId: Value(seasonId),
+      startedAt: Value(startedAt),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory SeasonState.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SeasonState(
+      id: serializer.fromJson<int>(json['id']),
+      seasonId: serializer.fromJson<String>(json['seasonId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'seasonId': serializer.toJson<String>(seasonId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  SeasonState copyWith({
+    int? id,
+    String? seasonId,
+    DateTime? startedAt,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => SeasonState(
+    id: id ?? this.id,
+    seasonId: seasonId ?? this.seasonId,
+    startedAt: startedAt ?? this.startedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  SeasonState copyWithCompanion(SeasonStatesCompanion data) {
+    return SeasonState(
+      id: data.id.present ? data.id.value : this.id,
+      seasonId: data.seasonId.present ? data.seasonId.value : this.seasonId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeasonState(')
+          ..write('id: $id, ')
+          ..write('seasonId: $seasonId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, seasonId, startedAt, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SeasonState &&
+          other.id == this.id &&
+          other.seasonId == this.seasonId &&
+          other.startedAt == this.startedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class SeasonStatesCompanion extends UpdateCompanion<SeasonState> {
+  final Value<int> id;
+  final Value<String> seasonId;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  const SeasonStatesCompanion({
+    this.id = const Value.absent(),
+    this.seasonId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+  });
+  SeasonStatesCompanion.insert({
+    this.id = const Value.absent(),
+    required String seasonId,
+    this.startedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+  }) : seasonId = Value(seasonId);
+  static Insertable<SeasonState> custom({
+    Expression<int>? id,
+    Expression<String>? seasonId,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (seasonId != null) 'season_id': seasonId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+    });
+  }
+
+  SeasonStatesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? seasonId,
+    Value<DateTime>? startedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+  }) {
+    return SeasonStatesCompanion(
+      id: id ?? this.id,
+      seasonId: seasonId ?? this.seasonId,
+      startedAt: startedAt ?? this.startedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (seasonId.present) {
+      map['season_id'] = Variable<String>(seasonId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SeasonStatesCompanion(')
+          ..write('id: $id, ')
+          ..write('seasonId: $seasonId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CompletedNodesTable extends CompletedNodes
+    with TableInfo<$CompletedNodesTable, CompletedNode> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CompletedNodesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _seasonIdMeta = const VerificationMeta(
+    'seasonId',
+  );
+  @override
+  late final GeneratedColumn<String> seasonId = GeneratedColumn<String>(
+    'season_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(position).isBetweenValues(1, 42),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    seasonId,
+    position,
+    completedAt,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'completed_nodes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CompletedNode> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('season_id')) {
+      context.handle(
+        _seasonIdMeta,
+        seasonId.isAcceptableOrUnknown(data['season_id']!, _seasonIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seasonIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {seasonId, position};
+  @override
+  CompletedNode map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CompletedNode(
+      seasonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $CompletedNodesTable createAlias(String alias) {
+    return $CompletedNodesTable(attachedDatabase, alias);
+  }
+}
+
+class CompletedNode extends DataClass implements Insertable<CompletedNode> {
+  final String seasonId;
+
+  /// 1-based, matching what the player is shown ("Node 14").
+  final int position;
+  final DateTime completedAt;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const CompletedNode({
+    required this.seasonId,
+    required this.position,
+    required this.completedAt,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['season_id'] = Variable<String>(seasonId);
+    map['position'] = Variable<int>(position);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  CompletedNodesCompanion toCompanion(bool nullToAbsent) {
+    return CompletedNodesCompanion(
+      seasonId: Value(seasonId),
+      position: Value(position),
+      completedAt: Value(completedAt),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory CompletedNode.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CompletedNode(
+      seasonId: serializer.fromJson<String>(json['seasonId']),
+      position: serializer.fromJson<int>(json['position']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'seasonId': serializer.toJson<String>(seasonId),
+      'position': serializer.toJson<int>(position),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  CompletedNode copyWith({
+    String? seasonId,
+    int? position,
+    DateTime? completedAt,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => CompletedNode(
+    seasonId: seasonId ?? this.seasonId,
+    position: position ?? this.position,
+    completedAt: completedAt ?? this.completedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  CompletedNode copyWithCompanion(CompletedNodesCompanion data) {
+    return CompletedNode(
+      seasonId: data.seasonId.present ? data.seasonId.value : this.seasonId,
+      position: data.position.present ? data.position.value : this.position,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompletedNode(')
+          ..write('seasonId: $seasonId, ')
+          ..write('position: $position, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(seasonId, position, completedAt, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CompletedNode &&
+          other.seasonId == this.seasonId &&
+          other.position == this.position &&
+          other.completedAt == this.completedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class CompletedNodesCompanion extends UpdateCompanion<CompletedNode> {
+  final Value<String> seasonId;
+  final Value<int> position;
+  final Value<DateTime> completedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const CompletedNodesCompanion({
+    this.seasonId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CompletedNodesCompanion.insert({
+    required String seasonId,
+    required int position,
+    this.completedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : seasonId = Value(seasonId),
+       position = Value(position);
+  static Insertable<CompletedNode> custom({
+    Expression<String>? seasonId,
+    Expression<int>? position,
+    Expression<DateTime>? completedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (seasonId != null) 'season_id': seasonId,
+      if (position != null) 'position': position,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CompletedNodesCompanion copyWith({
+    Value<String>? seasonId,
+    Value<int>? position,
+    Value<DateTime>? completedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return CompletedNodesCompanion(
+      seasonId: seasonId ?? this.seasonId,
+      position: position ?? this.position,
+      completedAt: completedAt ?? this.completedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (seasonId.present) {
+      map['season_id'] = Variable<String>(seasonId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CompletedNodesCompanion(')
+          ..write('seasonId: $seasonId, ')
+          ..write('position: $position, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BossAttemptsTable extends BossAttempts
+    with TableInfo<$BossAttemptsTable, BossAttempt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BossAttemptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _seasonIdMeta = const VerificationMeta(
+    'seasonId',
+  );
+  @override
+  late final GeneratedColumn<String> seasonId = GeneratedColumn<String>(
+    'season_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(position).isBetweenValues(1, 42),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    seasonId,
+    position,
+    attempts,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'boss_attempts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BossAttempt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('season_id')) {
+      context.handle(
+        _seasonIdMeta,
+        seasonId.isAcceptableOrUnknown(data['season_id']!, _seasonIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seasonIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {seasonId, position};
+  @override
+  BossAttempt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BossAttempt(
+      seasonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $BossAttemptsTable createAlias(String alias) {
+    return $BossAttemptsTable(attachedDatabase, alias);
+  }
+}
+
+class BossAttempt extends DataClass implements Insertable<BossAttempt> {
+  final String seasonId;
+  final int position;
+  final int attempts;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const BossAttempt({
+    required this.seasonId,
+    required this.position,
+    required this.attempts,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['season_id'] = Variable<String>(seasonId);
+    map['position'] = Variable<int>(position);
+    map['attempts'] = Variable<int>(attempts);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  BossAttemptsCompanion toCompanion(bool nullToAbsent) {
+    return BossAttemptsCompanion(
+      seasonId: Value(seasonId),
+      position: Value(position),
+      attempts: Value(attempts),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory BossAttempt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BossAttempt(
+      seasonId: serializer.fromJson<String>(json['seasonId']),
+      position: serializer.fromJson<int>(json['position']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'seasonId': serializer.toJson<String>(seasonId),
+      'position': serializer.toJson<int>(position),
+      'attempts': serializer.toJson<int>(attempts),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  BossAttempt copyWith({
+    String? seasonId,
+    int? position,
+    int? attempts,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => BossAttempt(
+    seasonId: seasonId ?? this.seasonId,
+    position: position ?? this.position,
+    attempts: attempts ?? this.attempts,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  BossAttempt copyWithCompanion(BossAttemptsCompanion data) {
+    return BossAttempt(
+      seasonId: data.seasonId.present ? data.seasonId.value : this.seasonId,
+      position: data.position.present ? data.position.value : this.position,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BossAttempt(')
+          ..write('seasonId: $seasonId, ')
+          ..write('position: $position, ')
+          ..write('attempts: $attempts, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(seasonId, position, attempts, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BossAttempt &&
+          other.seasonId == this.seasonId &&
+          other.position == this.position &&
+          other.attempts == this.attempts &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class BossAttemptsCompanion extends UpdateCompanion<BossAttempt> {
+  final Value<String> seasonId;
+  final Value<int> position;
+  final Value<int> attempts;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const BossAttemptsCompanion({
+    this.seasonId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BossAttemptsCompanion.insert({
+    required String seasonId,
+    required int position,
+    this.attempts = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : seasonId = Value(seasonId),
+       position = Value(position);
+  static Insertable<BossAttempt> custom({
+    Expression<String>? seasonId,
+    Expression<int>? position,
+    Expression<int>? attempts,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (seasonId != null) 'season_id': seasonId,
+      if (position != null) 'position': position,
+      if (attempts != null) 'attempts': attempts,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BossAttemptsCompanion copyWith({
+    Value<String>? seasonId,
+    Value<int>? position,
+    Value<int>? attempts,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return BossAttemptsCompanion(
+      seasonId: seasonId ?? this.seasonId,
+      position: position ?? this.position,
+      attempts: attempts ?? this.attempts,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (seasonId.present) {
+      map['season_id'] = Variable<String>(seasonId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BossAttemptsCompanion(')
+          ..write('seasonId: $seasonId, ')
+          ..write('position: $position, ')
+          ..write('attempts: $attempts, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3791,6 +4897,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SettingsTable settings = $SettingsTable(this);
   late final $ConfigCacheTable configCache = $ConfigCacheTable(this);
   late final $SeenLessonsTable seenLessons = $SeenLessonsTable(this);
+  late final $SeasonStatesTable seasonStates = $SeasonStatesTable(this);
+  late final $CompletedNodesTable completedNodes = $CompletedNodesTable(this);
+  late final $BossAttemptsTable bossAttempts = $BossAttemptsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3806,6 +4915,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settings,
     configCache,
     seenLessons,
+    seasonStates,
+    completedNodes,
+    bossAttempts,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -6032,6 +7144,610 @@ typedef $$SeenLessonsTableProcessedTableManager =
       SeenLesson,
       PrefetchHooks Function()
     >;
+typedef $$SeasonStatesTableCreateCompanionBuilder =
+    SeasonStatesCompanion Function({
+      Value<int> id,
+      required String seasonId,
+      Value<DateTime> startedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+    });
+typedef $$SeasonStatesTableUpdateCompanionBuilder =
+    SeasonStatesCompanion Function({
+      Value<int> id,
+      Value<String> seasonId,
+      Value<DateTime> startedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+    });
+
+class $$SeasonStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $SeasonStatesTable> {
+  $$SeasonStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SeasonStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SeasonStatesTable> {
+  $$SeasonStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SeasonStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SeasonStatesTable> {
+  $$SeasonStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get seasonId =>
+      $composableBuilder(column: $table.seasonId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$SeasonStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SeasonStatesTable,
+          SeasonState,
+          $$SeasonStatesTableFilterComposer,
+          $$SeasonStatesTableOrderingComposer,
+          $$SeasonStatesTableAnnotationComposer,
+          $$SeasonStatesTableCreateCompanionBuilder,
+          $$SeasonStatesTableUpdateCompanionBuilder,
+          (
+            SeasonState,
+            BaseReferences<_$AppDatabase, $SeasonStatesTable, SeasonState>,
+          ),
+          SeasonState,
+          PrefetchHooks Function()
+        > {
+  $$SeasonStatesTableTableManager(_$AppDatabase db, $SeasonStatesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SeasonStatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SeasonStatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SeasonStatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> seasonId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+              }) => SeasonStatesCompanion(
+                id: id,
+                seasonId: seasonId,
+                startedAt: startedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String seasonId,
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+              }) => SeasonStatesCompanion.insert(
+                id: id,
+                seasonId: seasonId,
+                startedAt: startedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SeasonStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SeasonStatesTable,
+      SeasonState,
+      $$SeasonStatesTableFilterComposer,
+      $$SeasonStatesTableOrderingComposer,
+      $$SeasonStatesTableAnnotationComposer,
+      $$SeasonStatesTableCreateCompanionBuilder,
+      $$SeasonStatesTableUpdateCompanionBuilder,
+      (
+        SeasonState,
+        BaseReferences<_$AppDatabase, $SeasonStatesTable, SeasonState>,
+      ),
+      SeasonState,
+      PrefetchHooks Function()
+    >;
+typedef $$CompletedNodesTableCreateCompanionBuilder =
+    CompletedNodesCompanion Function({
+      required String seasonId,
+      required int position,
+      Value<DateTime> completedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$CompletedNodesTableUpdateCompanionBuilder =
+    CompletedNodesCompanion Function({
+      Value<String> seasonId,
+      Value<int> position,
+      Value<DateTime> completedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$CompletedNodesTableFilterComposer
+    extends Composer<_$AppDatabase, $CompletedNodesTable> {
+  $$CompletedNodesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CompletedNodesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CompletedNodesTable> {
+  $$CompletedNodesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CompletedNodesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CompletedNodesTable> {
+  $$CompletedNodesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get seasonId =>
+      $composableBuilder(column: $table.seasonId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$CompletedNodesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CompletedNodesTable,
+          CompletedNode,
+          $$CompletedNodesTableFilterComposer,
+          $$CompletedNodesTableOrderingComposer,
+          $$CompletedNodesTableAnnotationComposer,
+          $$CompletedNodesTableCreateCompanionBuilder,
+          $$CompletedNodesTableUpdateCompanionBuilder,
+          (
+            CompletedNode,
+            BaseReferences<_$AppDatabase, $CompletedNodesTable, CompletedNode>,
+          ),
+          CompletedNode,
+          PrefetchHooks Function()
+        > {
+  $$CompletedNodesTableTableManager(
+    _$AppDatabase db,
+    $CompletedNodesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CompletedNodesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CompletedNodesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CompletedNodesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> seasonId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<DateTime> completedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompletedNodesCompanion(
+                seasonId: seasonId,
+                position: position,
+                completedAt: completedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String seasonId,
+                required int position,
+                Value<DateTime> completedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CompletedNodesCompanion.insert(
+                seasonId: seasonId,
+                position: position,
+                completedAt: completedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CompletedNodesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CompletedNodesTable,
+      CompletedNode,
+      $$CompletedNodesTableFilterComposer,
+      $$CompletedNodesTableOrderingComposer,
+      $$CompletedNodesTableAnnotationComposer,
+      $$CompletedNodesTableCreateCompanionBuilder,
+      $$CompletedNodesTableUpdateCompanionBuilder,
+      (
+        CompletedNode,
+        BaseReferences<_$AppDatabase, $CompletedNodesTable, CompletedNode>,
+      ),
+      CompletedNode,
+      PrefetchHooks Function()
+    >;
+typedef $$BossAttemptsTableCreateCompanionBuilder =
+    BossAttemptsCompanion Function({
+      required String seasonId,
+      required int position,
+      Value<int> attempts,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$BossAttemptsTableUpdateCompanionBuilder =
+    BossAttemptsCompanion Function({
+      Value<String> seasonId,
+      Value<int> position,
+      Value<int> attempts,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$BossAttemptsTableFilterComposer
+    extends Composer<_$AppDatabase, $BossAttemptsTable> {
+  $$BossAttemptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BossAttemptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BossAttemptsTable> {
+  $$BossAttemptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BossAttemptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BossAttemptsTable> {
+  $$BossAttemptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get seasonId =>
+      $composableBuilder(column: $table.seasonId, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$BossAttemptsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BossAttemptsTable,
+          BossAttempt,
+          $$BossAttemptsTableFilterComposer,
+          $$BossAttemptsTableOrderingComposer,
+          $$BossAttemptsTableAnnotationComposer,
+          $$BossAttemptsTableCreateCompanionBuilder,
+          $$BossAttemptsTableUpdateCompanionBuilder,
+          (
+            BossAttempt,
+            BaseReferences<_$AppDatabase, $BossAttemptsTable, BossAttempt>,
+          ),
+          BossAttempt,
+          PrefetchHooks Function()
+        > {
+  $$BossAttemptsTableTableManager(_$AppDatabase db, $BossAttemptsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BossAttemptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BossAttemptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BossAttemptsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> seasonId = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BossAttemptsCompanion(
+                seasonId: seasonId,
+                position: position,
+                attempts: attempts,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String seasonId,
+                required int position,
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BossAttemptsCompanion.insert(
+                seasonId: seasonId,
+                position: position,
+                attempts: attempts,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BossAttemptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BossAttemptsTable,
+      BossAttempt,
+      $$BossAttemptsTableFilterComposer,
+      $$BossAttemptsTableOrderingComposer,
+      $$BossAttemptsTableAnnotationComposer,
+      $$BossAttemptsTableCreateCompanionBuilder,
+      $$BossAttemptsTableUpdateCompanionBuilder,
+      (
+        BossAttempt,
+        BaseReferences<_$AppDatabase, $BossAttemptsTable, BossAttempt>,
+      ),
+      BossAttempt,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6056,4 +7772,10 @@ class $AppDatabaseManager {
       $$ConfigCacheTableTableManager(_db, _db.configCache);
   $$SeenLessonsTableTableManager get seenLessons =>
       $$SeenLessonsTableTableManager(_db, _db.seenLessons);
+  $$SeasonStatesTableTableManager get seasonStates =>
+      $$SeasonStatesTableTableManager(_db, _db.seasonStates);
+  $$CompletedNodesTableTableManager get completedNodes =>
+      $$CompletedNodesTableTableManager(_db, _db.completedNodes);
+  $$BossAttemptsTableTableManager get bossAttempts =>
+      $$BossAttemptsTableTableManager(_db, _db.bossAttempts);
 }

@@ -199,6 +199,87 @@ class SeenLessons extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{lessonId};
 }
 
+/// Which **season** is in force.
+///
+/// One row. The **season** itself is not stored — it is read from the remote
+/// configuration document with a compiled-in fallback (D-109's rotation is a
+/// publish, not a release), so all this table records is *which* one the player
+/// is walking. That is enough: completions are keyed by the same id, so a
+/// **season** and its progress find each other by name.
+class SeasonStates extends Table {
+  /// Always [singletonId]. One **season** in force, one row.
+  IntColumn get id => integer()();
+
+  /// The **season**'s id, matching the definition's own.
+  TextColumn get seasonId => text()();
+
+  /// When this **season** became the one in force. Not the **season**'s start
+  /// date, which the definition carries — this is when *this player* began it.
+  DateTimeColumn get startedAt => dateTime().clientDefault(DateTime.now)();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  static const int singletonId = 0;
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
+/// Which **node**s the player has completed, in which **season**.
+///
+/// Keyed by **season** id as well as position, and that is what makes rotation
+/// safe: a successor **season** has a different id, so it starts with no rows
+/// and carries none of its predecessor's progress (D-17). Nothing has to be
+/// deleted at rotation, which means nothing can be deleted by mistake — the old
+/// **season**'s rows simply stop being asked about.
+///
+/// There is no `completed` boolean and no way to unset a row. A **node** is
+/// completed by a row existing, and constraint 1 is enforced by the schema
+/// having no representation for taking one back.
+class CompletedNodes extends Table {
+  TextColumn get seasonId => text()();
+
+  /// 1-based, matching what the player is shown ("Node 14").
+  // Drift's documented idiom for a CHECK constraint refers to the column inside
+  // its own getter, exactly as `Notes.cell` does.
+  // ignore: recursive_getters
+  IntColumn get position => integer().check(position.isBetweenValues(1, 42))();
+
+  DateTimeColumn get completedAt => dateTime().clientDefault(DateTime.now)();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{seasonId, position};
+}
+
+/// How many times each **boss node** has been attempted.
+///
+/// **Counted, never enforced.** D-22 gives a **boss node** unlimited free
+/// retries, so nothing reads this to decide whether an attempt may happen — it
+/// exists for `add-trophy-cabinet`'s statistics and for the player's own
+/// interest. A test asserts the count never restricts access, because a counter
+/// sitting next to a gate is one line away from becoming one.
+class BossAttempts extends Table {
+  TextColumn get seasonId => text()();
+
+  // ignore: recursive_getters
+  IntColumn get position => integer().check(position.isBetweenValues(1, 42))();
+
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{seasonId, position};
+}
+
 class SolvedPuzzles extends Table {
   TextColumn get puzzleId => text()();
 
@@ -331,6 +412,9 @@ class Notes extends Table {
     Settings,
     ConfigCache,
     SeenLessons,
+    SeasonStates,
+    CompletedNodes,
+    BossAttempts,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -387,6 +471,21 @@ class AppDatabase extends _$AppDatabase {
       from3To4: (m, schema) async {
         await m.createTable(schema.seenLessons);
       },
+      // Version 5 adds the **season** the player is walking and what they have
+      // completed on it. Three new tables and nothing else moves, so every
+      // saved game, note, statistic, setting, **solve record** and seen
+      // **lesson** carries over untouched — which task 4.2 asserts rather than
+      // assumes.
+      //
+      // They arrive *empty*, and that is the direction that is safe: a player
+      // upgrading has completed no **node**, so they start at **node** 1 of
+      // season one with their permanent progress intact (D-17). Arriving
+      // pre-filled would hand them a **season** they never played.
+      from4To5: (m, schema) async {
+        await m.createTable(schema.seasonStates);
+        await m.createTable(schema.completedNodes);
+        await m.createTable(schema.bossAttempts);
+      },
     ),
   );
 
@@ -417,5 +516,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 }

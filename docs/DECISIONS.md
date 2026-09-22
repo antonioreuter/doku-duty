@@ -1677,3 +1677,175 @@ confusing message — a diff about `puzzles` in a change that never touched
 `puzzles`. The declaration looks correct either way; only the emitted SQL says
 which it is, which is why the column now carries an instruction to dump
 `sqlite_master` rather than trust the Dart.
+
+### D-108 · The trail is walked in order, and the order is not a lock
+
+A **season**'s 42 **node**s are walked in sequence: the first is current on a
+fresh **season**, and completing **node** N makes N+1 the **current node**. A
+**node** further along than the player has reached is presented as **not yet
+reached**. No string shown to the player calls it locked.
+
+**Rationale.** D-103 refused a hard gate on **rank**s, and the obvious reading is
+that this change reimposes one. It does not, and the distinction is what the
+decision exists to record.
+
+D-103 refused to withhold something the player had *earned*. A player at
+Marshal who is told they may not open a Ranger puzzle is being refused access to
+a tier their own solving has already argued for, and the refusal converts the
+**rank** from an achievement into a permission. Nothing on the trail is earned
+and then withheld. **Node** 30 is not something the player has a claim on and is
+being denied — it is somewhere they have not walked yet, and walking there is
+the entire activity. A path with no order is not a path.
+
+What makes this safe under constraint 1 is what the order does *not* do. It
+takes nothing away: no completion is ever withdrawn, no **node** expires (D-20),
+no **attempt** ends a **season**, and a **boss node** retries forever (D-22).
+Nothing is lost by being slow, and nothing is lost by being absent. The order
+gates only the direction of travel, and travel is free.
+
+The phrasing rule is carried here rather than left to the UI, because it is the
+part that decays. D-104 settled the same point for a **technique unlock**: a
+technique the player has not met reads as not yet met, never as locked or
+withheld, because the second describes the game keeping something from them when
+it is only describing what they have done so far. A **node** ahead of the player
+is the same fact and takes the same words. A test asserts no player-facing
+string says otherwise, because "locked" is the word that will be reached for by
+whoever writes the next label, and it is one commit away from reintroducing the
+posture D-103 rejected.
+
+**Free play** is what keeps the two decisions consistent rather than merely
+adjacent — see D-111.
+
+**What breaks if reversed.** Dropping the order entirely makes D-19's
+front-loaded reward pacing meaningless: pacing describes a sequence, and there
+is nothing to pace if all 42 **node**s are open at once. Keeping the order and
+calling it a lock costs nothing structurally and everything in tone — it is the
+one place the game would tell a player no, in a product whose positioning is the
+absence of exactly that.
+
+### D-109 · A season with no successor holds open
+
+When a **season**'s six weeks elapse and no later **season** is defined, the
+current **season** stays open and every incomplete **node** stays completable.
+The countdown stops being shown rather than being shown as elapsed. Rotation
+happens when there is something to rotate *to*, never on the calendar alone.
+
+**Rationale.** D-18 says a **season** "rotates out and is replaced", and the
+literal implementation closes the map at six weeks. That is correct for a live
+game with a content pipeline behind it and wrong for v1, which ships one season
+(D-35). Taken literally it means the game's spine goes dark six weeks after
+launch with nothing behind it — the player opens the app to a finished map, no
+successor, and no route to a **node**.
+
+The alternative considered was expiry with a grace period, which only moves the
+cliff. The rule adopted instead makes expiry conditional on a replacement
+existing, which is the thing that actually matters: a **season** ends because
+another begins, not because time passed. That also makes the six-week length a
+*cadence* rather than a *timer*, which is what D-18's rationale was reaching for
+— six weeks is described there as an art production cadence, not as a countdown
+the player races.
+
+Stopping the countdown rather than showing it elapsed is the non-punitive half.
+A timer reading "-4 days" tells a player they are late for something that cannot
+be late, and constraint 1 has no room for a clock that can beat you.
+
+**What breaks if reversed.** Closing the map on schedule takes something from a
+player mid-play, which no other rule in this product does, and in v1 it takes it
+with nothing offered in exchange.
+
+### D-110 · A node names a rank, not a puzzle
+
+A **season** definition gives each puzzle-bearing **node** a **rank**. The
+puzzle itself is resolved from the installed **pack** at the moment the **node**
+is opened. No **season** stores a puzzle id.
+
+**Rationale.** The alternative — naming the 42 boards in the **season**
+document — pins a **season** to a **pack** version. D-32 makes **pack**s
+versioned and replaceable and the client already tops them up, so a refreshed or
+regenerated **pack** would strand **node**s pointing at puzzles that no longer
+exist, or worse, silently repoint them at different boards while their
+completions stood. Recovering from that means either freezing **pack**s for the
+life of a **season** or writing a reconciliation nobody would test.
+
+Resolving at open time also makes the **node** honest about what it is. A
+**node** is a *position on a ladder* — its meaning is "a Marshal puzzle here" —
+and the specific grid is interchangeable. The **rank** is the part D-07 says
+carries the meaning; the seed does not.
+
+The cost is real and worth stating: two players' **season**s are not the same 42
+boards. A **season** never promised that. The daily challenge does, and it is a
+separate layer (D-17) built on a different mechanism for exactly this reason.
+
+**What breaks if reversed.** Naming puzzles makes a **pack** top-up a
+progress-losing event, which is the failure D-33 and the separate
+`solved_puzzles` table already exist to prevent, arriving by a different door.
+
+### D-111 · Free play survives the trail
+
+The route to a puzzle by **rank** remains available alongside the **trail**, at
+every point in a **season**, reachable from the navigation.
+`rank_picker_screen.dart` is promoted from scaffolding to a real screen rather
+than deleted.
+
+**Rationale.** This resolves a direct conflict between two things already
+shipped. `grid-input` carries a requirement that a puzzle can be opened at each
+of the six **rank**s, and D-103 forbids making any **rank** harder to reach than
+another. A **trail** walked in order (D-108) puts Legend forty **node**s away
+from a new player. If the **trail** were the only route, both would be false the
+day this change landed — and the gate would be exactly the one D-103 refused,
+wearing a map instead of a list.
+
+`openspec/BACKLOG.md` said this change would delete the **rank** picker, and that
+instruction is reversed here. It was written before D-102 … D-104 existed, when
+the picker was understood as a stand-in for a menu rather than as the only
+surface carrying a guarantee. The screen was scaffolding for its *placement* —
+being the home route — and never for its function.
+
+The division that results is clean enough to be worth keeping on its own terms.
+The **trail** is where progression, pacing, and rewards live: an ordered season
+with somewhere to get to. **Free play** is where the ladder stays open: any
+**rank**, any time, no position required. A puzzle solved in **free play**
+writes a **solve record** like any other and advances no **season**, so the
+permanent layer and the seasonal layer stay the separate things D-17 made them.
+
+**What breaks if reversed.** Deleting the picker silently voids a shipped
+requirement and D-103 together, and the symptom is not a failing test but a
+player at Greenhorn who can no longer choose to attempt a Legend board — the
+precise thing D-103 was written to protect.
+
+### D-112 · The current node is gold, not the mockup's red
+
+On the **trail**, a completed **node** is `cactusGreen`, the **current node** is
+`badgeGold`, a **chest node** is `badgeGold`, a **boss node** is `sunsetRed`, and
+a **node** that is **not yet reached** is a `bone` surface behind a `duskInk`
+outline. `docs/pages/screens.html` draws the **current node** in `sunsetRed`, and
+that is not followed.
+
+**Rationale.** `docs/DESIGN.md` §1 gives each token one job. `sunsetRed`'s is
+"errors, duplicates, Ace"; `badgeGold`'s is "selection, focus, reward,
+progress". Where the player currently stands is focus and progress, so gold is
+the documented job and red would be a second one — which constraint 4 forbids in
+as many words. The mockup was drawn before the palette was fixed at eight tokens
+(D-71), and it is the older document.
+
+Two consequences are worth stating because they look like problems and are not.
+
+The **current node** and a **chest node** share a hue. They are told apart by
+size and by glyph, which is what the mockup's own §4 note asks for anyway — *the
+current node is larger, not just redder* — and size is the signal a returning
+player reads first. Sharing a hue is only a defect if colour is doing the work
+alone, and constraint 5 already forbids that.
+
+A **boss node** keeps `sunsetRed`, and that is the documented job rather than an
+exception to it: a **boss node** is **Ace** (D-58), and Ace is what that entry
+names.
+
+The mockup's artwork is already known to be stale in a larger way — it still
+draws the five-character bureau cast D-58 removed. This entry exists so that
+whoever eventually redraws those figures does not also "correct" the **trail**
+back to red on the way past.
+
+**What breaks if reversed.** Painting the **current node** red gives `sunsetRed`
+two jobs, and the one it loses is the one that matters: a duplicate digit and
+"you are here" would read the same, in a product whose error feedback is
+deliberately gentle enough to be missed.

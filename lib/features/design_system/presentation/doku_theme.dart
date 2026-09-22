@@ -9,9 +9,13 @@ import 'doku_type.dart';
 
 /// The season currently painting the app.
 ///
-/// One default for now. Real territories are data and arrive with
-/// `add-season-map`; this provider is the seam they will be supplied through,
-/// so nothing downstream has to change when they do.
+/// The seam this provider was built as: `add-season-map` supplies the territory
+/// and nothing downstream changed. It is overridden in `bootstrap.dart` rather
+/// than reaching for `season-map` from here — the design system is the bottom
+/// of the stack and must not depend on a capability five changes above it.
+///
+/// A **season** can only reach the two surfaces, and that is enforced by
+/// [SeasonTheme] having no field for anything else (D-55, constraint 4).
 final seasonThemeProvider = Provider<SeasonTheme>(
   (ref) => SeasonTheme.defaultTheme,
 );

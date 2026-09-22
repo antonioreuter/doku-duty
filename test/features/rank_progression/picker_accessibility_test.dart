@@ -17,6 +17,8 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 
+import '../../support/home_navigation.dart';
+
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
 const String _solution =
@@ -82,6 +84,8 @@ void main() {
         await tester.pumpWidget(_app(db, scale));
         await tester.pumpAndSettle();
 
+        await goToFreePlay(tester);
+
         expect(
           tester.takeException(),
           isNull,
@@ -116,6 +120,8 @@ void main() {
     await tester.pumpWidget(_app(db, 1));
     await tester.pumpAndSettle();
 
+    await goToFreePlay(tester);
+
     // One string serves both, so the label a reader hears and the label a
     // player sees cannot drift apart (constraint 5).
     expect(find.bySemanticsLabel(RegExp('Above your rank')), findsWidgets);
@@ -128,6 +134,8 @@ void main() {
 
     await tester.pumpWidget(_app(db, 1));
     await tester.pumpAndSettle();
+
+    await goToFreePlay(tester);
 
     // Asserted rather than assumed. Nothing about a **rank** mark animates, so
     // there is nothing for **reduce effects** to silence — and if that ever

@@ -32,13 +32,31 @@ final class ProgressionRepository {
   /// own transaction when called directly; drift nests them into this one, so
   /// a failure anywhere rolls the whole record back rather than leaving the
   /// lifetime total standing over a puzzle the picker would hand back.
+  /// [alsoInTransaction] runs inside the same transaction, before anything
+  /// else is written.
+  ///
+  /// It exists for `season-map`: a **node** completion and the **solve record**
+  /// it came from must be one write, so that a failure leaves neither and the
+  /// **node** still reads as the **current node**. Passed in rather than
+  /// imported, because the dependency runs the other way — `season-map` reads
+  /// **solve record**s, and this layer has no business knowing what a **node**
+  /// is.
+  ///
+  /// It runs *before* the already-solved guard below, and deliberately. The two
+  /// are different facts: a **node** is completed by the player finishing it,
+  /// and a puzzle carries a **solve record** once ever. A replayed board must
+  /// still complete the **node** it was opened from, and returning early would
+  /// silently leave that **node** current forever.
   Future<void> record({
     required String puzzleId,
     required Set<Technique> techniquesRequired,
     required Duration timeTaken,
     required Attempt attempt,
+    Future<void> Function()? alsoInTransaction,
   }) {
     return _db.transaction(() async {
+      await alsoInTransaction?.call();
+
       // Checked first, and it is not defensive noise: `solvedPuzzles` holds a
       // bare id with no foreign key, so an unknown puzzle would be marked
       // solved without complaint and the counters would rise behind it.

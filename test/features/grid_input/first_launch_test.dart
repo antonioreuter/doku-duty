@@ -14,6 +14,8 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart
 import 'package:doku_duty/features/puzzle_engine/data/pack_source.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/pack.dart';
 
+import '../../support/home_navigation.dart';
+
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
 const String _solution =
@@ -88,12 +90,17 @@ void main() {
   testWidgets('a fresh install never reports a rank as empty', (tester) async {
     await tester.pumpWidget(app());
 
-    // Every frame from the first to the last: at no point may the picker claim
-    // a rank is exhausted. Before the pack lands it knows nothing, and knowing
-    // nothing is not the same as knowing there is nothing.
+    // Every frame from the first to the last: at no point may **free play**
+    // claim a rank is exhausted. Before the pack lands it knows nothing, and
+    // knowing nothing is not the same as knowing there is nothing.
+    //
+    // `skipOffstage: false` throughout: the app opens on the **trail**, and
+    // this is a claim about what **free play** is *built* holding on every
+    // frame — which is the stronger version of the claim, since the wrong text
+    // would be there waiting the moment the player switched tab.
     for (var frame = 0; frame < 12; frame++) {
       expect(
-        find.text('Nothing left here for now'),
+        find.text('Nothing left here for now', skipOffstage: false),
         findsNothing,
         reason: 'claimed a rank was empty on frame $frame',
       );
@@ -101,7 +108,11 @@ void main() {
     }
     await _settle(tester);
 
-    expect(find.text('Nothing left here for now'), findsNothing);
+    expect(
+      find.text('Nothing left here for now', skipOffstage: false),
+      findsNothing,
+    );
+    await goToFreePlay(tester);
     for (final rank in Rank.values) {
       expect(find.text('${_titled(rank.name)} rank'), findsOneWidget);
     }
@@ -112,6 +123,7 @@ void main() {
   ) async {
     await tester.pumpWidget(app());
     await _settle(tester);
+    await goToFreePlay(tester);
 
     final tile = tester.widget<ListTile>(
       find.byKey(const ValueKey<String>('rank-greenhorn')),
@@ -129,6 +141,7 @@ void main() {
   testWidgets('the pack is installed exactly once', (tester) async {
     await tester.pumpWidget(app());
     await _settle(tester);
+    await goToFreePlay(tester);
 
     await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
     await _settle(tester);
@@ -156,6 +169,7 @@ void main() {
       UncontrolledProviderScope(container: packs, child: const DokuDutyApp()),
     );
     await _settle(tester);
+    await goToFreePlay(tester);
 
     expect(find.text('Nothing left here for now'), findsOneWidget);
     expect(find.text('Legend rank'), findsOneWidget);

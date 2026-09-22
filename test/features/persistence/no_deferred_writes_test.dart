@@ -13,16 +13,37 @@ import 'package:flutter_test/flutter_test.dart';
 /// passes on a fast machine and on CI, and fails on the cheap Android phone
 /// nobody tests on.
 void main() {
-  final persistence = Directory('lib/features/persistence');
+  /// Every directory that writes state a player would be upset to lose.
+  ///
+  /// **Not just `persistence`.** `season-map` keeps its own repository beside
+  /// the capability that owns it, and where a player stands on a 42-**node**
+  /// **trail** is exactly the kind of state this constraint exists to protect —
+  /// so scanning only the persistence layer would have left the newest writer
+  /// of save state unguarded. Any later capability that writes durably belongs
+  /// on this list on the day it lands.
+  final watched = <Directory>[
+    Directory('lib/features/persistence'),
+    Directory('lib/features/season_map/data'),
+  ];
 
   List<({String path, String source})> sources() =>
       <({String path, String source})>[
-        for (final entity in persistence.listSync(recursive: true))
-          if (entity is File &&
-              entity.path.endsWith('.dart') &&
-              !entity.path.endsWith('.g.dart'))
-            (path: entity.path, source: entity.readAsStringSync()),
+        for (final root in watched)
+          for (final entity in root.listSync(recursive: true))
+            if (entity is File &&
+                entity.path.endsWith('.dart') &&
+                !entity.path.endsWith('.g.dart'))
+              (path: entity.path, source: entity.readAsStringSync()),
       ];
+
+  test('every watched directory exists', () {
+    // A directory renamed out from under this list would silently stop being
+    // scanned, and the test would still pass by scanning nothing.
+    for (final root in watched) {
+      expect(root.existsSync(), isTrue, reason: '${root.path} has moved');
+    }
+    expect(sources(), isNotEmpty);
+  });
 
   test('nothing defers a write behind a timer or a debounce', () {
     final banned = <RegExp, String>{

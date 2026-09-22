@@ -3,30 +3,40 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: Milestone 1 is complete.** Thirteen changes are archived —
-foundation, design system, persistence, remote config, puzzle engine,
-generation, grid and input, notes, note automation, provisional notes, the
-mistake model, completion effects, and the pad's tools row. A player can open a
-puzzle from a shipped pack at any of the six **rank**s, place values, mark
-notes in fixed positional slots, run a **chain test** in **provisional note**s,
-and see **unit**s celebrate and hold a **completion tint** — with
-**auto-cleanup**, **candidate highlighting**, and **auto-notes** throughout.
+**Current state: Milestones 0 and 1 are complete; Milestone 2 is two-thirds
+done.** Sixteen changes are archived — foundation, design system, persistence,
+remote config, puzzle engine, generation, grid and input, notes, note
+automation, provisional notes, the mistake model, completion effects, the pad's
+tools row, rank progression, technique tutorials, and the season map. A player
+opens the app onto the **trail**: 42 **node**s of a six-week **season**, walked
+in order, with **free play** beside it reaching any **rank** at any time. They
+place values, mark notes in fixed positional slots, run a **chain test** in
+**provisional note**s, and see **unit**s celebrate and hold a **completion
+tint** — with **auto-cleanup**, **candidate highlighting**, and **auto-notes**
+throughout. Their **rank** rises and never falls, and a **lesson** teaches each
+technique the first time a puzzle demands it.
 
-Nothing is in progress. The next item is **backlog change 12,
-`add-rank-progression`**, which opens Milestone 2; its dependencies (5, 10) are
-both archived. Run `openspec status` to confirm before starting.
+Nothing is in progress. The next item is **backlog change 14,
+`add-daily-challenge`**; its dependencies (3, 5) are both archived. **Change 17,
+`add-puzzle-variants`, is also unblocked** now that 15 has landed — the six
+**variant node**s exist and play classic boards until it gives the **season** a
+rule. Run `openspec status` to confirm before starting.
 
 `add-pad-tools-row` is not in `openspec/BACKLOG.md` — it was an unnumbered
 corrective change that replaced six unlabelled glyph keys with named controls
 after `add-mistake-model` found the pad overflowing. Expect the archive to hold
 changes the backlog does not number.
 
-**Two measurements are still outstanding, both on real hardware.** The mid-tier
-Android latency profile is recorded as unmet against *both* change 6 and change
-11 in `openspec/BACKLOG.md`; a **cascade** is the heavier frame, so
+**Hardware verification is the standing debt, and change 15 added to it.** The
+mid-tier Android latency profile is recorded as unmet against *both* change 6
+and change 11 in `openspec/BACKLOG.md`; a **cascade** is the heavier frame, so
 `integration_test/completion_effects_test.dart` on one physical phone settles
 both. Haptics are covered by neither — a simulator reports success for a haptic
-it never played.
+it never played. Change 15 then added its own:
+`integration_test/season_map_test.dart` passes on the iOS simulator but has been
+taken on **no** physical device — the attached iPhone reports Developer Mode off,
+and no Android device is attached. **One session with a mid-tier Android phone
+and a Developer-Mode iPhone closes all four.**
 
 ## Source of truth — read before proposing or implementing
 
@@ -110,9 +120,12 @@ stamp, perk, digit sweep**
 The list grows: `add-note-automation` added **auto-notes**, **candidate
 highlighting**, and **generated note**; `add-completion-effects` added
 **completion tint**, **corner mark**, and **cascade**; `add-pad-tools-row`
-added **tools row** and **chain test**. Read `openspec/project.md` rather than
-this summary when it matters — a change that needs a new concept adds it there
-in the same change.
+added **tools row** and **chain test**; `add-rank-progression` added
+**technique unlock**; `add-technique-tutorials` added **lesson** and **notes
+lesson**; `add-season-map` added **trail**, **node type**, **variant node**,
+**chest node**, **boss node**, **current node**, **not yet reached**, and **free
+play**. Read `openspec/project.md` rather than this summary when it matters
+— a change that needs a new concept adds it there in the same change.
 
 Never write "box" for unit, "level" for node or rank, "pencil mark" for note, or
 "difficulty" where rank is meant. A change that needs a new concept adds it to
@@ -174,17 +187,25 @@ is not landing and the installed skill file needs editing.
   guidance here said to regenerate rather than hand-edit, and no such tool was
   ever written, which is why the page stayed stale for so long. Either redraw
   the figures or build the generator; do not trust the drawings meanwhile.
+  **One colour in it is deliberately not followed** — it draws the **current
+  node** on the **trail** in `sunsetRed`, whose documented job is "errors,
+  duplicates, Ace". The built trail uses `badgeGold`, and D-112 records why, so
+  that a redraw does not "correct" it back.
 - **Nobody presents the store.** D-58 removed Ruby and named no replacement, so
   the store, the pass offer, and chest openings have no character attached. The
   argument for giving monetisation a face is still in `docs/SPEC.md` §7 and still
   good. Settle it before `add-purchases-and-entitlements` (change 26).
-- **The mid-tier Android latency profile has never been taken.** Now recorded
+- **No integration test has run on a physical device.** The mid-tier Android
+  latency profile has never been taken, and `add-season-map` added a second
+  runner in the same position. Recorded
   against both `add-grid-and-input` and `add-completion-effects` in
   `openspec/BACKLOG.md`: measured on the host, an emulator, and a simulator
   only, with roughly 200× headroom against the 100 ms budget — but that is an
   inference, not the measurement the backlog asked for. A **cascade** is the
   heavier frame, so `integration_test/completion_effects_test.dart` on the first
-  physical phone that comes to hand settles both. Record the number, and check
+  physical phone that comes to hand settles both — and
+  `integration_test/season_map_test.dart` is the second thing to run in the same
+  session. Record the number, and check
   the haptics by hand in the same session.
 
 Resolved, kept here only so they are not re-opened: the Sheriff's retired
