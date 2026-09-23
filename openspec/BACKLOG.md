@@ -303,9 +303,12 @@ has been taken on **no** physical device, and joins the runners from 6, 11 and 1
 waiting on the same session.
 
 ### 17. `add-puzzle-variants`
-**Capabilities:** `puzzle-engine`, `grid-input`
-**Unblocked** — 6 and 15 are both archived. The six **variant node**s exist and
-play classic boards until this change gives the **season** a rule.
+**Capabilities:** `puzzle-engine`, `grid-input`, `notes`, `season-map`,
+`persistence`, `technique-tutorials`, `design-system` — widened from the first
+two when planning found a **cage** reaches every system that reads **peer**s,
+and the puzzle table.
+**In progress** — `openspec/changes/add-puzzle-variants/`. **Killer**, on
+**variant node**s only (D-127 … D-130).
 One rule variant beyond classic for the season's variant nodes — killer recommended for v1.
 **Depends on:** 6, 15.
 **Watch for:** scope. One variant, properly. Not four.

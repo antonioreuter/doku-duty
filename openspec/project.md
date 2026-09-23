@@ -73,12 +73,12 @@ Read them there before proposing or implementing anything.
 | **Season** | A six-week territory containing 42 nodes, then rotated out |
 | **Pack** | A versioned, immutable shipment of pre-generated puzzles, each carrying its solution, its rank, and its seed (D-32). A pack is content; a season is play. One pack can supply several seasons, and a pack version never installs backwards |
 | **Rank** | One of six difficulty tiers, from Greenhorn to Legend |
-| **Unit** | A row, column, or 3×3 block |
-| **Peer** | One of the twenty other cells a cell shares a unit with. A digit may appear at most once among a cell and its peers |
+| **Unit** | A row, column, or 3×3 block. A **cage** is not one (D-130) |
+| **Peer** | One of the twenty other cells a cell shares a unit with — and on a **killer** board also every other cell of its **cage** (D-130). A digit may appear at most once among a cell and its peers |
 | **Settled note** | A candidate the player has derived (indigo) |
 | **Provisional note** | A hypothesis under test (turquoise), clearable in one action |
 | **Generated note** | A candidate **auto-notes** marked rather than the player. Identical on screen to one marked by hand; the distinction exists for undo, **auto-cleanup**, and clearing (D-15) |
-| **Auto-cleanup** | Removing a placed value's candidate from its row, column, and block |
+| **Auto-cleanup** | Removing a placed value's candidate from its **peer**s — its row, column, and block, and on a **killer** board its **cage** |
 | **Auto-notes** | The one action that marks every empty cell with each candidate its peers do not already hold as a value. Unions with what is already marked; never replaces it (D-87) |
 | **Candidate highlighting** | Lighting every cell that holds the held digit, or failing that the selected cell's digit, as a candidate or as a value. Derived rather than set by the player (D-88). Free and always on, unlike **digit sweep** (D-13) |
 | **Promote** | The one action that turns every **provisional note** on the board into a **settled note**, adding and removing nothing. The other way a chain test ends, beside the D-11 clear (D-91) |
@@ -109,7 +109,10 @@ Read them there before proposing or implementing anything.
 | **Notes lesson** | The one **lesson** that teaches notes rather than a technique. Fires on opening the first puzzle at Sheriff **rank or harder** — Sheriff is one **rank** before Marshal, where notes stop being optional, and "or harder" is there because the soft **rank** gate (D-103) lets a player skip past Sheriff entirely. Teaching no technique, no **technique unlock** can suppress it; it takes precedence over a technique **lesson** due on the same opening, being the prerequisite for them |
 | **Trail** | The **season** map screen: 42 **node**s on a winding path, with the season's name, how far along the player is, and the days remaining — that last shown only while there are any, never as a negative (D-109). *Trail* is what the interface calls it; `season-map` is the capability |
 | **Node type** | One of four, fixed per **node** by the **season** definition and never changing within a season: puzzle, variant, chest, boss (D-18) |
-| **Variant node** | A **node** playing the **season**'s rule twist rather than classic sudoku. Six per season. Plays a classic puzzle until `add-puzzle-variants` gives the season a rule |
+| **Variant node** | A **node** playing the **season**'s rule twist rather than classic sudoku. Six per season. Plays a **killer** puzzle (D-127) |
+| **Killer** | The rule variant every **variant node** plays: a classic grid also divided into **cage**s. Reached only from a **variant node** — never **free play** or the **daily challenge** (D-127) |
+| **Cage** | A group of orthogonally connected cells on a **killer** board, every cell in exactly one. No digit repeats inside a **cage**, and its digits add up to its **cage sum**. Not a **unit**: filling one fires no completion effect (D-130) |
+| **Cage sum** | The number a **cage**'s digits add up to, printed top-left of the **cage**'s first cell in reading order (D-129) |
 | **Chest node** | A reward **node** carrying no puzzle. Four per season, at 25/50/75/100% of the trail. Opening one is the reward; it costs nothing and cannot be failed |
 | **Boss node** | The **node** at a **season**'s midpoint and at its finale. A puzzle like any other except that it retries without limit and without cost (D-22) |
 | **Current node** | The one **node** the player is at: the first not yet completed. Drawn larger as well as differently coloured, so someone returning after three days finds their place without reading anything. *First* rather than *furthest* — the two differ only if a completion is ever missing from the middle, and sending the player back to close the gap loses nothing, where sending them past it would leave a hole they can see and cannot reach |

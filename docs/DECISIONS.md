@@ -699,6 +699,9 @@ state for colourblind players, and the one-action clear in D-11 becomes a contro
 whose effect the player cannot predict.
 
 ### D-74 · The UI face is Nunito, chosen on its 11px aperture
+
+> **Amended by D-129** — on a **killer** board only, notes fall below 11px to make room for the **cage sum**. Classic boards keep this floor. Kept whole because the aperture argument still decides the face.
+
 Bundled as three static weights (400/500/600) under the SIL Open Font License,
 about 380KB. Not fetched at runtime.
 
@@ -2318,3 +2321,124 @@ it. Two players who earned the same **trophy** a day apart, either side of a
 rename, would hold different records of the same event only until the
 **season** rotated, and then the same one. Nothing about that is explainable to
 a player.
+
+### D-127 · Killer is the v1 variant, and it lives only on variant nodes
+
+The rule every **variant node** plays is **killer**: a classic grid also divided
+into **cage**s, each carrying a **cage sum**, with no digit repeated inside a
+**cage**. It is compiled in for every **season**. It is reached only from a
+**variant node** — **free play** and the **daily challenge** never serve a
+**killer** board.
+
+**Rationale.** D-35 promises one variant beyond classic for v1 without naming
+it, and `docs/SPEC.md` lists four. **Killer** wins on D-34: the standalone killer
+app planned for launch +6 months needs a **cage**-aware solver, grader and
+generator, and building them here means that app starts with an engine rather
+than a plan. Jigsaw was the cheaper candidate — it needs no numbers in cells and
+reuses every classic technique — and was rejected because it buys D-34 nothing.
+
+**Why variant nodes only.** **Free play** is where a player picks a **rank**
+(D-111), and a **rank** there has always meant a classic board; a toggle would be
+a second surface for one variant. The **daily challenge** is one board for
+everyone on a weekly ramp (D-115, D-116), and a **killer** day would put a rule
+some players have never met on the one counter whose job is to reward turning
+up. Six **node**s a **season** is the dose `docs/SPEC.md` §4 asks for.
+
+**Why no rule key in the season document.** With one variant there is nothing
+to choose, and a key that can only hold one value is a key that can only be
+wrong. It arrives with the second variant, which is when a **season** can
+genuinely differ.
+
+**What breaks if reversed.** Serving **killer** from **free play** or the
+**daily** without a surface that says so hands a player a board with numbers in
+the corners and no explanation of the rule, on a route they chose for a
+classic puzzle.
+
+### D-128 · Killer is graded on the same ladder, with two techniques added
+
+A **killer** puzzle's **rank** is the hardest technique it requires (D-07),
+drawn from the classic twelve plus two: **cage combination** at Greenhorn and
+**the 45 rule** at Sheriff. Each has a **lesson**, including cage combination
+although Greenhorn techniques otherwise have none. A **killer** solve writes a
+**solve record** on the same terms as a classic one, so it raises **rank**
+(D-102) and grants **technique unlock**s (D-104).
+
+**Rationale.** A separate killer ladder would give "Marshal" two meanings,
+and a player's **rank** would stop saying one thing. Every classic technique
+still applies on a **killer** board, so the only question is which **cage**
+reasoning to add. Cage combination — a two-cell **cage** of 3 is {1,2} — is the
+first thing anyone learns about **killer** and is as simple as a naked single,
+so it sits at Greenhorn. The 45 rule — a **unit** sums to 45, so one cell poking
+out of the **cage**s covering it is known — is the first genuinely **killer**
+deduction, and Sheriff is where the ladder already introduces reasoning across
+several cells. Anything past these two belongs to D-34's standalone app.
+
+**Why cage combination gets a lesson.** Full house and naked single have none
+because everyone meets them before they meet the app. Nobody meets **cage**s
+before their first **variant node**, whatever their **rank**.
+
+**What breaks if reversed.** Grading **killer** any other way leaves the
+shipped-pack audit unable to check it and the **variant node**'s **rank** as a
+label nobody verified — the failure `openspec/BACKLOG.md` warns about under
+change 5.
+
+### D-129 · A cage is a dashed outline and a corner sum, and killer notes are smaller
+
+Every **cage** is outlined with a dashed stroke in `duskInk`, a fifth stroke
+token. Its **cage sum** is drawn at 8px in `inkSoft`, top-left of the **cage**'s
+first cell in reading order. On a **killer** board the note grid of *every*
+cell is inset below the band the sum occupies, so a digit's slot is the same in
+every cell of the board.
+
+**Rationale.** The sum goes top-left because that is where every **killer**
+player looks for it. That corner is note slot 1 (D-10). Insetting only the
+cells carrying a sum would put slot 1 in two places on one board, which breaks
+constraint 3's "always". So the inset is board-wide, and slot order is
+unchanged everywhere.
+
+**The cost is note size, and it was measured before it was accepted.** The
+grid fills the width, less padding:
+
+| Screen | Cell | Classic note slot | **Killer** note (8px band) |
+|---|---|---|---|
+| 320×568 (D-84) | 32.9px | 10.96px | 8.3px |
+| 375×667 | 39.0px | 13.0px | 10.3px |
+| 402×874 | 42.0px | 14.0px | 11.3px |
+
+On the smallest phone classic notes already sit at their slot size, so no
+in-cell sum leaves notes at D-74's 11px anywhere common. The developer weighed
+this against showing only the selected **cage**'s sum in a strip above the grid,
+which keeps 11px notes but loses reading every sum at a glance — the way
+**killer** is solved. Smaller notes on **killer** boards only won. This amends
+D-74 for **killer** boards and nothing else.
+
+**No ninth hue.** `duskInk` already carries outlines and `inkSoft` secondary
+text; the note inks stay off the **cage** layer so a **cage** is never mistaken
+for a candidate.
+
+**What breaks if reversed.** A per-cell inset moves slot 1 between cells of one
+board. Dropping the inset puts the sum on top of a candidate 1.
+
+### D-130 · A cage is not a unit, but its cells are peers
+
+On a **killer** board a cell's **peer**s are its twenty classic **peer**s and
+every other cell of its **cage**. **Auto-cleanup**, **auto-notes**, duplicate
+checks and the selection highlight all follow. A **cage** is not a **unit**:
+filling one earns no **completion tint**, **corner mark**, **cascade** or
+haptic.
+
+**Rationale.** "No digit repeats in a **cage**" is exactly the relation a
+**peer** already expresses, so extending **peer**s makes every existing system
+correct on a **killer** board without a second rule. The arithmetic is
+different: a **cage sum** is a deduction, not a legality check, so
+**auto-notes** does not apply it. That would be solving for the player.
+
+**Why a cage is not a unit.** A **unit** holds nine distinct digits, and D-99
+decides its completion without the solution. A **cage** holds two to nine
+cells and completes by sum, and celebrating one would add a fourth effect
+family to a board already celebrating rows, columns and blocks.
+
+**What breaks if reversed.** If **cage** mates are not **peer**s,
+**auto-cleanup** leaves a candidate the rules forbid. If a **cage** is a
+**unit**, the **cascade**'s chain rules meet shapes they were never
+tuned for.

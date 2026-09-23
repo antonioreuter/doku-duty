@@ -87,6 +87,13 @@ setting (D-50).
 | Label / meta | 12 | 500 |
 | Character line | 15 | 400 |
 
+**On a killer board** (D-129) the grid-note role does two more jobs, and neither
+is a seventh role. The **cage sum** is the grid-note face at 8px, weight 600, in
+`inkSoft`, capped to its band the way a note is capped to its slot. Notes are
+inset below that band on every cell of the board, so they fall below 11px on
+most phones — 8.3px on the smallest. That amends D-74 for **killer** boards
+only; classic boards keep the 11px floor.
+
 The face is **Nunito**, bundled at 400/500/600 (D-74). Rounded, with real weight
 contrast. It is *not* condensed, which is the one deviation from the original
 brief: no open-licensed face is rounded, condensed, and open-apertured at once,
@@ -114,6 +121,7 @@ Sentence case everywhere. Dynamic type respected.
 | Interior detail stroke | 2 |
 | Grid box divider | 2.5 |
 | Grid cell hairline | 1 |
+| Cage outline (dashed, 3 on / 2 off, inset 3 inside the cell) | 1.5 |
 
 Thick outer contour with thinner interior lines is what reads as cartoon rather
 than diagram. Uniform stroke weight is the most common tell of lifeless vector
