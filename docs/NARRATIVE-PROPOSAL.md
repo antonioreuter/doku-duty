@@ -1,8 +1,13 @@
 # Narrative proposal — the case file
 
-**Status: proposal.** Nothing here is canon yet. If it is accepted it folds into
-`docs/doku-duty-game-bible.md` §1 and needs decision IDs from **D-118** onward
-(117 decisions exist today; `CLAUDE.md` still says 101 and is stale).
+**Status: decisions written, bible amendments outstanding.** The reasoning below
+is now recorded as **D-119 … D-123** in `docs/DECISIONS.md`. What has *not*
+happened yet is folding the arc and the voices into
+`docs/doku-duty-game-bible.md` §1, which is where the cast actually lives.
+
+> **Numbering note.** These were drafted as D-118–D-122 and renumbered on
+> landing: D-118 was already taken by "anything rendered from the clock is
+> injected". `CLAUDE.md` says the project has 101 decisions; it has 123.
 
 ---
 
@@ -213,15 +218,15 @@ app. They will absolutely notice a wall filling up with chalk marks.
 
 ## 7. What this needs to become real
 
-**New decisions, D-118 onward:**
+**Decisions — written, in `docs/DECISIONS.md`:**
 
-| Proposed | Records |
+| ID | Records |
 |---|---|
-| D-118 | A season is a case; the ledger premise; rotation as closure |
-| D-119 | The four-act structure and its mapping to the existing node layout |
-| D-120 | Act-gated line pools — the reaction table gains an act dimension |
-| D-121 | The Sheriff withholds until Legend; one payoff line per career |
-| D-122 | Character mechanisms, superseding the tone-only descriptions in §1.1 |
+| D-119 | A season is a case; the ledger premise; rotation as closure |
+| D-120 | The acts sit on the existing node layout, and the layout does not move |
+| D-121 | Act-gated line pools — the reaction table gains a dimension, not rows |
+| D-122 | The Sheriff withholds until Legend; one payoff line per career |
+| D-123 | Each character is a mechanism, not a tone |
 
 **Bible amendments:** a new §1.0 (the premise and arc) ahead of §1.1; §1.1
 rewritten from tones to mechanisms; §1.2 gains the act column.

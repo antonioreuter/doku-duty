@@ -2067,3 +2067,148 @@ which carries the server-time offset and the verified flag `docs/TECH_STACK.md`
 **What breaks if reversed.** Reading the clock directly in a widget puts the
 date into every golden that contains it, and the failure arrives on a day nobody
 is working on that code, attached to a diff that does not mention time.
+
+### D-119 · A season is a case, and the trail is the case being worked
+
+Every **season** is framed as a case: something of the territory's is taken, and
+the 42 **node**s restore it. Season one, Dust Gulch — Ace has the ledger, and
+without it the numbers do not add up. A **season** ending is the case *closing*,
+filed to the **cabinet**, never a map expiring.
+
+**Rationale.** D-58 gave the game a cast and the bible gave them reaction
+triggers, but nothing gave them a reason to be anywhere. The result is a cast
+that is entirely stateless: Ace behaves identically at **node** 2 and **node**
+41, nothing accumulates, and the **season** ends because the calendar says so.
+A reaction table is comedy. It is not a story, and the difference is memory.
+
+This premise is chosen over the alternatives because it makes the mechanic
+diegetic. The player is restoring numbers to their correct places, which is not
+a metaphor for sudoku — it *is* sudoku. Nothing has to be invented to connect
+the fiction to the board, so the fiction costs nothing to maintain and cannot
+drift away from what the player is actually doing.
+
+It also repairs the weakest point in D-17's three layers. A seasonal layer that
+rotates out is a layer the player watches disappear; framed as a case that
+*closes*, rotation reads as an episode ending and the **cabinet** becomes the
+series so far. The same wall that D-21 fills with visible gaps becomes a record
+of cases closed rather than of content removed.
+
+**The stolen thing is the seasonal variable; the shape stays.** Ledger, census,
+brand registry, the town clock. If "Ace takes X, you restore X" cannot be
+varied six times without tiring, the premise is too narrow and this decision is
+wrong — that is the test to apply at season three, not season two.
+
+**What breaks if reversed.** Without a premise the **season** is a progress bar
+with cowboys drawn beside it, and every line any character says has to carry the
+entire personality budget on its own. Rotation stays what it is today: content
+the player earned, taken away on a schedule, with nothing said about why.
+
+### D-120 · The acts sit on the node layout, and the layout does not move
+
+The **season**'s narrative beats are mapped onto the **node** positions already
+fixed by D-18 and D-19 — **chest node**s at 11, 21, 32 and 42, **boss node**s at
+22 and 41, and the **rank** ramp reaching Sheriff at 22 and Legend at 39. The
+story adapts to the pacing. The pacing does not move for the story.
+
+**Rationale.** That layout was paced for reward cadence before there was any
+narrative, and it already has the shape of one. The midpoint **boss node** at 22
+lands on the same **node** that promotes the player to Sheriff **rank**, so the
+mechanical peak and the story peak coincide without either being adjusted. A
+structure that falls out of existing data is a structure nobody has to maintain.
+
+**The season ends on a chest, and that is not an accident to be corrected.**
+**Node** 42 is a **chest node**: the last thing that happens in six weeks is
+being given something, never being tested. That is constraint 1 expressed as
+structure rather than as a settings default, and it is worth more than the
+tidier-looking alternative of ending on the **boss node**. A future change that
+"fixes" the anticlimax by moving the boss to 42 would be reversing this decision
+without noticing.
+
+**What breaks if reversed.** If acts get their own positions, a **season** has
+to satisfy two independent layouts — one for reward pacing and one for story —
+and every future **season** document has to keep both true at once. They drift
+on the first **season** authored by someone who was not in this conversation.
+
+### D-121 · Reactions are act-gated: the trigger table gains a dimension, not rows
+
+Every row of the reaction trigger table draws its line from a pool selected by
+the act the player is in. Same triggers, same animations, same art. One column.
+
+**Rationale.** What makes a cast feel alive is that it remembers. The existing
+table fires the same class of line forever, so a player forty **node**s into a
+**season** is being addressed exactly as they were on the first day — which is
+the specific way a comedy cast goes stale, and it goes stale long before the six
+weeks are up.
+
+The implementation is deliberately the cheapest one available. No new triggers,
+no new rig states, no new art, no new screens; the table being built for change
+20 gains an act dimension and the line pools grow. Retrofitting it later means
+rewriting every line in place, because a stateless pool has no act to assign.
+
+**It stays inside the localisation budget because the lines stay short.** Every
+line remains under six words (D-02) and the arc is carried by *state the player
+can see* — the tally filling, the posters accumulating, the ledger refiling —
+not by prose. Four acts across the table is on the order of 120–160 short lines
+per **season**, which is under a thousand words of source text across fifteen-plus
+languages. A narrative told in cutscenes instead would be a five-figure
+localisation bill and would be skipped by most players regardless.
+
+**What breaks if reversed.** The cast comments and never develops. Ace's tally
+grows all **season** and he never once acknowledges it, which makes the most
+visible running gag in the game into set dressing.
+
+### D-122 · The Sheriff withholds until Legend, and says it once
+
+The Sheriff never gives direct praise. His entire vocabulary is filing status.
+Exactly one line of genuine approval exists in the game — on reaching Legend
+**rank** — and it is keyed to **rank**, which is permanent, not to the
+**season**, which repeats.
+
+**Rationale.** The payoff works only because of the withholding, and the
+withholding is only bearable because it is funny: a man who cannot say "well
+done" and can only confirm that a form has been processed. Forty **node**s of
+*filed*, *noted*, *acceptable*, and then three words that mean something. The
+joke and the emotional beat are the same mechanism, which is the cheapest
+possible way to buy both.
+
+**Keyed to rank, not season, on purpose.** **Rank** never falls (D-07, D-57), so
+the moment happens once in a player's life with the game. A payoff that
+re-fires every six weeks is not a payoff, it is a routine, and the second
+occurrence retroactively cheapens the first.
+
+**What breaks if reversed.** A Sheriff who warms gradually has no moment to
+arrive at, and the one genuinely affecting beat available to a sudoku app is
+spent in instalments too small to notice. A Sheriff keyed to the **season**
+turns it into seasonal furniture.
+
+### D-123 · Each character is a mechanism, not a tone
+
+Each of the four is defined by a rule that generates lines, extending the roles
+D-58 assigned:
+
+- **The Sheriff** — praise expressed as paperwork. Never a direct compliment
+  (D-122), never an exclamation, never more than one clause.
+- **Ace** — your biggest admirer, and that is the threat. Never hostile, never
+  threatening, delighted by you and proprietorial about your mistakes.
+- **Biscuit** — disproportion. Enormous reactions to small things, none at all
+  to large ones. Wordless (D-59).
+- **Number Four** — labour relations. Objects to working conditions and to
+  placement aesthetics, never to correctness (D-60).
+
+**Rationale.** The bible described the cast in tones — "dry, grudging", "weary
+satisfaction". A tone tells an animator a mood and writes no dialogue; four
+tones produce four moods and, in practice, one voice, because every writer
+reaches for the same jokes. A mechanism produces the next line on its own and
+produces it differently for each character.
+
+**Ace being fond rather than hostile is load-bearing.** §5.1 forbids weapons,
+gunfire and anything aimed at anyone, and constraint 1 forbids the game
+punishing the player — which leaves a conventional antagonist with nothing to
+do. An antagonist who *likes* you, keeps your mistakes because he admires them,
+and is disappointed when you do well needs none of the things the boundaries
+forbid, and is funnier than the version that does.
+
+**What breaks if reversed.** Written from tone, the four blur and Ace drifts
+toward menace, because menace is what "antagonist" suggests to anyone who has
+not read the boundaries. That drift is not caught by review — each individual
+line reads fine — and by the time it is visible the pools are written.
