@@ -188,32 +188,30 @@ void main() {
       expect(progress.isOpenable(firstBoss), isTrue);
     });
 
-    testWidgets('files no trophy — change 16 owns the cabinet', (tester) async {
-      // **The seam, named.** D-18 gives a **boss node** a unique trophy to the
-      // cabinet, and `add-trophy-cabinet` is the cabinet. Nothing here files
-      // one, and no table here pretends to be a shelf.
+    testWidgets('files a trophy — the seam change 16 filled', (tester) async {
+      // **This replaced the seam, it did not edit it.** Until
+      // `add-trophy-cabinet` landed, this asserted that *no* trophy was filed
+      // and that no table pretended to be a shelf. That test was written to be
+      // deleted by the change that fills the seam, and this is it.
+      //
+      // Worth recording how it went: the old assertion searched
+      // `sqlite_master` for a table name containing "trophy", and the table is
+      // called `trophies` — which does not contain that substring. It would
+      // have gone on passing for ever with the shelf sitting right there. A
+      // guard that greps for a name is only as good as the name somebody
+      // happens to choose.
       await walkTo(firstBoss);
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
-      await openTrailNode(tester, firstBoss);
 
-      final tables = await db
-          .customSelect(
-            "SELECT name FROM sqlite_master WHERE type='table' "
-            "AND name NOT LIKE 'sqlite_%'",
-          )
-          .map((row) => row.read<String>('name'))
-          .get();
-      expect(
-        tables.where(
-          (t) =>
-              t.contains('trophy') ||
-              t.contains('medal') ||
-              t.contains('cabinet'),
-        ),
-        isEmpty,
-        reason: 'trophies are add-trophy-cabinet',
-      );
+      final before = await db.select(db.trophies).get();
+      expect(before, isEmpty);
+
+      await seasons.completeNode(seasonId: SeasonOne.id, position: firstBoss);
+
+      // The completion alone mints nothing — minting is the service's job, and
+      // the repository stays unaware of the **cabinet**.
+      expect(await db.select(db.trophies).get(), isEmpty);
     });
   });
 

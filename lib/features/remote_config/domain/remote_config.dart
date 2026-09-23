@@ -13,6 +13,7 @@ class RemoteConfig {
     required this.values,
     required this.schemaVersion,
     this.season,
+    this.rawSeasonAwards,
   });
 
   /// Everything at its compiled-in default. What a fresh install runs on, with
@@ -23,9 +24,13 @@ class RemoteConfig {
     },
     schemaVersion: null,
     season: null,
+    rawSeasonAwards: null,
   );
 
   final Map<ConfigValue, int> values;
+
+  /// The published **season**'s `awards`, unparsed. See [_rawAwards].
+  final Object? rawSeasonAwards;
 
   /// The schema version the source declared, or null when it came from the
   /// compiled-in defaults or declared none.
@@ -87,11 +92,33 @@ abstract final class RemoteConfigParser {
           : value.clampToDefault(candidate);
     }
 
+    final season = _season(decoded['season']);
     return RemoteConfig(
       values: parsed,
       schemaVersion: _asInt(decoded['schema_version']),
-      season: _season(decoded['season']),
+      season: season,
+      // Only alongside the **season** that declared them. A refused **season**
+      // leaves the compiled-in one in force, and its **award**s would otherwise
+      // be filed under that **season**'s id — a territory that never offered
+      // them.
+      rawSeasonAwards: season == null ? null : _rawAwards(decoded['season']),
     );
+  }
+
+  /// The `awards` key of the published **season**, still as JSON.
+  ///
+  /// **Deliberately unparsed.** An **award** is a `trophy-cabinet` type, and
+  /// parsing it here would make `remote-config` — and through it `season-map` —
+  /// depend on the **cabinet**. The dependency runs the other way: the
+  /// **cabinet** reads this raw and makes its own **award**s of it (D-125).
+  ///
+  /// Null covers an absent **season**, an absent key, and a malformed one
+  /// alike, because all three mean the same thing to the reader: use the
+  /// compiled-in list.
+  static Object? _rawAwards(Object? raw) {
+    if (raw is! Map) return null;
+    final awards = raw['awards'];
+    return awards is List ? awards : null;
   }
 
   /// The published **season**, or null if there is not a usable one here.

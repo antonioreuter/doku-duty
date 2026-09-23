@@ -6,7 +6,6 @@ import '../../design_system/presentation/paper_grain.dart';
 import '../../completion_effects/application/completion_settings.dart';
 import '../../mistake_model/application/strict_mode.dart';
 import '../../persistence/domain/app_setting.dart';
-import '../../technique_tutorials/presentation/lessons_screen.dart';
 import '../application/grid_providers.dart';
 
 /// Every stored setting, and nothing that is not stored.
@@ -76,20 +75,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 // Not a setting, so not a switch: it opens the list rather than
                 // storing anything. `add-trophy-cabinet` moves it into the
                 // cabinet, which is where `docs/SPEC.md` §5.1 wants it.
-                ListTile(
-                  key: const ValueKey<String>('open-lessons'),
-                  title: Text('Lessons', style: TypeRole.body.style),
-                  subtitle: Text(
-                    'Replay any technique lesson, met or not.',
-                    style: TypeRole.label.style,
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => const LessonsScreen(),
-                    ),
-                  ),
-                ),
                 const Divider(height: 1),
                 for (final entry in SettingsScreen.rows.entries)
                   SwitchListTile(

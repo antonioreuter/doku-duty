@@ -227,6 +227,50 @@ class SeasonStates extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+/// Every **trophy** the player has earned.
+///
+/// **Minted, not derived** (D-124), and that is a deliberate departure from the
+/// rule that governs the **streak** and a **technique unlock**. A **trophy** is
+/// a record of an *event* — earned on a date, in a territory, never true
+/// differently afterwards — where those two are states that change while the
+/// player does nothing. The codebase already treats events this way, which is
+/// why `solved_puzzles` holds a row per puzzle.
+///
+/// **The season's name is copied in here on purpose.** It is the one field that
+/// looks redundant and is not: `completed_nodes` survives rotation, but the
+/// **season** *document* carrying the name is replaced, so a derived **trophy**
+/// from a past territory could only ever be "position 22 of frontier-1".
+///
+/// As with **completed node**s and **completed day**s there is no way to unset
+/// a row: constraint 1 is enforced by the schema having no representation for
+/// taking a **trophy** back.
+class Trophies extends Table {
+  /// The **award** id this was minted from. Stable across publishes —
+  /// **progress is keyed to it**, so a republish that changes an id orphans the
+  /// **trophy** rather than renaming it.
+  TextColumn get awardId => text()();
+
+  /// What it was called when it was earned. A later publish may rename the
+  /// **award**; what the player earned does not change.
+  TextColumn get name => text()();
+
+  /// Null for a permanent **award**, which belongs to no **season**.
+  TextColumn get seasonId => text().nullable()();
+
+  /// The territory's name, captured at mint time. See the note above.
+  TextColumn get seasonName => text().nullable()();
+
+  /// When it was first earned. Never moved by a second minting.
+  DateTimeColumn get earnedAt => dateTime().clientDefault(DateTime.now)();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{awardId};
+}
+
 /// Which days the **daily challenge** was completed.
 ///
 /// **A set of dates, never a count.** The **streak** is recomputed from these
@@ -483,6 +527,7 @@ class Notes extends Table {
     BossAttempts,
     CompletedDays,
     StreakFreezeLedgers,
+    Trophies,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -576,6 +621,21 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(schema.completedDays);
         await m.createTable(schema.streakFreezeLedgers);
       },
+      // Version 7 adds the **cabinet**'s **trophy**s. One new table and nothing
+      // else moves, so every saved game, note, statistic, setting, **solve
+      // record**, seen **lesson**, **season** completion and **calendar** day
+      // carries over untouched — which the migration test asserts rather than
+      // assumes.
+      //
+      // It arrives *empty*, and **there is no retroactive minting**. A player
+      // upgrading has earned no **trophy** yet and starts earning from here.
+      // Back-filling would mean inventing dates for events the database never
+      // recorded — a **boss node** completed under version 5 has a completion
+      // row but no moment attached to it — and a **cabinet** that quietly
+      // invents its own history is worth less than an honest empty one.
+      from6To7: (m, schema) async {
+        await m.createTable(schema.trophies);
+      },
     ),
   );
 
@@ -606,5 +666,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 }

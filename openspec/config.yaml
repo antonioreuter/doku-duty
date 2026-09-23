@@ -17,7 +17,7 @@ context: |
     game refuses to do. Read this before proposing anything that touches play,
     progression, or effects. It is compiled from the sources below, so cite the
     D-NN it carries rather than the bible itself when recording a rationale.
-  - docs/DECISIONS.md — 68 numbered decisions with rationale, cited as D-NN
+  - docs/DECISIONS.md — the numbered decisions with rationale, cited as D-NN
   - docs/TECH_STACK.md — the decided stack and the reasoning behind it: client,
     AWS backend, auth and the guest tier, purchases and commission, offline and
     sync merge semantics, and build-time tooling. Canonical for anything

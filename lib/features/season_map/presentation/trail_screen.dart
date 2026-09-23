@@ -8,6 +8,7 @@ import '../../platform_shell/application/clock_provider.dart';
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../rank_progression/domain/player_rank.dart';
+import '../../trophy_cabinet/application/cabinet_providers.dart';
 import '../application/season_providers.dart';
 import '../domain/node_type.dart';
 import '../domain/season.dart';
@@ -161,10 +162,21 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
   }
 
   Future<void> _openChest(SeasonNode node) async {
-    final seasonId = ref.read(currentSeasonProvider).id;
+    final season = ref.read(currentSeasonProvider);
+    // Through the **cabinet**'s minting service, for the same reason the
+    // puzzle path is: the completion and any **trophy** it earns commit
+    // together (D-124). A **chest node** earns none today, and routing it the
+    // same way is what stops that being a special case somebody has to
+    // remember when it does.
     await ref
-        .read(seasonRepositoryProvider)
-        .completeNode(seasonId: seasonId, position: node.position);
+        .read(mintingServiceProvider)
+        .completeNode(
+          seasonId: season.id,
+          seasonName: season.name,
+          position: node.position,
+          nodeCount: season.nodes.length,
+          catalogue: ref.read(awardCatalogueProvider),
+        );
     // The read that says where the player stands is cached and this screen
     // stays mounted, so the write has to say so (D-105).
     ref.invalidate(trailProgressProvider);

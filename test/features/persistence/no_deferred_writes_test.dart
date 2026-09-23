@@ -29,6 +29,11 @@ void main() {
     // a player may have held for a year, with no way to tell afterwards
     // whether it was a bug or a day they genuinely missed.
     Directory('lib/features/daily_challenge/data'),
+    // `trophy-cabinet` mints a **trophy** inside the transaction of the event
+    // that earned it. A deferred write there would not merely lose the
+    // **trophy** — it would break the guarantee that a **trophy** and its
+    // cause commit together (D-124).
+    Directory('lib/features/trophy_cabinet/data'),
   ];
 
   List<({String path, String source})> sources() =>

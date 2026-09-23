@@ -14,13 +14,13 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ---
 
-## Status — 2026-09-20
+## Status — 2026-09-23
 
-**Sixteen changes archived. Milestones 0 and 1 are complete; Milestone 2 is
-two-thirds done.** Items carry a **Done** line naming the archive directory they landed
-in; anything without one is not built. Three of the finished items — 6, 11 and
-15 — still carry an **OUTSTANDING** note; read those before treating the
-capability as settled, because what is outstanding in all three cases is a
+**Nineteen changes archived. Milestones 0 and 1 are complete; Milestone 2 has
+one item left, 17.** Items carry a **Done** line naming the archive directory they landed
+in; anything without one is not built. Five of the finished items — 6, 11, 14,
+15 and 16 — still carry an **OUTSTANDING** note; read those before treating the
+capability as settled, because what is outstanding in every case is a
 *measurement on physical hardware*, not code. One session with a mid-tier
 Android phone and a Developer-Mode iPhone closes all of them.
 
@@ -28,8 +28,8 @@ Android phone and a Developer-Mode iPhone closes all of them.
 |---|---|---|
 | 0 — Foundation | 1–4 | Complete |
 | 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
-| 2 — A reason to come back | 12–17 | 12, 13, 15 done; 14, 16, 17 open |
-| *(unlabelled)* — the perk economy | 18, 19 | Not started |
+| 2 — A reason to come back | 12–17 | 12–16 done; 17 open |
+| *(unlabelled)* — the perk economy | 18, 19 | Not started; 18 unblocked |
 | 3 — The reason it exists | 20–23 | Not started |
 | 4 — The business | 24–29 | Not started |
 | 5 — Ship quality | 30–34 | Not started |
@@ -39,12 +39,14 @@ last item and Milestone 3's first, and always have. Left as they are rather than
 renumbered, for the reason given under 5a: the docs and the code cite these
 changes by number.
 
-**One archived change is not numbered here.** `add-pad-tools-row`
+**Two archived changes are not numbered here.** `add-pad-tools-row`
 (`2026-09-19-add-pad-tools-row`) replaced six unlabelled glyph keys with a named
 **tools row** after `add-mistake-model` found the pad overflowing, and added
 D-100 and D-101. It was corrective work on change 6's surface rather than a
-backlog item, and it is recorded here so the archive and this list can be
-reconciled.
+backlog item. `add-trail-path` (`2026-09-20-add-trail-path`) drew the connector
+joining the **trail**'s 42 **node**s, which `add-season-map` had left to artwork
+and running the built app showed was geometry. Both are recorded here so the
+archive and this list can be reconciled.
 
 ---
 
@@ -166,9 +168,9 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 
 *Done when: there is a season to progress through, a daily habit, and a permanent record.*
 
-**Two-thirds done — 12, 13 and 15 are archived; 14, 16 and 17 are open.** 14 was
-never blocked (it only ever needed 3 and 5). 16 now waits on 14 alone, and 17 is
-unblocked by 15 landing.
+**One item left — 12 through 16 are archived; 17 is open and unblocked.** 18,
+under no milestone heading, is unblocked too now that 14 and 15 have both
+landed.
 
 ### 12. `add-rank-progression`
 **Done** — `openspec/changes/archive/2026-09-19-add-rank-progression/`.
@@ -224,10 +226,26 @@ the grid and is never a penalty for reaching upward. It also fixed a schema
 defect it did not cause — see D-107.
 
 ### 14. `add-daily-challenge`
+**Done** — `openspec/changes/archive/2026-09-22-add-daily-challenge/`.
 **Capabilities:** `daily-challenge`
 One puzzle per day, identical for all players, month-grid calendar, streak counter, one automatic free streak freeze per week (D-20). No interstitial, ever.
 **Depends on:** 5, 3.
 **Watch for:** the freeze must apply automatically. A freeze the player has to remember to use is a trap, not a safety net.
+
+**A daily names a puzzle, a node names a rank** — the mirror of D-110, so every
+player meets the same board (D-115). The **rank** follows a weekly ramp rather
+than the player (D-116), the freeze regenerates weekly and never banks (D-117),
+and anything drawn from the clock is injected so no golden reads the wall
+(D-118). The schedule format is in `lib/features/remote_config/PUBLISHING.md`.
+
+**The Android emulator found a real bug:** changing the device timezone with the
+app running left the old day's board on screen, because the status read was
+cached and nothing invalidated it on resume. Fixed and covered in
+`daily_screen_test.dart`.
+
+**OUTSTANDING — the device checks.** `integration_test/daily_challenge_test.dart`
+passes on the iOS simulator (safe area 62/34pt) and the Android emulator
+(52/24pt). It has been taken on **no** physical device.
 
 ### 15. `add-season-map`
 **Done** — `openspec/changes/archive/2026-09-20-add-season-map/`.
@@ -265,10 +283,24 @@ attached. The mid-tier Android profile carried against changes 6 and 11 is
 unchanged and still wants the same session.
 
 ### 16. `add-trophy-cabinet`
+**Done** — `openspec/changes/archive/2026-09-23-add-trophy-cabinet/`.
 **Capabilities:** `trophy-cabinet`
-**Unblocked once 14 lands** — 15 and 12 are archived.
 Permanent trophies and medals, unearned seasonal awards shown as unfiled rather than hidden, lifetime and per-technique statistics (D-17, D-21).
 **Depends on:** 15, 14, 12.
+
+**It shipped one concept, not two.** "Trophies and medals" became **trophy**
+alone; nothing said what a medal would mean. A **trophy** is minted when earned
+(D-124) and a **season** declares its own **award**s (D-125), with the format in
+`lib/features/remote_config/PUBLISHING.md`. The **boss node** and perfect-month
+seams left by 15 and 14 are filled; the **chest node** → **stamp** seam (18) is
+untouched. A perfect month mints one **trophy** per month — the first cut minted
+only the first month ever, and was caught against `docs/SPEC.md` §5.3 at archive.
+
+**OUTSTANDING — the device checks.** `integration_test/trophy_cabinet_test.dart`
+passes on the iOS simulator (safe area 62/34pt) and the Android emulator
+(52/24pt), with the four-destination navigation clear of the bottom inset. It
+has been taken on **no** physical device, and joins the runners from 6, 11 and 15
+waiting on the same session.
 
 ### 17. `add-puzzle-variants`
 **Capabilities:** `puzzle-engine`, `grid-input`
@@ -284,6 +316,9 @@ One rule variant beyond classic for the season's variant nodes — killer recomm
 **Capabilities:** `stamps`
 The perk currency. Earning on daily completion, perfect solve, streak milestone, chest, and boss; a persisted balance that survives app kill; and the earn values in D-66. Never purchasable — no store surface of any kind.
 **Depends on:** 3, 14, 15.
+**Unblocked** — 3, 14 and 15 are all archived. 15 left a seam test asserting a
+**chest node** mints no **stamp**; replace it rather than edit it, the way 16
+replaced the **boss node** one.
 **Watch for:** the balance is save state, so it inherits constraint 9 — write on every change, never on a timer. A Stamp awarded and lost to a crash is worse than one never awarded.
 
 ### 19. `add-perks`
@@ -302,6 +337,26 @@ Rive rig, the four characters, reaction trigger table, character strip below the
 **Depends on:** 6, 10, 11.
 **Watch for:** the character strip must never cover the grid, and idles must never make noise.
 
+**The trigger table is act-gated, and that is not optional (D-121).** Each row
+draws from a pool chosen by the player's act, so Ace at **node** 2 and Ace at
+**node** 41 are not the same character. This is one column on a table that is
+already being built — no new triggers, no new animations, no new art. Built
+stateless it cannot be retrofitted without rewriting every line, and the cast
+will comment for a whole **season** without ever developing.
+
+**Each character is a mechanism, not a tone (D-123).** "Dry, grudging" tells an
+animator a mood and writes no lines. The Sheriff expresses praise as a filing
+status; Ace is fond of you, never hostile; Biscuit runs on disproportion;
+Number Four objects to working conditions and never to correctness. Write from
+the mechanism or the four voices blur into one.
+
+**Two of the four have never been drawn.** Ace exists in the mockups; the
+Sheriff and Number Four exist nowhere in `lib/` at all, and the Sheriff carries
+the entire rank arc (D-122). Budget them as new work, not as variants.
+`docs/pages/narrative-screens.html` has both, and the avatar lesson learned
+there: **an avatar crop is a silhouette, not a portrait** — a numeral with eyes
+and a mouth at 46px reads as a pair of goggles.
+
 ### 21. `add-digit-reactions`
 **Capabilities:** `character-system`, `completion-effects`
 Digits reacting to duplicates in place of a conventional red flash (D-42).
@@ -314,10 +369,60 @@ Ace's jailhouse tally (cosmetic only), telegram and newspaper loading screens, w
 **Depends on:** 20, 15.
 **Watch for:** the tally must never affect difficulty, rewards, or progression. The moment it carries consequence it breaks the non-punitive principle.
 
+**The tally has to be somewhere the player looks.** Marks accumulating in a
+database are not a running gag. It belongs on the **trail** as a drawn wall,
+which means this change edits a screen that shipped in 15 — expect that, and do
+not let it become a reason to put the tally somewhere nobody goes.
+
+**Three narrative surfaces on the trail ride along (D-119, D-120).** The header
+names the case rather than only the territory; the progress line reads *ledger
+refiled — 13 / 42 pages* instead of *trail progress*, which is the same number
+with the story attached and the cheapest item in this whole change; and a
+leaning signpost names the act. All three are drawn in
+`docs/pages/narrative-screens.html`.
+
+**Telegrams are the only place the plot can move.** They fire between **node**s,
+which is the one moment nothing is being interrupted (constraint 4). Act-gated
+like every other pool. They decorate a load that was already happening and must
+never gate the first frame — if there is nothing to wait for, no telegram.
+
 ### 23. `add-deputy-avatar`
 **Capabilities:** `deputy-avatar`
 Customisable player character — hats, moustaches, badges, kerchiefs — as flat layers on one rig, feeding the wanted-poster wall (D-63).
 **Depends on:** 20, 16.
+
+### `add-node-complete-beat` *(unnumbered)*
+**Capabilities:** `season-map`
+The reward beat after a **node** is cleared: what was achieved, the technique
+unlocked, the time, the explicit **Continue**, and the slot an interstitial is
+permitted to fire into. Plus the **season** close at **node** 42 — the case
+filed, the poster to the **cabinet**, Ace's exit line (D-24, D-22, D-119).
+**Depends on:** 15, 20.
+
+**Nothing builds this today and change 24 assumes it.** 24's placement rule is
+"after node completion, after celebration, **after an explicit tap**" — so the
+tap it names has no screen to live on. D-24's entire ad policy, which is the
+product's main defence against the category leader's worst habit, currently
+rests on a surface no change owns. This is the gap, and it is the reason this
+entry exists.
+
+**Unnumbered on purpose.** The numbers here are load-bearing — every entry's
+**Depends on** line refers to them — so inserting a 24 would renumber eleven
+changes and silently invalidate a dozen references. `add-pad-tools-row` set the
+precedent for corrective work that does not fit the numbering; this follows it.
+Its position in this file is its position in the order: it lands before 24.
+
+**Capability assignment is a judgement call worth revisiting.** Filed under
+`season-map` because a **node** completing is already that capability's
+business — it owns `completeNode`, chest opening, and boss attempts, and a beat
+that only ever fires on the **trail** belongs with the **trail**. It touches
+`completion-effects` (11, archived — which owns the in-grid celebration, not the
+screen after it) and `ads` (24). If it grows a second screen, split it out then.
+
+**Watch for:** there is no failure variant of this screen and there must never
+be one (D-22). Boss retries are unlimited and free, so the most loaded moment in
+the **season** has nothing to lose attached to it. Drawn in
+`docs/pages/screens-redesign.html` §04.
 
 ---
 

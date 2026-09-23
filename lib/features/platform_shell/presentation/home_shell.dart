@@ -7,18 +7,19 @@ import '../../design_system/presentation/doku_colours.dart';
 import '../../design_system/presentation/doku_type.dart';
 import '../../grid_input/presentation/free_play_screen.dart';
 import '../../season_map/presentation/trail_screen.dart';
+import '../../trophy_cabinet/presentation/cabinet_screen.dart';
 
-/// The three routes into a puzzle, side by side.
+/// The four destinations, side by side.
 ///
 /// **Trail** is the spine — an ordered **season** with somewhere to get to.
 /// **Daily** is the habit layer, the third of D-17's three and the reason to
 /// open the app on a day the **season** is not calling. **Free play** is where
 /// the ladder stays open: any **rank**, any time, no position required (D-111).
 ///
-/// Cabinet belongs here too and is deliberately absent rather than stubbed.
-/// `add-trophy-cabinet` owns it, and a placeholder tab would be guessing at its
-/// arguments — the same reason this shell carried no Daily tab until
-/// `add-daily-challenge`.
+/// **Cabinet** is the permanent layer and the last of D-17's three to arrive.
+/// It is the only destination that is not a route into a puzzle: the map
+/// creates urgency, and the cabinet creates the sunk cost (`docs/SPEC.md`
+/// §5.1).
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -42,6 +43,7 @@ class _HomeShellState extends State<HomeShell> {
           TrailScreen(),
           DailyScreen(),
           FreePlayScreen(),
+          CabinetScreen(),
         ],
       ),
       bottomNavigationBar: _HomeNav(
@@ -52,7 +54,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// Three destinations, sized to the player's text.
+/// Four destinations, sized to the player's text.
 ///
 /// **Material's `NavigationBar` is deliberately not used here.** Its height is
 /// fixed, so at the accessibility text sizes it overflows — 139 pixels at 4x
@@ -72,16 +74,15 @@ class _HomeNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = MediaQuery.maybeTextScalerOf(context)?.scale(1) ?? 1.0;
 
-    // Above 3x the destinations stack instead of sitting side by side.
+    // Above 2x the destinations stack instead of sitting side by side.
     //
-    // Three of them rather than two gives each label a third of the width, and
-    // on the smallest phone the app targets (D-84) that is about 100 logical
-    // pixels — enough for "Free play" to wrap to four lines at 5x and for the
-    // bar to overflow the screen it is meant to sit under. A test caught it
-    // the day Daily was added. Stacked, each label has the full width and fits
-    // on one line: it costs vertical space and never truncates a name, which
-    // is the same trade the **tools row** made (D-100).
-    final stacked = scale > 3;
+    // The threshold moved from 3 to 2 when the **cabinet** made it four: a
+    // quarter of the smallest screen the app targets (D-84) is about 75
+    // logical pixels, and "Free play" no longer fits on one line there even at
+    // 3x. Stacked, each label has the full width: it costs vertical space and
+    // never truncates a name, which is the same trade the **tools row** made
+    // (D-100).
+    final stacked = scale > 2;
 
     final entries = <Widget>[
       _NavEntry(
@@ -111,6 +112,15 @@ class _HomeNav extends StatelessWidget {
         stacked: stacked,
         onTap: () => onSelected(2),
       ),
+      _NavEntry(
+        entryKey: const ValueKey<String>('nav-cabinet'),
+        icon: index == 3 ? Icons.inventory_2 : Icons.inventory_2_outlined,
+        label: 'Cabinet',
+        isSelected: index == 3,
+        scale: scale,
+        stacked: stacked,
+        onTap: () => onSelected(3),
+      ),
     ];
 
     return Material(
@@ -118,6 +128,16 @@ class _HomeNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: stacked
+            // Bounded, and scrollable inside that bound.
+            //
+            // Four destinations stacked at 5x want more than half the screen,
+            // and the body still has to be usable underneath — 184 pixels'
+            // worth of overflow, which a test caught the day the **cabinet**
+            // was added. Capping the bar and letting it scroll keeps every
+            // name whole, which is the rule that matters (D-100): a
+            // destination reading "Free pl…" is a control whose name cannot be
+            // read, and one the player has to scroll two lines to reach is
+            // merely inconvenient.
             ? Column(
                 key: const ValueKey<String>('home-nav'),
                 mainAxisSize: MainAxisSize.min,
@@ -204,15 +224,21 @@ class _NavEntry extends StatelessWidget {
                 : DokuLayout.minimumTapTarget * (scale < 1 ? 1 : scale),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            // Tighter when stacked. Four rows at 5x on the smallest screen the
+            // app targets came to twelve pixels over; halving the vertical
+            // padding reclaims thirty-two and leaves the tap target on its own
+            // floor, which is what accessibility actually requires.
+            padding: EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: stacked ? 4 : 8,
+            ),
             child: stacked
-                ? Row(
-                    children: <Widget>[
-                      glyph,
-                      const SizedBox(width: 8),
-                      Expanded(child: text),
-                    ],
-                  )
+                // **No glyph when stacked.** Four destinations each need a
+                // full row, and the icon is the half that can go: the label
+                // already carries the meaning and the semantics never
+                // mentioned the icon at all. Dropping it is what keeps four
+                // rows inside the screen at 5x without truncating a name.
+                ? Align(alignment: Alignment.centerLeft, child: text)
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,

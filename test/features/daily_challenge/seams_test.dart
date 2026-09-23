@@ -97,24 +97,30 @@ void main() {
     });
   });
 
-  group('add-trophy-cabinet (16) — nothing is filed', () {
-    test('a full month files no trophy', () async {
-      for (var day = 1; day <= 31; day++) {
+  group('add-trophy-cabinet (16) — the seam it filled', () {
+    test('a full month is what mints, and it is not minted here', () async {
+      // **Replaced, not edited.** This asserted that a perfect month filed no
+      // trophy and that no table pretended to be a shelf. `add-trophy-cabinet`
+      // filled the seam, so the assertion it was written to make is gone.
+      //
+      // What stays is the boundary: the **calendar** records the days and
+      // knows nothing about **trophy**s. Minting is `MintingService`'s job, and
+      // `minting_events_test.dart` is where the perfect-month **award** is
+      // tested. A **daily challenge** completing on its own mints nothing.
+      for (var day = 1; day <= 30; day++) {
         await repository.completeDay(
-          DatedDay(date: DailyDate(2026, 3, day), isVerified: true),
+          DatedDay(date: DailyDate(2026, 4, day), isVerified: true),
         );
       }
 
       final calendar = await repository.calendar();
-      expect(calendar.completed, hasLength(31));
+      expect(calendar.completed, hasLength(30));
 
-      // A perfect month is exactly what `docs/SPEC.md` §5.3 says unlocks a
-      // cabinet trophy, and there is nowhere yet to put one.
-      final tables = db.allTables.map((t) => t.actualTableName).toList();
+      final rows = await db.select(db.trophies).get();
       expect(
-        tables.any((t) => t.contains('troph')),
-        isFalse,
-        reason: 'a trophy table appeared before add-trophy-cabinet',
+        rows,
+        isEmpty,
+        reason: 'the daily layer minted a trophy of its own',
       );
     });
   });

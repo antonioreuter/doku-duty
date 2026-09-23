@@ -11,14 +11,30 @@ import 'package:flutter_test/flutter_test.dart';
 /// Tapping the navigation rather than reaching past it with
 /// `skipOffstage: false`, because that is the route a player takes and it is
 /// the thing worth having a test walk.
-Future<void> goToFreePlay(WidgetTester tester) async {
-  await tester.tap(find.text('Free play'));
-  await tester.pumpAndSettle();
-}
+Future<void> goToFreePlay(WidgetTester tester) => _select(tester, 'Free play');
 
 /// Switch the home shell back to the **trail**.
-Future<void> goToTrail(WidgetTester tester) async {
-  await tester.tap(find.text('Trail'));
+Future<void> goToTrail(WidgetTester tester) => _select(tester, 'Trail');
+
+/// Switch the home shell to the **daily challenge**.
+Future<void> goToDaily(WidgetTester tester) => _select(tester, 'Daily');
+
+/// Switch the home shell to the **cabinet**.
+Future<void> goToCabinet(WidgetTester tester) => _select(tester, 'Cabinet');
+
+/// Taps a destination, scrolling the bar to it first if it needs it.
+///
+/// **The scroll is not incidental**, and it arrived with the **cabinet**. Above
+/// 2x text the bar stacks and is capped at a share of the screen, so with four
+/// destinations the last of them can sit outside the bar's own viewport — a
+/// plain `tap` then fails on a widget that is built, laid out, and genuinely
+/// not reachable without scrolling. Which is exactly what a player would have
+/// to do, so the helper does it too.
+Future<void> _select(WidgetTester tester, String label) async {
+  final entry = find.text(label);
+  await tester.ensureVisible(entry);
+  await tester.pumpAndSettle();
+  await tester.tap(entry);
   await tester.pumpAndSettle();
 }
 

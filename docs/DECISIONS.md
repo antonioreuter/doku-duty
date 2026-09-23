@@ -2212,3 +2212,109 @@ forbid, and is funnier than the version that does.
 toward menace, because menace is what "antagonist" suggests to anyone who has
 not read the boundaries. That drift is not caught by review — each individual
 line reads fine — and by the time it is visible the pools are written.
+
+### D-124 · A trophy is minted when earned, not derived
+
+A **trophy** is written at the moment the event that earns it is recorded, in
+the same transaction, capturing what was earned and which **season** it came
+from. Nothing reconstructs a **trophy** from other state at read time.
+
+**Rationale.** This project derives wherever it can, and says so twice: a
+**streak** is recomputed from the **calendar** rather than stored, and a
+**technique unlock** is that technique's counter standing above zero rather than
+a second flag (D-104). Both exist to stop a stored number drifting away from the
+thing it claims to describe. So the departure needs an argument.
+
+**A trophy is a record of an event, not a state.** That is the distinction. A
+**streak** is a fact about *now* and changes while the player does nothing — a
+day passes and it falls. A **trophy** is a fact about *then*: earned on a date,
+in a territory, and never true differently afterwards. The codebase already
+treats events this way, which is why `solved_puzzles` holds a row per puzzle
+rather than inferring solves from the save table. Deriving a fact about the past
+from present state only works while the present still contains the evidence.
+
+**And here it stops containing it.** A seasonal **trophy** would be derived from
+`completed_nodes`, which is keyed by **season** id and survives rotation. What
+does not survive is the **season** *document*: its name, its territory, and the
+list of what it awarded are replaced when the next one is published. A player
+who defeated the boss of Dust Gulch would be left with a row saying position 22
+of `frontier-1` was completed, and nothing able to turn that back into a
+**trophy** with a name. Minting captures the name while it is still there.
+
+**Written in the same transaction as its cause**, so the two cannot come apart
+(constraint 9). A **trophy** without its completion is a lie about what the
+player did; a completion without its **trophy** is a reward silently withheld,
+and the player has no way to tell either happened.
+
+**Minting is idempotent.** The same event recorded twice mints once and keeps
+the first date, because a **trophy** records when something first happened.
+
+**What breaks if reversed.** Deriving leaves every **trophy** from a rotated
+**season** nameless — which is exactly the population of **trophy**s the
+**cabinet** exists to accumulate, and exactly what D-17 means when it says the
+permanent layer is what stops rotation from feeling like loss.
+
+### D-125 · A season declares the awards it offers
+
+The **award**s a **season** offers are published in its own document, alongside
+its **node**s and its palette, with a compiled-in list as fallback. Permanent
+**award**s, belonging to no **season**, are compiled in and always on offer.
+
+**Rationale.** D-21 requires an unearned **award** to be shown as **unfiled**
+rather than hidden, which means the **cabinet** has to know an **award** exists
+*before* anyone earns it. Something must therefore declare the list, and the
+choice is where.
+
+Deriving it from **node** composition — two **boss node**s imply two boss
+**trophy**s — needs no new surface and gets the count right, but it makes every
+territory award the same three things for ever. A **season** is the product's
+content lever (D-18, D-35); a territory that cannot have a **trophy** of its own
+is a weaker one.
+
+Compiling the list into the client is simplest and fully offline, and it makes
+every new **season**'s **trophy**s a client release — the precise thing building
+**season**s as data was meant to avoid, and the failure `openspec/BACKLOG.md`
+warns about under change 15 in as many words.
+
+Publishing follows the **season** and the daily schedule, which are already
+documents with compiled-in fallbacks, and inherits their refusal rule: a
+malformed **award** is refused on its own and the rest are kept, so a publishing
+mistake costs one **award** rather than the **cabinet**.
+
+**The fallback is not a degraded state.** A **season** with no published
+document is ordinary — most installs, most of the time — and the compiled-in
+list makes the **cabinet** complete in that case rather than empty.
+
+**What breaks if reversed.** Without a declared list there is no such thing as
+an **unfiled** **award**, because nothing knows the **award** is coming. D-21
+becomes unimplementable and the **cabinet** shows only what has already been
+earned, which is the design D-21 explicitly rejected: visible gaps drive return
+engagement far better than absence does.
+
+### D-126 · An earned trophy keeps the name it was minted with
+
+Once a **trophy** is minted, the **cabinet** shows the name captured at that
+moment, whether or not its **season** is still in force. A later publish that
+renames the **award** changes only what is still on offer as **unfiled**; it
+never rewrites a **trophy** a player already holds.
+
+**Rationale.** D-124 captures the name at mint time so a **trophy** survives its
+**season**'s document rotating away, but the first build of the **cabinet**
+honoured the captured name only *after* rotation. While the **season** was in
+force it drew the **award**'s current published name, so the same **trophy**
+could carry one name in October and another in November with nothing the player
+did in between. That makes a **trophy** a live label, which is exactly what
+D-124 argues it is not: a record of an event, true on the day and never true
+differently afterwards.
+
+**The cost is small and it is on the publisher.** A typo fixed in a live
+**award** reaches everyone who has not yet earned it and nobody who has. That is
+the same trade `PUBLISHING.md` already makes for a **season**'s `id`, and the
+remedy is the same — review the name before it goes live.
+
+**What breaks if reversed.** A **trophy**'s name would depend on whether its
+**season** happens still to be in force: stable after rotation, mutable before
+it. Two players who earned the same **trophy** a day apart, either side of a
+rename, would hold different records of the same event only until the
+**season** rotated, and then the same one. Nothing about that is explainable to
+a player.

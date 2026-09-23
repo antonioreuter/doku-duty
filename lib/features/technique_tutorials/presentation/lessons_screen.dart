@@ -10,9 +10,11 @@ import 'lesson_view.dart';
 
 /// Every **lesson**, replayable.
 ///
-/// **Reparented by change 16.** `docs/SPEC.md` §5.1 puts this in the cabinet,
-/// which does not exist yet; it lives behind a row on the settings screen until
-/// it does. Everything that decides what is in the list is here rather than in
+/// **Reparented by `add-trophy-cabinet`, as planned.** `docs/SPEC.md` §5.1
+/// puts this in the **cabinet**, and it now opens from there; the settings row
+/// that held it in the meantime is gone, so the list has one home. It was built
+/// self-contained precisely so the move would be a re-parent rather than a
+/// rebuild. Everything that decides what is in the list is here rather than in
 /// the screen around it, so `add-trophy-cabinet` can adopt this widget whole
 /// instead of rebuilding it.
 class LessonsScreen extends ConsumerWidget {

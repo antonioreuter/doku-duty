@@ -69,4 +69,14 @@ const List<String> syncableTables = <String>[
   // should merge it by maximum like a counter, not by recency of write.
   'completed_days',
   'streak_freeze_ledgers',
+  // The **cabinet**. Permanent rather than seasonal or daily (D-17), and the
+  // one layer a player would be most upset to lose — a **trophy** is the
+  // record of something they did once and can never do again.
+  //
+  // The merge is the easy kind: a set of rows keyed by **award** id, so it
+  // unions. Where two devices hold the same **trophy** with different dates,
+  // the *earlier* `earned_at` wins rather than the later — a **trophy**
+  // records when something first happened, so last-write-wins is backwards
+  // here in the one direction that matters (D-124).
+  'trophies',
 ];

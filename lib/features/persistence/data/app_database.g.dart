@@ -5594,6 +5594,490 @@ class StreakFreezeLedgersCompanion extends UpdateCompanion<StreakFreezeLedger> {
   }
 }
 
+class $TrophiesTable extends Trophies with TableInfo<$TrophiesTable, Trophy> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrophiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _awardIdMeta = const VerificationMeta(
+    'awardId',
+  );
+  @override
+  late final GeneratedColumn<String> awardId = GeneratedColumn<String>(
+    'award_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _seasonIdMeta = const VerificationMeta(
+    'seasonId',
+  );
+  @override
+  late final GeneratedColumn<String> seasonId = GeneratedColumn<String>(
+    'season_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seasonNameMeta = const VerificationMeta(
+    'seasonName',
+  );
+  @override
+  late final GeneratedColumn<String> seasonName = GeneratedColumn<String>(
+    'season_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _earnedAtMeta = const VerificationMeta(
+    'earnedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> earnedAt = GeneratedColumn<DateTime>(
+    'earned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    awardId,
+    name,
+    seasonId,
+    seasonName,
+    earnedAt,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trophies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Trophy> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('award_id')) {
+      context.handle(
+        _awardIdMeta,
+        awardId.isAcceptableOrUnknown(data['award_id']!, _awardIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_awardIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('season_id')) {
+      context.handle(
+        _seasonIdMeta,
+        seasonId.isAcceptableOrUnknown(data['season_id']!, _seasonIdMeta),
+      );
+    }
+    if (data.containsKey('season_name')) {
+      context.handle(
+        _seasonNameMeta,
+        seasonName.isAcceptableOrUnknown(data['season_name']!, _seasonNameMeta),
+      );
+    }
+    if (data.containsKey('earned_at')) {
+      context.handle(
+        _earnedAtMeta,
+        earnedAt.isAcceptableOrUnknown(data['earned_at']!, _earnedAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {awardId};
+  @override
+  Trophy map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Trophy(
+      awardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}award_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      seasonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season_id'],
+      ),
+      seasonName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season_name'],
+      ),
+      earnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}earned_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $TrophiesTable createAlias(String alias) {
+    return $TrophiesTable(attachedDatabase, alias);
+  }
+}
+
+class Trophy extends DataClass implements Insertable<Trophy> {
+  /// The **award** id this was minted from. Stable across publishes —
+  /// **progress is keyed to it**, so a republish that changes an id orphans the
+  /// **trophy** rather than renaming it.
+  final String awardId;
+
+  /// What it was called when it was earned. A later publish may rename the
+  /// **award**; what the player earned does not change.
+  final String name;
+
+  /// Null for a permanent **award**, which belongs to no **season**.
+  final String? seasonId;
+
+  /// The territory's name, captured at mint time. See the note above.
+  final String? seasonName;
+
+  /// When it was first earned. Never moved by a second minting.
+  final DateTime earnedAt;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const Trophy({
+    required this.awardId,
+    required this.name,
+    this.seasonId,
+    this.seasonName,
+    required this.earnedAt,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['award_id'] = Variable<String>(awardId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || seasonId != null) {
+      map['season_id'] = Variable<String>(seasonId);
+    }
+    if (!nullToAbsent || seasonName != null) {
+      map['season_name'] = Variable<String>(seasonName);
+    }
+    map['earned_at'] = Variable<DateTime>(earnedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  TrophiesCompanion toCompanion(bool nullToAbsent) {
+    return TrophiesCompanion(
+      awardId: Value(awardId),
+      name: Value(name),
+      seasonId: seasonId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seasonId),
+      seasonName: seasonName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seasonName),
+      earnedAt: Value(earnedAt),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory Trophy.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Trophy(
+      awardId: serializer.fromJson<String>(json['awardId']),
+      name: serializer.fromJson<String>(json['name']),
+      seasonId: serializer.fromJson<String?>(json['seasonId']),
+      seasonName: serializer.fromJson<String?>(json['seasonName']),
+      earnedAt: serializer.fromJson<DateTime>(json['earnedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'awardId': serializer.toJson<String>(awardId),
+      'name': serializer.toJson<String>(name),
+      'seasonId': serializer.toJson<String?>(seasonId),
+      'seasonName': serializer.toJson<String?>(seasonName),
+      'earnedAt': serializer.toJson<DateTime>(earnedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  Trophy copyWith({
+    String? awardId,
+    String? name,
+    Value<String?> seasonId = const Value.absent(),
+    Value<String?> seasonName = const Value.absent(),
+    DateTime? earnedAt,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => Trophy(
+    awardId: awardId ?? this.awardId,
+    name: name ?? this.name,
+    seasonId: seasonId.present ? seasonId.value : this.seasonId,
+    seasonName: seasonName.present ? seasonName.value : this.seasonName,
+    earnedAt: earnedAt ?? this.earnedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  Trophy copyWithCompanion(TrophiesCompanion data) {
+    return Trophy(
+      awardId: data.awardId.present ? data.awardId.value : this.awardId,
+      name: data.name.present ? data.name.value : this.name,
+      seasonId: data.seasonId.present ? data.seasonId.value : this.seasonId,
+      seasonName: data.seasonName.present
+          ? data.seasonName.value
+          : this.seasonName,
+      earnedAt: data.earnedAt.present ? data.earnedAt.value : this.earnedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Trophy(')
+          ..write('awardId: $awardId, ')
+          ..write('name: $name, ')
+          ..write('seasonId: $seasonId, ')
+          ..write('seasonName: $seasonName, ')
+          ..write('earnedAt: $earnedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    awardId,
+    name,
+    seasonId,
+    seasonName,
+    earnedAt,
+    updatedAt,
+    pendingUpload,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Trophy &&
+          other.awardId == this.awardId &&
+          other.name == this.name &&
+          other.seasonId == this.seasonId &&
+          other.seasonName == this.seasonName &&
+          other.earnedAt == this.earnedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class TrophiesCompanion extends UpdateCompanion<Trophy> {
+  final Value<String> awardId;
+  final Value<String> name;
+  final Value<String?> seasonId;
+  final Value<String?> seasonName;
+  final Value<DateTime> earnedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const TrophiesCompanion({
+    this.awardId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.seasonId = const Value.absent(),
+    this.seasonName = const Value.absent(),
+    this.earnedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrophiesCompanion.insert({
+    required String awardId,
+    required String name,
+    this.seasonId = const Value.absent(),
+    this.seasonName = const Value.absent(),
+    this.earnedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : awardId = Value(awardId),
+       name = Value(name);
+  static Insertable<Trophy> custom({
+    Expression<String>? awardId,
+    Expression<String>? name,
+    Expression<String>? seasonId,
+    Expression<String>? seasonName,
+    Expression<DateTime>? earnedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (awardId != null) 'award_id': awardId,
+      if (name != null) 'name': name,
+      if (seasonId != null) 'season_id': seasonId,
+      if (seasonName != null) 'season_name': seasonName,
+      if (earnedAt != null) 'earned_at': earnedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrophiesCompanion copyWith({
+    Value<String>? awardId,
+    Value<String>? name,
+    Value<String?>? seasonId,
+    Value<String?>? seasonName,
+    Value<DateTime>? earnedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return TrophiesCompanion(
+      awardId: awardId ?? this.awardId,
+      name: name ?? this.name,
+      seasonId: seasonId ?? this.seasonId,
+      seasonName: seasonName ?? this.seasonName,
+      earnedAt: earnedAt ?? this.earnedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (awardId.present) {
+      map['award_id'] = Variable<String>(awardId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (seasonId.present) {
+      map['season_id'] = Variable<String>(seasonId.value);
+    }
+    if (seasonName.present) {
+      map['season_name'] = Variable<String>(seasonName.value);
+    }
+    if (earnedAt.present) {
+      map['earned_at'] = Variable<DateTime>(earnedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrophiesCompanion(')
+          ..write('awardId: $awardId, ')
+          ..write('name: $name, ')
+          ..write('seasonId: $seasonId, ')
+          ..write('seasonName: $seasonName, ')
+          ..write('earnedAt: $earnedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5613,6 +6097,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CompletedDaysTable completedDays = $CompletedDaysTable(this);
   late final $StreakFreezeLedgersTable streakFreezeLedgers =
       $StreakFreezeLedgersTable(this);
+  late final $TrophiesTable trophies = $TrophiesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5633,6 +6118,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     bossAttempts,
     completedDays,
     streakFreezeLedgers,
+    trophies,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -8862,6 +9348,242 @@ typedef $$StreakFreezeLedgersTableProcessedTableManager =
       StreakFreezeLedger,
       PrefetchHooks Function()
     >;
+typedef $$TrophiesTableCreateCompanionBuilder =
+    TrophiesCompanion Function({
+      required String awardId,
+      required String name,
+      Value<String?> seasonId,
+      Value<String?> seasonName,
+      Value<DateTime> earnedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$TrophiesTableUpdateCompanionBuilder =
+    TrophiesCompanion Function({
+      Value<String> awardId,
+      Value<String> name,
+      Value<String?> seasonId,
+      Value<String?> seasonName,
+      Value<DateTime> earnedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$TrophiesTableFilterComposer
+    extends Composer<_$AppDatabase, $TrophiesTable> {
+  $$TrophiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get awardId => $composableBuilder(
+    column: $table.awardId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seasonName => $composableBuilder(
+    column: $table.seasonName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get earnedAt => $composableBuilder(
+    column: $table.earnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrophiesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TrophiesTable> {
+  $$TrophiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get awardId => $composableBuilder(
+    column: $table.awardId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seasonId => $composableBuilder(
+    column: $table.seasonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seasonName => $composableBuilder(
+    column: $table.seasonName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get earnedAt => $composableBuilder(
+    column: $table.earnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrophiesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TrophiesTable> {
+  $$TrophiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get awardId =>
+      $composableBuilder(column: $table.awardId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get seasonId =>
+      $composableBuilder(column: $table.seasonId, builder: (column) => column);
+
+  GeneratedColumn<String> get seasonName => $composableBuilder(
+    column: $table.seasonName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get earnedAt =>
+      $composableBuilder(column: $table.earnedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$TrophiesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TrophiesTable,
+          Trophy,
+          $$TrophiesTableFilterComposer,
+          $$TrophiesTableOrderingComposer,
+          $$TrophiesTableAnnotationComposer,
+          $$TrophiesTableCreateCompanionBuilder,
+          $$TrophiesTableUpdateCompanionBuilder,
+          (Trophy, BaseReferences<_$AppDatabase, $TrophiesTable, Trophy>),
+          Trophy,
+          PrefetchHooks Function()
+        > {
+  $$TrophiesTableTableManager(_$AppDatabase db, $TrophiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrophiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrophiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrophiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> awardId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> seasonId = const Value.absent(),
+                Value<String?> seasonName = const Value.absent(),
+                Value<DateTime> earnedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrophiesCompanion(
+                awardId: awardId,
+                name: name,
+                seasonId: seasonId,
+                seasonName: seasonName,
+                earnedAt: earnedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String awardId,
+                required String name,
+                Value<String?> seasonId = const Value.absent(),
+                Value<String?> seasonName = const Value.absent(),
+                Value<DateTime> earnedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrophiesCompanion.insert(
+                awardId: awardId,
+                name: name,
+                seasonId: seasonId,
+                seasonName: seasonName,
+                earnedAt: earnedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrophiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TrophiesTable,
+      Trophy,
+      $$TrophiesTableFilterComposer,
+      $$TrophiesTableOrderingComposer,
+      $$TrophiesTableAnnotationComposer,
+      $$TrophiesTableCreateCompanionBuilder,
+      $$TrophiesTableUpdateCompanionBuilder,
+      (Trophy, BaseReferences<_$AppDatabase, $TrophiesTable, Trophy>),
+      Trophy,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8896,4 +9618,6 @@ class $AppDatabaseManager {
       $$CompletedDaysTableTableManager(_db, _db.completedDays);
   $$StreakFreezeLedgersTableTableManager get streakFreezeLedgers =>
       $$StreakFreezeLedgersTableTableManager(_db, _db.streakFreezeLedgers);
+  $$TrophiesTableTableManager get trophies =>
+      $$TrophiesTableTableManager(_db, _db.trophies);
 }

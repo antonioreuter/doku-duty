@@ -42,6 +42,7 @@ at all. Publishing a `season` is how a **season** is rotated without a release
 | `season.length_days` | integer | Whole days. Six weeks is 42 (D-18) |
 | `season.nodes` | array | Exactly 42 objects, in trail order |
 | `season.palette` | object | Optional. What this territory repaints |
+| `season.awards` | array | Optional. The **award**s this territory offers — see [The awards](#the-awards) |
 
 Each entry in `season.nodes` carries a `type` — `puzzle`, `variant`, `chest`, or
 `boss` — and, for every type but `chest`, a `rank`: one of `greenhorn`,
@@ -187,6 +188,75 @@ property constraint 1 needs and the reason the fallback exists at all.
 It cannot set a **rank** directly. The **rank** is whatever the named puzzle
 already carries, graded when the **pack** was built (D-32). A schedule that
 wants a Marshal board on a Thursday names a Marshal puzzle.
+
+## The awards
+
+`season.awards` lists the **trophy**s a territory offers, so a new **season**
+gets its own without a release (D-125). It lives inside `season`, not beside
+it, because an **award** belongs to the territory that declared it.
+
+Absent is valid and common. With no `awards` key the client offers the
+compiled-in set for whichever **season** is in force: one **award** for each
+**boss node**, at 22 and 41, and one for closing the **season**, named after
+the territory. A **cabinet** with nothing published is complete, not degraded.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `id` | string | Stable identity. **A minted trophy is keyed to it** |
+| `name` | string | What the **cabinet** shows. "The assayer, cornered" |
+| `trigger` | string | `boss` or `season_complete` |
+| `node_position` | integer | Required for `boss`: the **boss node** that earns it, 22 or 41 |
+
+A published list **replaces** the compiled-in one rather than joining it. A
+**season** that wants a trophy for each boss and one for closing must list all
+three.
+
+**Ids are forever, and names are too once earned.** A **trophy** is written
+when it is earned and keeps the id, name, and territory it was minted with
+(D-124, D-126). Renaming an **award** in place changes what is still on offer as
+**unfiled**; every player who already holds it keeps the old name. Review a
+name before it goes live — a typo fixed later stays on every **trophy** minted
+before the fix. Changing an `id` is different: it orphans the old one, and the
+player who earned it keeps a **trophy** the new **award** does not recognise and
+can earn the new one again. Prefix ids with the **season** id —
+`copper-hollow.boss.22` — so two territories cannot collide.
+
+### What the client refuses
+
+Per **entry**, never per document — the same rule as the daily schedule. One
+malformed entry loses that **award** and no other:
+
+- An entry that is not an object
+- A missing or empty `id` or `name`
+- A `trigger` other than `boss` or `season_complete`
+- A `boss` entry with no integer `node_position`
+
+The last is refused rather than kept because an **award** that can never be
+matched to a completion would sit **unfiled** for ever, which reads to the
+player as something they failed to get.
+
+An `awards` value that is not an array, an empty array, or an array in which
+every entry is refused all fall back to the compiled-in set. **A refused
+`season` takes its `awards` with it:** the compiled-in **season** comes back
+into force with its own compiled-in **award**s, never with the refused
+document's under the wrong territory.
+
+### What an award cannot do
+
+It cannot invent a way to earn something. `trigger` is a closed set of events
+the client already records; there is no key for a score, a time, or a count,
+and a new trigger needs a build.
+
+It cannot declare a permanent **award**. The perfect-month **award** and one for
+each **rank** from Sheriff to Legend are compiled in and belong to no
+**season**, so no publish can add to them, rename them, or withdraw them (D-17).
+
+It cannot take anything away. Removing an **award** from a later publish stops
+offering it; every **trophy** already minted under it stays in the **cabinet**
+under the name and territory captured when it was earned.
+
+It cannot carry a reward. A **trophy** grants no **stamp**s and no **perk** —
+`add-stamps` owns every way a **stamp** is earned (D-66).
 
 ## What a value cannot do
 

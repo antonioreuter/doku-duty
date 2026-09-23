@@ -12,6 +12,7 @@ import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
 import 'generated/schema_v6.dart' as v6;
+import 'generated/schema_v7.dart' as v7;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -870,6 +871,159 @@ void main() {
           await rows('SELECT last_spent_day FROM streak_freeze_ledgers'),
           isEmpty,
         );
+      },
+    );
+  });
+
+  test('migration from v6 to v7 keeps everything and mints nothing', () async {
+    final stamp = DateTime.utc(2026, 9, 23, 9).toIso8601String();
+    const grid =
+        '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+    // A player with all three of D-17's layers in play: a puzzle in progress, a
+    // permanent record behind them, a **season** walked, and a **calendar**
+    // with a **streak** on it. Version 7 adds one table and moves nothing.
+    final oldSaves = <v6.PuzzleSavesData>[
+      v6.PuzzleSavesData(
+        puzzleId: 'p1',
+        placedValues: grid,
+        elapsedMs: 480000,
+        isComplete: 0,
+        updatedAt: stamp,
+        pendingUpload: 1,
+        deviceOrigin: 'test-device',
+        mistakes: 3,
+      ),
+    ];
+
+    final oldSolved = <v6.SolvedPuzzlesData>[
+      v6.SolvedPuzzlesData(
+        puzzleId: 'q-ranger',
+        solvedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldLifetime = <v6.LifetimeStatsData>[
+      v6.LifetimeStatsData(
+        id: 0,
+        puzzlesSolved: 88,
+        perfectSolves: 27,
+        totalPlayMs: 20000000,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldTechniques = <v6.TechniqueStatsData>[
+      v6.TechniqueStatsData(
+        technique: 'xWing',
+        puzzlesRequiring: 4,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldSeason = <v6.SeasonStatesData>[
+      v6.SeasonStatesData(
+        id: 0,
+        seasonId: 'dust-gulch',
+        startedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    final oldNodes = <v6.CompletedNodesData>[
+      for (final position in <int>[20, 21, 22])
+        v6.CompletedNodesData(
+          seasonId: 'dust-gulch',
+          position: position,
+          completedAt: stamp,
+          updatedAt: stamp,
+          pendingUpload: 1,
+        ),
+    ];
+
+    final oldDays = <v6.CompletedDaysData>[
+      for (final day in <int>[20, 21, 22])
+        v6.CompletedDaysData(
+          day: '2026-09-${day.toString().padLeft(2, '0')}',
+          isVerified: 1,
+          wasFrozen: 0,
+          updatedAt: stamp,
+          pendingUpload: 1,
+        ),
+    ];
+
+    await verifier.testWithDataIntegrity(
+      oldVersion: 6,
+      newVersion: 7,
+      createOld: v6.DatabaseAtV6.new,
+      createNew: v7.DatabaseAtV7.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        batch.insertAll(oldDb.solvedPuzzles, oldSolved);
+        batch.insertAll(oldDb.lifetimeStats, oldLifetime);
+        batch.insertAll(oldDb.techniqueStats, oldTechniques);
+        batch.insertAll(oldDb.seasonStates, oldSeason);
+        batch.insertAll(oldDb.completedNodes, oldNodes);
+        batch.insertAll(oldDb.completedDays, oldDays);
+      },
+      validateItems: (newDb) async {
+        Future<List<Map<String, Object?>>> rows(String sql) async {
+          final result = await newDb.customSelect(sql).get();
+          return <Map<String, Object?>>[for (final r in result) r.data];
+        }
+
+        final saves = await rows(
+          'SELECT placed_values, elapsed_ms, mistakes FROM puzzle_saves',
+        );
+        expect(saves.single['placed_values'], grid);
+        expect(saves.single['mistakes'], 3);
+
+        // The permanent layer (D-17), which is the layer this change is about
+        // and therefore the one a migration must not disturb.
+        expect(
+          (await rows(
+            'SELECT puzzle_id FROM solved_puzzles',
+          )).single['puzzle_id'],
+          'q-ranger',
+        );
+        expect(
+          (await rows(
+            'SELECT puzzles_solved, perfect_solves FROM lifetime_stats',
+          )).single['perfect_solves'],
+          27,
+        );
+        expect(
+          (await rows(
+            'SELECT puzzles_requiring FROM technique_stats',
+          )).single['puzzles_requiring'],
+          4,
+        );
+
+        // The seasonal and daily layers, untouched.
+        expect(
+          (await rows(
+            'SELECT season_id FROM season_states',
+          )).single['season_id'],
+          'dust-gulch',
+        );
+        expect(
+          await rows('SELECT position FROM completed_nodes'),
+          hasLength(3),
+        );
+        expect(await rows('SELECT day FROM completed_days'), hasLength(3));
+
+        // **No retroactive minting.** This player completed node 22 — a **boss
+        // node** — under version 6, and upgrading does not hand them the
+        // **trophy** for it. There is no moment attached to that completion to
+        // date a **trophy** from, and a **cabinet** that invents its own
+        // history is worth less than an honest empty one (D-124).
+        expect(await rows('SELECT award_id FROM trophies'), isEmpty);
       },
     );
   });

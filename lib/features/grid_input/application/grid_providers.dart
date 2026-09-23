@@ -15,6 +15,7 @@ import '../../puzzle_engine/domain/rank.dart';
 import '../../puzzle_engine/domain/technique.dart';
 import '../../rank_progression/data/progression_repository.dart';
 import '../../season_map/application/season_providers.dart';
+import '../../trophy_cabinet/application/cabinet_providers.dart';
 import '../application/puzzle_controller.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
@@ -341,9 +342,20 @@ final boardSinkProvider = Provider<BoardSink>(
     nodeCompletion: () {
       final position = ref.read(activeNodeProvider);
       if (position == null) return null;
-      final seasonId = ref.read(currentSeasonProvider).id;
-      final seasons = ref.read(seasonRepositoryProvider);
-      return () => seasons.completeNode(seasonId: seasonId, position: position);
+      final season = ref.read(currentSeasonProvider);
+      // Routed through the **cabinet**'s minting service rather than the
+      // **season** repository directly, so the completion and any **trophy**
+      // it earns commit in one transaction (D-124). `season-map` stays unaware
+      // of the **cabinet**; the dependency points one way.
+      final minting = ref.read(mintingServiceProvider);
+      final catalogue = ref.read(awardCatalogueProvider);
+      return () => minting.completeNode(
+        seasonId: season.id,
+        seasonName: season.name,
+        position: position,
+        nodeCount: season.nodes.length,
+        catalogue: catalogue,
+      );
     },
     // Every read derived from the **solve record** is now stale: which puzzle
     // is next at each **rank**, the player's **rank**, and where they stand on
