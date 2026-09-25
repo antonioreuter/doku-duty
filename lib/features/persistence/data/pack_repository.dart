@@ -2,6 +2,18 @@ import 'package:drift/drift.dart';
 
 import 'app_database.dart';
 
+/// Which rule a puzzle is played under.
+///
+/// Asked for at the query rather than filtered by callers: **killer** is
+/// reached only from a **variant node** (D-127), and a caller that forgot to
+/// filter would hand a **free play** player a board with sums in its corners.
+enum PuzzleKind {
+  classic,
+
+  /// Carries **cage**s. Stored as a non-null `cages` column.
+  killer,
+}
+
 /// A puzzle as callers hand it in, before it is a database row.
 class StoredPuzzle {
   const StoredPuzzle({
@@ -10,6 +22,7 @@ class StoredPuzzle {
     required this.solution,
     required this.rank,
     required this.seed,
+    this.cages,
   });
 
   final String id;
@@ -17,6 +30,11 @@ class StoredPuzzle {
   final String solution;
   final Rank rank;
   final int seed;
+
+  /// A **killer** puzzle's **cage**s as the **pack** writes them, or null for
+  /// a classic one. Stored as given: this layer keeps a puzzle, and the engine
+  /// is what reads a **cage**.
+  final String? cages;
 }
 
 /// Reads puzzles and installs packs.
@@ -61,6 +79,7 @@ class PackRepository {
               solution: puzzle.solution,
               rank: puzzle.rank,
               seed: puzzle.seed,
+              cages: Value(puzzle.cages),
             ),
         ]);
       });
@@ -78,20 +97,35 @@ class PackRepository {
     _db.puzzles,
   )..where((p) => p.id.equals(id))).getSingleOrNull();
 
-  /// The next puzzle of [rank] the player has not solved, or null.
+  /// The next puzzle of [rank] and [kind] the player has not solved, or null.
   ///
   /// Null is a normal answer, not a failure: running out is how a top-up is
   /// triggered, and an exception would make an ordinary condition look like a
-  /// fault.
-  Future<Puzzle?> nextUnsolved(Rank rank) {
+  /// fault. Running out of **killer** is null too — never a classic puzzle in
+  /// its place.
+  Future<Puzzle?> nextUnsolved(
+    Rank rank, {
+    PuzzleKind kind = PuzzleKind.classic,
+  }) {
     final solved = _db.selectOnly(_db.solvedPuzzles)
       ..addColumns(<Expression<Object>>[_db.solvedPuzzles.puzzleId]);
 
     return (_db.select(_db.puzzles)
-          ..where((p) => p.rank.equalsValue(rank) & p.id.isNotInQuery(solved))
+          ..where(
+            (p) =>
+                p.rank.equalsValue(rank) &
+                _ofKind(p, kind) &
+                p.id.isNotInQuery(solved),
+          )
           ..limit(1))
         .getSingleOrNull();
   }
+
+  static Expression<bool> _ofKind($PuzzlesTable p, PuzzleKind kind) =>
+      switch (kind) {
+        PuzzleKind.classic => p.cages.isNull(),
+        PuzzleKind.killer => p.cages.isNotNull(),
+      };
 
   /// A puzzle of [rank] chosen by [seed], deterministically.
   ///
@@ -103,10 +137,16 @@ class PackRepository {
   ///
   /// Ordered by id so the choice does not depend on insertion order, which a
   /// **pack** top-up changes.
+  ///
+  /// Classic only, and not a parameter: the **daily challenge** is always
+  /// classic (D-127), and this is the only query it derives a board from.
   Future<Puzzle?> puzzleByRankAndSeed(Rank rank, int seed) async {
     final rows =
         await (_db.select(_db.puzzles)
-              ..where((p) => p.rank.equalsValue(rank))
+              ..where(
+                (p) =>
+                    p.rank.equalsValue(rank) & _ofKind(p, PuzzleKind.classic),
+              )
               ..orderBy(<OrderingTerm Function($PuzzlesTable)>[
                 (p) => OrderingTerm(expression: p.id),
               ]))

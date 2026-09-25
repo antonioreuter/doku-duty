@@ -9,6 +9,7 @@ import '../../design_system/domain/haptics.dart';
 import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
 import '../../mistake_model/domain/attempt.dart';
 import '../../persistence/domain/note_enums.dart';
+import '../../puzzle_engine/domain/cage.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../../puzzle_engine/domain/technique.dart';
 import '../domain/board.dart';
@@ -322,6 +323,13 @@ PuzzleSession sessionFor({
   int mistakes = 0,
 }) {
   final givens = (Grid.parse(puzzle.clues) as ValidGrid).grid;
+  // The **pack** validated these on install, so an unreadable set here means
+  // a damaged row; it opens as the classic grid it also is rather than not
+  // opening at all (constraint 1).
+  final cages = switch (CageSet.fromStoredText(puzzle.cages)) {
+    ValidCageSet(:final cages) => cages,
+    _ => null,
+  };
   return PuzzleSession.start(
     // The pack carries the solution beside the clues (D-32), so the session
     // that counts **mistake**s never has to ask the network for the answer.
@@ -329,11 +337,12 @@ PuzzleSession sessionFor({
     isStrict: isStrict,
     attempt: Attempt(mistakes: mistakes),
     board: placedValues == null && notes.isEmpty
-        ? Board.forPuzzle(givens: givens)
+        ? Board.forPuzzle(givens: givens, cages: cages)
         : Board.restore(
             givens: givens,
             placedValues: placedValues ?? '.' * 81,
             notes: notes,
+            cages: cages,
           ),
     mode: mode,
   );

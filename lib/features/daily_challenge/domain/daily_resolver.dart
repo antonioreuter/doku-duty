@@ -21,9 +21,10 @@ class DailyResolver {
 
     if (resolution is NamedPuzzle) {
       final named = await source.byId(resolution.puzzleId);
-      if (named != null) return named;
+      if (named != null && !named.isKiller) return named;
       // The schedule named something this install does not have — an older
-      // **pack**, or a publish that ran ahead of one. Falling through is the
+      // **pack**, or a publish that ran ahead of one — or a **killer** puzzle,
+      // which the **daily challenge** never is (D-127). Falling through is the
       // same answer as an uncovered date (D-115).
     }
 

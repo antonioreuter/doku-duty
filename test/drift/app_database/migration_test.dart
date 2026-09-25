@@ -13,6 +13,7 @@ import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
+import 'generated/schema_v8.dart' as v8;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -1027,4 +1028,83 @@ void main() {
       },
     );
   });
+
+  test(
+    'migration from v7 to v8 keeps a classic save in progress, and classic',
+    () async {
+      final stamp = DateTime.utc(2026, 9, 23, 9).toIso8601String();
+      const clues =
+          '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+      const solution =
+          '534678912672195348198342567859761423426853791713924856961537284287419635345286179';
+      const placed =
+          '534.7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+      // A classic puzzle half-played, with notes and a mistake on it, from
+      // the version 1 **pack**. Version 8 gives puzzles a **cage** column and
+      // moves nothing else.
+      final oldPacks = <v7.PacksData>[
+        v7.PacksData(packId: 'frontier-1', version: 1, installedAt: stamp),
+      ];
+      final oldPuzzles = <v7.PuzzlesData>[
+        v7.PuzzlesData(
+          id: 'q2593396383',
+          packId: 'frontier-1',
+          clues: clues,
+          solution: solution,
+          rank: 'deputy',
+          seed: 2593396383,
+        ),
+      ];
+      final oldSaves = <v7.PuzzleSavesData>[
+        v7.PuzzleSavesData(
+          puzzleId: 'q2593396383',
+          placedValues: placed,
+          elapsedMs: 480000,
+          isComplete: 0,
+          updatedAt: stamp,
+          pendingUpload: 1,
+          deviceOrigin: 'test-device',
+          mistakes: 1,
+        ),
+      ];
+
+      await verifier.testWithDataIntegrity(
+        oldVersion: 7,
+        newVersion: 8,
+        createOld: v7.DatabaseAtV7.new,
+        createNew: v8.DatabaseAtV8.new,
+        openTestedDatabase: AppDatabase.new,
+        createItems: (batch, oldDb) {
+          batch.insertAll(oldDb.packs, oldPacks);
+          batch.insertAll(oldDb.puzzles, oldPuzzles);
+          batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        },
+        validateItems: (newDb) async {
+          Future<List<Map<String, Object?>>> rows(String sql) async {
+            final result = await newDb.customSelect(sql).get();
+            return <Map<String, Object?>>[for (final r in result) r.data];
+          }
+
+          final saves = await rows(
+            'SELECT puzzle_id, placed_values, elapsed_ms, mistakes '
+            'FROM puzzle_saves',
+          );
+          expect(saves.single['puzzle_id'], 'q2593396383');
+          expect(saves.single['placed_values'], placed);
+          expect(saves.single['mistakes'], 1);
+
+          // Still classic: null **cage**s is what a classic puzzle is, and an
+          // upgrade must not make a board the player started into another.
+          final puzzle = (await rows(
+            'SELECT clues, solution, rank, cages FROM puzzles',
+          )).single;
+          expect(puzzle['clues'], clues);
+          expect(puzzle['solution'], solution);
+          expect(puzzle['rank'], 'deputy');
+          expect(puzzle['cages'], equals(null));
+        },
+      );
+    },
+  );
 }

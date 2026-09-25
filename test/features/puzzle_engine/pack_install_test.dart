@@ -10,6 +10,7 @@ import 'package:doku_duty/features/persistence/data/app_database.dart'
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/data/pack_source.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/cage.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/pack.dart';
 
 /// Serves a string as if it were the bundled asset.
@@ -58,7 +59,7 @@ void main() {
         PackInstallOutcome.installed,
       );
 
-      expect(await packs.packVersion('frontier-1'), 1);
+      expect(await packs.packVersion('frontier-1'), 2);
       for (final rank in Rank.values) {
         final puzzle = await packs.nextUnsolved(rank);
         expect(puzzle, isNotNull, reason: rank.name);
@@ -68,6 +69,56 @@ void main() {
       }
       expect(reported, isEmpty);
     });
+
+    test(
+      'a killer puzzle keeps its cages, and a classic one has none',
+      () async {
+        await installerFor(bundled()).install();
+        final pack = (Pack.parse(packJson) as ParsedPack).pack;
+
+        final killer = pack.puzzles.firstWhere((p) => p.isKiller);
+        final stored = await packs.puzzleById(killer.id);
+        final read = CageSet.fromStoredText(stored!.cages);
+        expect(read, isA<ValidCageSet>());
+        expect((read! as ValidCageSet).cages, killer.cages);
+
+        final classic = pack.puzzles.firstWhere((p) => !p.isKiller);
+        expect((await packs.puzzleById(classic.id))!.cages, isNull);
+        expect(CageSet.fromStoredText(null), isNull);
+      },
+    );
+
+    // The upgrade every existing install takes: version 1 held classic
+    // puzzles only, and version 2 adds **killer** ones without touching them.
+    test(
+      'an installed version 1 pack upgrades, keeping what was solved',
+      () async {
+        final current = (Pack.parse(packJson) as ParsedPack).pack;
+        final v1 = Pack(
+          packId: current.packId,
+          version: 1,
+          puzzles: current.puzzles.where((p) => !p.isKiller).toList(),
+        );
+        await installerFor(bundled(v1.encode())).install();
+        final solvedId = v1.puzzles.first.id;
+        await packs.markSolved(solvedId);
+        expect(
+          await packs.nextUnsolved(Rank.sheriff, kind: PuzzleKind.killer),
+          isNull,
+        );
+
+        expect(
+          await installerFor(bundled()).install(),
+          PackInstallOutcome.installed,
+        );
+        expect(await packs.packVersion('frontier-1'), 2);
+        expect(await packs.isSolved(solvedId), isTrue);
+        expect(
+          await packs.nextUnsolved(Rank.sheriff, kind: PuzzleKind.killer),
+          isNotNull,
+        );
+      },
+    );
 
     test('every puzzle in the file reaches the database', () async {
       await installerFor(bundled()).install();

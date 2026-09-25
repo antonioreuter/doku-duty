@@ -29,6 +29,17 @@ void main() {
     Rank.legend: 20,
   };
 
+  /// The **killer** split, for **variant node**s. Every **rank** needs some,
+  /// because a published **season** may put a **variant node** at any of them.
+  const expectedKiller = <Rank, int>{
+    Rank.greenhorn: 12,
+    Rank.deputy: 12,
+    Rank.sheriff: 12,
+    Rank.marshal: 12,
+    Rank.ranger: 12,
+    Rank.legend: 12,
+  };
+
   late Pack pack;
 
   setUpAll(() {
@@ -47,7 +58,7 @@ void main() {
 
   test('it is the pack the app declares', () {
     expect(pack.packId, 'frontier-1');
-    expect(pack.version, 1);
+    expect(pack.version, 2);
     expect(
       File('pubspec.yaml').readAsStringSync(),
       contains(packPath),
@@ -55,10 +66,12 @@ void main() {
     );
   });
 
-  // Constraint 8, at the only point where breaking it reaches a player.
+  // Constraint 8, at the only point where breaking it reaches a player. A
+  // **killer** puzzle is checked under its **cage**s, which is the only way
+  // most of them are unique at all.
   test('every puzzle has exactly one solution, and it is the stored one', () {
     for (final puzzle in pack.puzzles) {
-      final result = checkUniqueness(gridOf(puzzle.clues));
+      final result = checkUniqueness(gridOf(puzzle.clues), cages: puzzle.cages);
       expect(result, isA<UniqueSolution>(), reason: puzzle.id);
       expect(
         (result as UniqueSolution).solution,
@@ -88,7 +101,7 @@ void main() {
   // parse, still be unique, and carry grades this solver no longer agrees with.
   test('every stored rank is what the grader returns for it now', () {
     for (final puzzle in pack.puzzles) {
-      final graded = grade(gridOf(puzzle.clues));
+      final graded = grade(gridOf(puzzle.clues), cages: puzzle.cages);
       expect(graded, isA<Graded>(), reason: '${puzzle.id} is ungradable');
       expect(
         (graded as Graded).rank,
@@ -99,12 +112,32 @@ void main() {
   });
 
   test('all six ranks are present, in the counts the tool shipped', () {
+    final classic = pack.puzzles.where((p) => !p.isKiller);
     for (final rank in Rank.values) {
-      final count = pack.puzzles.where((p) => p.rank == rank).length;
+      final count = classic.where((p) => p.rank == rank).length;
       expect(count, expected[rank], reason: rank.name);
       expect(count, greaterThan(0), reason: rank.name);
     }
-    expect(pack.puzzles, hasLength(305));
+    expect(classic, hasLength(305));
+  });
+
+  test('every rank has killer puzzles, in the counts the tool shipped', () {
+    final killer = pack.puzzles.where((p) => p.isKiller);
+    for (final rank in Rank.values) {
+      final count = killer.where((p) => p.rank == rank).length;
+      expect(count, expectedKiller[rank], reason: rank.name);
+      expect(count, greaterThan(0), reason: rank.name);
+    }
+  });
+
+  test('every killer solution satisfies its cages', () {
+    for (final puzzle in pack.puzzles.where((p) => p.isKiller)) {
+      expect(
+        puzzle.cages!.isSatisfiedBy(gridOf(puzzle.solution)),
+        isTrue,
+        reason: puzzle.id,
+      );
+    }
   });
 
   test('no two puzzles share a clue grid', () {
@@ -122,28 +155,35 @@ void main() {
   });
 
   // A regenerated pack must not re-key a puzzle the player has already solved:
-  // the id is derived from the seed, and the seed reproduces the puzzle.
-  test('every id is derived from its seed, so it is stable', () {
+  // the id is derived from the seed, and the seed reproduces the puzzle. The
+  // two kinds share a seed encoding, so the prefix is what keeps them apart.
+  test('every id is derived from its seed and kind, so it is stable', () {
     for (final puzzle in pack.puzzles) {
-      expect(puzzle.id, 'q${puzzle.seed}', reason: puzzle.id);
+      final prefix = puzzle.isKiller ? 'k' : 'q';
+      expect(puzzle.id, '$prefix${puzzle.seed}', reason: puzzle.id);
     }
-    expect(
-      pack.puzzles.map((puzzle) => puzzle.seed).toSet(),
-      hasLength(pack.puzzles.length),
-    );
+    for (final killer in <bool>[false, true]) {
+      final ofKind = pack.puzzles.where((p) => p.isKiller == killer);
+      expect(ofKind.map((p) => p.seed).toSet(), hasLength(ofKind.length));
+    }
   });
 
   test('a seed reproduces the puzzle it is stored on', () {
     // Costly per puzzle, so a spread rather than all 305 — one per rank, and
     // the whole pack is covered by the uniqueness and grading tests above.
-    const generator = PuzzleGenerator();
-    for (final rank in Rank.values) {
-      final puzzle = pack.puzzles.firstWhere((p) => p.rank == rank);
-      final regenerated = generator.puzzleForSeed(puzzle.seed);
-      expect(regenerated, isNotNull, reason: puzzle.id);
-      expect(regenerated!.clues.toStorageString(), puzzle.clues);
-      expect(regenerated.solution.toStorageString(), puzzle.solution);
-      expect(regenerated.rank, puzzle.rank);
+    for (final killer in <bool>[false, true]) {
+      final generator = PuzzleGenerator(killer: killer);
+      for (final rank in Rank.values) {
+        final puzzle = pack.puzzles.firstWhere(
+          (p) => p.rank == rank && p.isKiller == killer,
+        );
+        final regenerated = generator.puzzleForSeed(puzzle.seed);
+        expect(regenerated, isNotNull, reason: puzzle.id);
+        expect(regenerated!.clues.toStorageString(), puzzle.clues);
+        expect(regenerated.solution.toStorageString(), puzzle.solution);
+        expect(regenerated.rank, puzzle.rank);
+        expect(regenerated.cages, puzzle.cages, reason: puzzle.id);
+      }
     }
   });
 

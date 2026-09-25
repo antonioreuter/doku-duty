@@ -1,3 +1,4 @@
+import '../../puzzle_engine/domain/cage.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../puzzle_engine/domain/technique.dart';
 
@@ -35,6 +36,7 @@ final class Lesson {
     required this.steps,
     required this.grid,
     required this.placement,
+    this.cages,
   });
 
   /// Stable, and stored: this is the key in the seen table, so renaming one
@@ -54,6 +56,18 @@ final class Lesson {
   final String grid;
 
   final LessonPlacement placement;
+
+  /// A **killer** **lesson**'s **cage**s, in the JSON form a **pack** row
+  /// carries them in, or null for a classic one. Text rather than a [CageSet]
+  /// so a **lesson** stays a constant.
+  final String? cages;
+
+  /// [cages], read. Null for a classic **lesson**, and for a set that does not
+  /// read — which the catalogue test makes impossible to ship.
+  CageSet? get cageSet => switch (CageSet.fromStoredText(cages)) {
+    ValidCageSet(:final cages) => cages,
+    _ => null,
+  };
 
   /// Where this **lesson** sits on the ladder, for choosing the hardest due one
   /// (D-106). The **notes lesson** sits at the **rank** it is owed by.

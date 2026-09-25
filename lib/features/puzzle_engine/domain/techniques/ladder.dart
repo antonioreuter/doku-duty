@@ -1,4 +1,5 @@
 import '../technique.dart';
+import 'cages.dart';
 import 'chains.dart';
 import 'fish.dart';
 import 'intersections.dart';
@@ -16,9 +17,11 @@ import 'wings.dart';
 const List<SolvingTechnique> techniqueLadder = <SolvingTechnique>[
   FullHouse(),
   NakedSingle(),
+  CageCombination(),
   HiddenSingle(),
   NakedPair(),
   PointingPair(),
+  FortyFiveRule(),
   BoxLineReduction(),
   NakedTriple(),
   HiddenPair(),

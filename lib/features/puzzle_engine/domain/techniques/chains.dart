@@ -63,7 +63,7 @@ final class SimpleChain extends SolvingTechnique {
       if (!state.isEmptyAt(cell) || !state.hasCandidate(cell, digit)) continue;
 
       var sees = 0;
-      for (final peer in GridGeometry.peersOf(cell)) {
+      for (final peer in state.peers.of(cell)) {
         final colour = chain.colourOf[peer];
         if (colour != null) sees |= 1 << colour;
       }

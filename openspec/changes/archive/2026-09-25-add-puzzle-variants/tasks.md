@@ -49,161 +49,184 @@ back to the developer.
 
 ## 3. The cage model *(test-first)*
 
-- [ ] 3.1 Write the failing tests for a **cage** set: every cell in exactly one
+- [x] 3.1 Write the failing tests for a **cage** set: every cell in exactly one
       **cage**, every **cage** orthogonally connected, **cage sum**s between the
       least and greatest possible for their size, and refusal of each violation.
-- [ ] 3.2 Implement the **cage** model in `puzzle_engine/domain/`, pure Dart,
+- [x] 3.2 Implement the **cage** model in `puzzle_engine/domain/`, pure Dart,
       and extend the domain's `no_flutter_import_test.dart`.
-- [ ] 3.3 Write the failing tests for per-puzzle peers. A classic puzzle's peers
+- [x] 3.3 Write the failing tests for per-puzzle peers. A classic puzzle's peers
       are exactly `GridGeometry.peersOf`, for all 81 cells. A **killer**
       puzzle's are those plus **cage** mates, each listed once. Candidates never
       exclude a digit by arithmetic.
-- [ ] 3.4 Move peer lookup from the static `GridGeometry` table to a per-puzzle
+- [x] 3.4 Move peer lookup from the static `GridGeometry` table to a per-puzzle
       source that falls back to the table when there are no **cage**s. Every
       existing caller keeps its behaviour. The full suite must be green here
       with no classic test edited.
 
 ## 4. Uniqueness *(test-first)*
 
-- [ ] 4.1 Write the failing tests: a **killer** grid unique only through its
+- [x] 4.1 Write the failing tests: a **killer** grid unique only through its
       sums, the same grid with one **cage sum** changed reported as ambiguous or
       unsolvable, and a classic grid answering exactly as before.
-- [ ] 4.2 Extend the exhaustive search to prune on **cage** repeats and partial
+- [x] 4.2 Extend the exhaustive search to prune on **cage** repeats and partial
       sums. It stays independent of the technique solver (D-08).
-- [ ] 4.3 Re-run `test/features/puzzle_engine/timing_test.dart` on a
+- [x] 4.3 Re-run `test/features/puzzle_engine/timing_test.dart` on a
       zero-given **killer** grid and record the time. It is offline only, but
-      the generator will call it thousands of times.
+      the generator will call it thousands of times. *Recorded 2026-09-23 on
+      the macOS host: median 53ms, worst 83ms over ten runs, on the 28-cage
+      reference board.*
 
 ## 5. The two killer techniques and the grader *(test-first)*
 
-- [ ] 5.1 Write the failing tests for cage combination: a two-cell **cage** of
+- [x] 5.1 Write the failing tests for cage combination: a two-cell **cage** of
       3 restricts to {1,2}, a three-cell **cage** of 24 to {7,8,9}, a **cage**
       with a placed value narrows the rest, and nothing is deduced on a classic
       grid.
-- [ ] 5.2 Implement cage combination at `Rank.greenhorn`.
-- [ ] 5.3 Write the failing tests for the 45 rule: a single innie and a single
+- [x] 5.2 Implement cage combination at `Rank.greenhorn`.
+- [x] 5.3 Write the failing tests for the 45 rule: a single innie and a single
       outie of a block, row, or column are placed from the **cage** sums around
       them. Again, nothing is deduced on a classic grid.
-- [ ] 5.4 Implement the 45 rule at `Rank.sheriff`.
-- [ ] 5.5 Write the failing grader tests: a **killer** puzzle's **rank** is its
+- [x] 5.4 Implement the 45 rule at `Rank.sheriff`.
+- [x] 5.5 Write the failing grader tests: a **killer** puzzle's **rank** is its
       hardest technique across both sets, one finishable only by cage
       combination grades Greenhorn, and one no technique finishes is
       ungradable.
-- [ ] 5.6 Make the grader and solver **cage**-aware. Add the two values to
+- [x] 5.6 Make the grader and solver **cage**-aware. Add the two values to
       `Technique`, and confirm `TechniqueStats`' text enum takes them without a
       migration.
 
 ## 6. Generation and the pack *(test-first)*
 
-- [ ] 6.1 Write the failing tests for **killer** generation: seeded and
+- [x] 6.1 Write the failing tests for **killer** generation: seeded and
       reproducible, every output unique under its **cage**s, and graded by the
       grader rather than by a parameter (the shipped-pack rule).
-- [ ] 6.2 Implement the **killer** generator: a solved grid, a **cage**
+- [x] 6.2 Implement the **killer** generator: a solved grid, a **cage**
       partition, then clue removal down to the fewest givens that still grade
       at the target **rank**. Givens are allowed; D-82's forty-clue ceiling
       still applies.
-- [ ] 6.3 Extend the **pack** format with an optional `cages` field and bump the
+- [x] 6.3 Extend the **pack** format with an optional `cages` field and bump the
       **pack** to version 2. Rewrite `pack_test.dart`'s "an unknown `variant`
       field is ignored" case, which was written to hand over, into one that
       reads and round-trips `cages`.
-- [ ] 6.4 Generate killer puzzles into `assets/packs/frontier-1.json` at all six
+- [x] 6.4 Generate killer puzzles into `assets/packs/frontier-1.json` at all six
       **rank**s. Aim for at least 12 per **rank** and record the actual split
       in `assets/packs/README.md`. Classic puzzles must be byte-identical to v1.
-- [ ] 6.5 Extend `shipped_pack_test.dart`: every **killer** puzzle is unique and
+- [x] 6.5 Extend `shipped_pack_test.dart`: every **killer** puzzle is unique and
       re-grades to its shipped **rank**, and every **rank** has at least one.
 
 ## 7. Storage
 
-- [ ] 7.1 Add a nullable `cages` column to `Puzzles`, moving schema v7 → v8, and
+- [x] 7.1 Add a nullable `cages` column to `Puzzles`, moving schema v7 → v8, and
       export `drift_schema_v8.json`. Extend `migration_test.dart` with v7 → v8,
       which must prove an in-progress classic save survives and stays classic.
-- [ ] 7.2 Carry `cages` through `StoredPuzzle`, `PackInstaller`, and
+- [x] 7.2 Carry `cages` through `StoredPuzzle`, `PackInstaller`, and
       `PackRepository.installPack`.
-- [ ] 7.3 Write the failing tests, then give `nextUnsolved` a kind. Free play
+- [x] 7.3 Write the failing tests, then give `nextUnsolved` a kind. Free play
       asks for classic, and a **variant node** asks for **killer**.
       `puzzleByRankAndSeed` returns classic only, so the daily's derived board
       can never be **killer**.
-- [ ] 7.4 Refuse a published daily schedule entry that names a **killer**
+- [x] 7.4 Refuse a published daily schedule entry that names a **killer**
       puzzle, the same way as one naming an unknown puzzle, with a test.
 
 ## 8. Variant nodes resolve killer
 
-- [ ] 8.1 `add-season-map` left
+- [x] 8.1 `add-season-map` left
       `test/features/season_map/node_types_test.dart`'s "plays a classic puzzle
       — change 17 owns the rule". **Delete it** and replace it with a test that
       a **variant node** opens a **killer** board, as 16 did with the boss
       seam.
-- [ ] 8.2 Resolve a **variant node** to a **killer** puzzle in
+- [x] 8.2 Resolve a **variant node** to a **killer** puzzle in
       `nodePuzzleProvider`, and test that exhaustion reports an absence rather
       than substituting classic.
-- [ ] 8.3 Update `offline_first_run_test.dart` and `trail_screen_test.dart`
+- [x] 8.3 Update `offline_first_run_test.dart` and `trail_screen_test.dart`
       where they assume a **variant node** opens a classic grid.
 
 ## 9. Notes and the board *(test-first)*
 
-- [ ] 9.1 Write the failing **auto-cleanup** test: a placement removes the digit
+- [x] 9.1 Write the failing **auto-cleanup** test: a placement removes the digit
       from a **cage** mate outside its row, column, and block, in both inks, and
       undo restores ink and slot.
-- [ ] 9.2 Write the failing **auto-notes** tests: a **cage** mate's value is
+- [x] 9.2 Write the failing **auto-notes** tests: a **cage** mate's value is
       excluded, and a sum-impossible digit is still added.
-- [ ] 9.3 Route `board.dart`'s **auto-cleanup**, **auto-notes**, and
+- [x] 9.3 Route `board.dart`'s **auto-cleanup**, **auto-notes**, and
       duplicate/conflict checks through the per-puzzle peers from 3.4.
-- [ ] 9.4 Confirm the mistake model and the solved check still compare against
+- [x] 9.4 Confirm the mistake model and the solved check still compare against
       the stored solution and need no change, with one **killer** test each.
 
 ## 10. Drawing the cage
 
-- [ ] 10.1 Add the **cage** stroke to `DokuStroke`, and a dashed-path helper
+- [x] 10.1 Add the **cage** stroke to `DokuStroke`, and a dashed-path helper
       with its own unit test.
-- [ ] 10.2 Draw the **cage** outlines in `grid_painter.dart`, built once per
+- [x] 10.2 Draw the **cage** outlines in `grid_painter.dart`, built once per
       puzzle and cached rather than per frame. Add the **cage sum** label and
       the board-wide note inset measured in 2.1. The inset must apply to every
       cell and never to a classic board.
-- [ ] 10.3 Mark **cage** mates with the selection highlight.
-- [ ] 10.4 Announce the **cage sum** and **cage** size in each cell's semantics
-      label.
-- [ ] 10.5 Goldens: every existing grid and note golden unchanged, plus new
+- [x] 10.3 Mark **cage** mates with the selection highlight.
+- [x] 10.4 ~~Announce the **cage sum** and **cage** size in each cell's
+      semantics label.~~ *Deferred to change 30 by D-131: no board has
+      per-cell semantics to extend. The scenario is dropped from this change's
+      `grid-input` delta and owed back there.*
+- [x] 10.5 Goldens: every existing grid and note golden unchanged, plus new
       **killer** goldens for an empty board, a board with notes in every head
       cell, and a solved board.
-- [ ] 10.6 Re-run `latency_test.dart` — per-tap median and maximum note density
+- [x] 10.6 Re-run `latency_test.dart` — per-tap median and maximum note density
       — on a **killer** fixture, and record both numbers against the classic
-      ones.
+      ones. *Recorded 2026-09-25 on the macOS host, recording canvas (no
+      rasterisation): per tap, classic median 302µs / **killer** 55µs (worst
+      18.1ms / 4.2ms, both first-frame warm-up); maximum density, classic 459
+      candidates 398µs / **killer** 729 candidates 326µs. The **cage** layer is
+      cached per puzzle, so it adds no per-frame build. Device numbers are part
+      of the standing hardware debt.*
 
 ## 11. Completion and progression *(test-first)*
 
-- [ ] 11.1 Write the failing test: filling a **cage** with no row, column, or
+- [x] 11.1 Write the failing test: filling a **cage** with no row, column, or
       block completing fires no effect and no haptic, and a row on a **killer**
       board still completes.
-- [ ] 11.2 Write the failing rank-progression tests: a **killer** solve above
+- [x] 11.2 Write the failing rank-progression tests: a **killer** solve above
       the player's **rank** raises it, and one needing the 45 rule increments
       its counter and unlocks it.
-- [ ] 11.3 Make `_techniquesFor` in `grid_providers.dart` grade with the
+- [x] 11.3 Make `_techniquesFor` in `grid_providers.dart` grade with the
       puzzle's **cage**s. The classic grader returns `Ungradable` on a
       **killer** grid, which today would silently skip every counter and every
       **lesson**.
 
 ## 12. Lessons
 
-- [ ] 12.1 Author the cage combination and 45 rule **lesson**s. Find their
+- [x] 12.1 Author the cage combination and 45 rule **lesson**s. Find their
       board positions with `tool/find_lesson_positions.dart`, extended for
       **cage**s.
-- [ ] 12.2 Extend the catalogue test with the two killer **lesson**s and the
+- [x] 12.2 Extend the catalogue test with the two killer **lesson**s and the
       rule that they exist although cage combination is Greenhorn. Check that
       the **cabinet**'s replay list shows both.
 
 ## 13. Publishing
 
-- [ ] 13.1 Add one paragraph to `lib/features/remote_config/PUBLISHING.md`:
+- [x] 13.1 Add one paragraph to `lib/features/remote_config/PUBLISHING.md`:
       every **variant node** plays **killer**, there is no rule key, and a
       daily entry naming a **killer** puzzle is refused.
 
 ## Platform checks
 
-- [ ] Verified on iOS — a **variant node** opened on a simulator shows
-      **cage**s, sums and inset notes, inside the safe area.
-- [ ] Verified on Android — the same. Extend `integration_test/` with a
+- [x] Verified on iOS — a **variant node** opened on a simulator shows
+      **cage**s, sums and inset notes, inside the safe area. *2026-09-25,
+      iPhone 17e simulator, `integration_test/killer_test.dart` 2/2: the
+      **variant node** opens a **killer** board (366pt grid, 40.7pt cells)
+      below the 47pt top inset. The drawing itself — outlines, sums clear of
+      the frame, the board-wide inset — is pinned by the `killer_*` goldens,
+      which were looked at by eye. No physical device: this joins the standing
+      hardware debt.*
+- [x] Verified on Android — the same. Extend `integration_test/` with a
       **killer** runner that opens a **variant node**, places a value into a
       **cage**, and checks that **auto-cleanup** reached a **cage** mate.
-- [ ] Accessibility: a **killer** board at text scales 1x–5x on a 320×568
+      *2026-09-25, Pixel 10 Pro emulator (API 37), `killer_test.dart` 2/2:
+      402.7pt grid, 44.7pt cells, 52pt top inset; a 4 placed in r3c2 took the
+      4 out of r4c1, which only the **cage** makes a **peer**. Emulator only.*
+- [x] Accessibility: a **killer** board at text scales 1x–5x on a 320×568
       screen with no sum clipped. Every **cage** is identifiable with colour
       removed, and the screen reader announces each cell's **cage sum**.
+      *Sums: `killer_painter_test.dart` checks every sum at 1, 1.5, 2, 3 and 5x
+      on the 296pt grid fits its 8px band and half its cell. Without colour: a
+      **cage** is a dashed outline plus a printed number, no fill, so it
+      survives greyscale by construction (constraint 5). Screen reader:
+      deferred to change 30 by D-131.*

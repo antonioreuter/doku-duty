@@ -11,10 +11,12 @@ import '../../design_system/domain/season_theme.dart';
 import '../../design_system/domain/shape.dart';
 import '../../design_system/presentation/doku_colours.dart';
 import '../../design_system/presentation/doku_type.dart';
+import '../../puzzle_engine/domain/cage.dart';
 import '../../puzzle_engine/domain/grid_geometry.dart';
 import '../../design_system/domain/note_ink.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
+import 'cage_outline.dart';
 import 'grid_metrics.dart';
 
 /// The colours the grid draws with, resolved once.
@@ -38,6 +40,8 @@ final class GridColours {
     required this.completionMark,
     required this.settledNote,
     required this.provisionalNote,
+    required this.cageLine,
+    required this.cageSum,
   });
 
   /// The grid as [palette] paints it.
@@ -61,6 +65,12 @@ final class GridColours {
     completionMark: DokuColours.cactusGreen,
     settledNote: NoteInk.settled.token.colour,
     provisionalNote: NoteInk.provisional.token.colour,
+    // The outline token and its secondary-text tint, which DESIGN.md already
+    // gives to outlines and secondary text. Fixed across seasons like every
+    // other ink, and never a note ink — a **cage** must not read as a
+    // candidate (D-129, constraint 4).
+    cageLine: DokuColours.duskInk,
+    cageSum: DokuColours.inkSoft,
   );
 
   /// The default season's grid.
@@ -93,6 +103,12 @@ final class GridColours {
     completionMark: DokuColours.cactusGreen,
     settledNote: NoteInk.settled.token.colour,
     provisionalNote: NoteInk.provisional.token.colour,
+    // The outline token and its secondary-text tint, which DESIGN.md already
+    // gives to outlines and secondary text. Fixed across seasons like every
+    // other ink, and never a note ink — a **cage** must not read as a
+    // candidate (D-129, constraint 4).
+    cageLine: DokuColours.duskInk,
+    cageSum: DokuColours.inkSoft,
   );
 
   final Color cell;
@@ -161,6 +177,12 @@ final class GridColours {
   /// what actually carries the distinction (D-73).
   final Color provisionalNote;
 
+  /// The dashed outline of a **cage** (D-129).
+  final Color cageLine;
+
+  /// A **cage sum**.
+  final Color cageSum;
+
   @override
   bool operator ==(Object other) =>
       other is GridColours &&
@@ -178,7 +200,9 @@ final class GridColours {
       other.freshCompletionFill == freshCompletionFill &&
       other.completionMark == completionMark &&
       other.settledNote == settledNote &&
-      other.provisionalNote == provisionalNote;
+      other.provisionalNote == provisionalNote &&
+      other.cageLine == cageLine &&
+      other.cageSum == cageSum;
 
   @override
   int get hashCode => Object.hash(
@@ -197,6 +221,8 @@ final class GridColours {
     completionMark,
     settledNote,
     provisionalNote,
+    cageLine,
+    cageSum,
   );
 }
 
@@ -310,12 +336,14 @@ class GridPainter extends CustomPainter {
     _paintHighlight(canvas, metrics);
     _paintFocus(canvas, metrics);
     _paintLines(canvas, metrics);
+    _paintCages(canvas, metrics);
     _paintEffects(canvas, metrics);
     _paintNotes(canvas, metrics);
     _paintDigits(canvas, metrics);
     _paintCompletionMarks(canvas, metrics);
     _paintStrikes(canvas, metrics);
     _paintFrame(canvas, metrics);
+    _paintCageSums(canvas, metrics);
   }
 
   void _paintSurface(Canvas canvas, GridMetrics metrics) {
@@ -675,7 +703,7 @@ class GridPainter extends CustomPainter {
     }
   }
 
-  /// The selected cell and the cells it shares a **unit** with.
+  /// The selected cell and its **peer**s.
   ///
   /// Both are the same fill; the selected cell is told apart by its border, so
   /// the distinction survives without colour at all (constraint 5).
@@ -684,7 +712,9 @@ class GridPainter extends CustomPainter {
     if (selected == null) return;
 
     final fill = Paint()..color = colours.focusFill;
-    for (final peer in GridGeometry.peersOf(selected)) {
+    // **Peer**s as the board has them: on a **killer** board the **cage**
+    // mates too, because the same digit cannot repeat among them (D-130).
+    for (final peer in board.peersOf(selected)) {
       canvas.drawRect(metrics.cellRect(peer), fill);
     }
     canvas.drawRect(metrics.cellRect(selected), fill);
@@ -696,6 +726,72 @@ class GridPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = DokuStroke.interiorDetail,
     );
+  }
+
+  /// Every **cage**'s dashed outline, and every **cage sum**.
+  ///
+  /// Built once per puzzle and size and kept on the **cage** set rather than on
+  /// this painter, which is rebuilt with every tap: thirty-odd dashed paths
+  /// rebuilt per frame is work constraint 2 has no room for.
+  void _paintCages(Canvas canvas, GridMetrics metrics) {
+    final cages = board.cages;
+    if (cages == null) return;
+    final layer = _CageLayer.of(cages, metrics, textScale, colours.cageSum);
+    // Clipped to the frame's rounded corners, which a run inset from a square
+    // cell would otherwise poke past.
+    canvas
+      ..save()
+      ..clipRRect(
+        RRect.fromRectAndRadius(
+          metrics.bounds,
+          const Radius.circular(DokuRadius.gridOuter),
+        ),
+      )
+      // The path is laid out from the grid's own corner, so a box that moves
+      // the grid without resizing it moves the outline too.
+      ..translate(metrics.origin.dx, metrics.origin.dy)
+      ..drawPath(
+        layer.outline,
+        Paint()
+          ..color = colours.cageLine
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = DokuStroke.cageOutline,
+      )
+      ..restore();
+  }
+
+  /// Every **cage sum**, painted last so no grid line or frame crosses one.
+  void _paintCageSums(Canvas canvas, GridMetrics metrics) {
+    final cages = board.cages;
+    if (cages == null) return;
+    final layer = _CageLayer.of(cages, metrics, textScale, colours.cageSum);
+    for (final entry in layer.sums.entries) {
+      final rect = metrics.cellRect(entry.key);
+      entry.value.paint(canvas, rect.topLeft + layer.sumOffsets[entry.key]!);
+    }
+  }
+
+  /// The outline cached for [cages], or null before one is drawn. Tests only.
+  @visibleForTesting
+  static Path? debugCageOutlineFor(CageSet cages) =>
+      _CageLayer._byCages[cages]?.outline;
+
+  /// A **cage sum**'s glyphs, for tests: the head cell each is printed in, and
+  /// the box it occupies there.
+  @visibleForTesting
+  Map<int, Size> debugCageSumBoxes(Size size) {
+    final cages = board.cages;
+    if (cages == null) return const <int, Size>{};
+    final layer = _CageLayer.of(
+      cages,
+      GridMetrics.fit(size),
+      textScale,
+      colours.cageSum,
+    );
+    return <int, Size>{
+      for (final entry in layer.sums.entries)
+        entry.key: Size(entry.value.width, entry.value.height),
+    };
   }
 
   void _paintLines(Canvas canvas, GridMetrics metrics) {
@@ -722,6 +818,28 @@ class GridPainter extends CustomPainter {
     }
   }
 
+  /// Where a cell's nine note slots sit.
+  ///
+  /// The whole cell on a classic board. On a **killer** board the square below
+  /// the **cage sum** band, centred — on *every* cell, not only those carrying
+  /// a sum, so each digit's slot is in the same place across the board
+  /// (D-129, constraint 3). The cost is size: 8.3px notes on the smallest
+  /// phone, which D-129 accepted for **killer** boards only.
+  static Rect noteArea(Rect cell, {required bool isKiller}) {
+    if (!isKiller) return cell;
+    final side = cell.width - cageSumBand;
+    return Rect.fromLTWH(
+      cell.left + cageSumBand / 2,
+      cell.top + cageSumBand,
+      side,
+      side,
+    );
+  }
+
+  /// The height of the band a **cage sum** sits in, at the top of a cell
+  /// (D-129).
+  static const double cageSumBand = 8.0;
+
   /// The candidates, each in the slot its digit owns (D-10, constraint 3).
   ///
   /// The slot comes from [NoteSet.slotOf] — a pure function of the digit — so a
@@ -733,7 +851,10 @@ class GridPainter extends CustomPainter {
       final notes = board.notesAt(cell);
       if (notes.isEmpty) continue;
 
-      final rect = metrics.cellRect(cell);
+      final rect = noteArea(
+        metrics.cellRect(cell),
+        isKiller: board.cages != null,
+      );
       final slot = rect.width / 3;
       for (final digit in notes.digits) {
         final position = NoteSet.slotOf(digit);
@@ -950,4 +1071,111 @@ class GridPainter extends CustomPainter {
       old.effects != effects ||
       old.textScale != textScale ||
       old.colours != colours;
+}
+
+/// One puzzle's **cage** outlines and **cage sum**s, laid out for one grid.
+///
+/// Hung off the [CageSet] with an [Expando], so it lives exactly as long as the
+/// puzzle does and is shared by every painter drawn for it.
+final class _CageLayer {
+  _CageLayer._(this._key, this.outline, this.sums, this.sumOffsets);
+
+  static final Expando<_CageLayer> _byCages = Expando<_CageLayer>();
+
+  static _CageLayer of(
+    CageSet cages,
+    GridMetrics metrics,
+    double textScale,
+    Color sumColour,
+  ) {
+    final key = (metrics.side, textScale, sumColour);
+    final cached = _byCages[cages];
+    if (cached != null && cached._key == key) return cached;
+    final built = _build(cages, metrics, textScale, sumColour, key);
+    _byCages[cages] = built;
+    return built;
+  }
+
+  final (double, double, Color) _key;
+  final Path outline;
+
+  /// Laid-out **cage sum**s, by the head cell each is printed in.
+  final Map<int, TextPainter> sums;
+
+  /// Where each sum sits, from its head cell's top-left corner.
+  final Map<int, Offset> sumOffsets;
+
+  /// Clear of the frame's contour on the grid's edge and of a box divider
+  /// inside it, whichever the head cell sits against.
+  static const double _sumInset = DokuStroke.outerContour + 0.5;
+  static const double _sumTop = 1.5;
+
+  /// Cell 0 heads a **cage** on every **killer** board and sits in the frame's
+  /// rounded corner, so its sum moves right until it clears the curve.
+  static double _cornerIndent(double inkTop) {
+    const radius = DokuRadius.gridOuter;
+    const inner = radius - DokuStroke.outerContour;
+    final dy = radius - inkTop;
+    if (dy <= 0) return _sumInset;
+    final dx = math.sqrt(math.max(0, inner * inner - dy * dy));
+    return math.max(_sumInset, radius - dx + 0.5);
+  }
+
+  static _CageLayer _build(
+    CageSet cages,
+    GridMetrics metrics,
+    double textScale,
+    Color sumColour,
+    (double, double, Color) key,
+  ) {
+    final sums = <int, TextPainter>{
+      for (final cage in cages.cages)
+        cage.head: _sumPainter(cage.sum, textScale, sumColour),
+    };
+    final sumOffsets = <int, Offset>{
+      for (final head in sums.keys)
+        head: Offset(
+          head == 0 ? _cornerIndent(_sumTop + 1.5) : _sumInset,
+          _sumTop,
+        ),
+    };
+
+    // Relative to the grid's corner rather than the box's: the cache is keyed
+    // on the grid's size, and where the box puts the grid is not part of it.
+    final outline = cageOutline(
+      cages,
+      cellRect: (cell) => metrics.cellRect(cell).shift(-metrics.origin),
+      headClearance: (head) => (
+        left: sumOffsets[head]!.dx + sums[head]!.width + 1,
+        top: GridPainter.cageSumBand,
+      ),
+    );
+
+    return _CageLayer._(key, outline, sums, sumOffsets);
+  }
+
+  /// A **cage sum** at the grid-note face, 8px and weight 600, capped to the
+  /// band it sits in the way a note is capped to its slot (D-129, D-92).
+  ///
+  /// Dynamic type is honoured up to the band and no further: a sum that grew
+  /// past it would sit on candidate 1, which is the one thing D-129 forbids.
+  static TextPainter _sumPainter(int sum, double textScale, Color colour) {
+    final style = TypeRole.gridNote
+        .scaled(textScale)
+        .copyWith(
+          color: colour,
+          fontWeight: FontWeight.w600,
+          fontSize: 8 * textScale,
+          height: 1,
+        );
+    TextPainter laidOut(TextStyle style) => TextPainter(
+      text: TextSpan(text: '$sum', style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final painter = laidOut(style);
+    final overflow =
+        math.max(painter.height, style.fontSize!) / GridPainter.cageSumBand;
+    if (overflow <= 1) return painter;
+    return laidOut(style.copyWith(fontSize: style.fontSize! / overflow));
+  }
 }

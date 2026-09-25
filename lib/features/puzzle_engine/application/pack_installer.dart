@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../persistence/data/pack_repository.dart';
 import '../data/pack_source.dart';
 import '../domain/pack.dart';
@@ -70,6 +72,10 @@ final class PackInstaller {
               solution: puzzle.solution,
               rank: puzzle.rank,
               seed: puzzle.seed,
+              cages: switch (puzzle.cages) {
+                final cages? => jsonEncode(cages.toJson()),
+                null => null,
+              },
             ),
         ],
       );

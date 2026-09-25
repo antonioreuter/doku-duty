@@ -72,6 +72,18 @@ void main() {
     });
   });
 
+  // D-127: one variant, so no rule key. A publisher who writes one anyway
+  // changes nothing — the season still parses, and its variant nodes still
+  // play killer, which is decided in code rather than here.
+  test('a rule key on the season is ignored, not honoured or refused', () {
+    final season = fixtureSeason()
+      ..['rule'] = 'jigsaw'
+      ..['variant'] = 'thermo';
+    final parsed = RemoteConfigParser.parse(withSeason(season))!.season;
+    expect(parsed, isNotNull);
+    expect(parsed!.nodes, hasLength(42));
+  });
+
   group('no season published', () {
     test('a document with no season carries none, and still parses', () {
       final config = RemoteConfigParser.parse(withSeason(null));

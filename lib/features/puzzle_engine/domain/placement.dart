@@ -1,5 +1,5 @@
 import 'grid.dart';
-import 'grid_geometry.dart';
+import 'peers.dart';
 
 /// What the engine can say about putting a digit in a cell.
 ///
@@ -33,15 +33,16 @@ final class PlacementReport {
 
 /// The peers of [cell] already holding [digit], ascending.
 ///
-/// A digit repeating in a **unit** is reported with the cells it repeats
-/// against, because a caller that wants to point at the clash needs to know
-/// where it is.
+/// A digit repeating in a **unit** — or in a **cage**, when [peers] carries
+/// one — is reported with the cells it repeats against, because a caller that
+/// wants to point at the clash needs to know where it is.
 List<int> conflictingPeers(
   Grid grid, {
   required int cell,
   required int digit,
+  Peers peers = Peers.classic,
 }) => <int>[
-  for (final peer in GridGeometry.peersOf(cell))
+  for (final peer in peers.of(cell))
     if (grid.digitAt(peer) == digit) peer,
 ];
 
@@ -55,12 +56,18 @@ PlacementReport inspectPlacement({
   required Grid solution,
   required int cell,
   required int digit,
+  Peers peers = Peers.classic,
 }) {
   final existing = grid.digitAt(cell);
   return PlacementReport(
     cell: cell,
     digit: digit,
-    conflictingCells: conflictingPeers(grid, cell: cell, digit: digit),
+    conflictingCells: conflictingPeers(
+      grid,
+      cell: cell,
+      digit: digit,
+      peers: peers,
+    ),
     agreesWithSolution: solution.digitAt(cell) == digit,
     overwritesCorrectValue:
         existing != Grid.blank && existing == solution.digitAt(cell),

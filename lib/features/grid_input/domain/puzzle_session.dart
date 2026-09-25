@@ -298,6 +298,7 @@ final class PuzzleSession {
           solution: solution,
           cell: cell,
           digit: digit,
+          peers: before.peers,
         ),
       ),
     );

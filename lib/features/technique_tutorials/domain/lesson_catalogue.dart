@@ -1,7 +1,7 @@
 import '../../puzzle_engine/domain/technique.dart';
 import 'lesson.dart';
 
-/// The eleven **lesson**s, keyed by id.
+/// The thirteen **lesson**s, keyed by id.
 ///
 /// **Generated content, checked by test.** Every grid here is a real position
 /// lifted from a puzzle in the shipped **pack** — walked to the state where the
@@ -22,6 +22,34 @@ import 'lesson.dart';
 /// digit the player is actually asked for.
 const List<Lesson> lessonCatalogue = <Lesson>[
   Lesson.notes,
+  // The two **killer** **lesson**s (D-128) are taught on one board: two
+  // Greenhorn **killer** puzzles from the same dig in the shipped **pack**,
+  // found by the tool like every other grid here.
+  Lesson(
+    id: 'cageCombination',
+    title: 'Cage combination',
+    technique: Technique.cageCombination,
+    grid: _killerGrid,
+    cages: _killerCages,
+    steps: <LessonStep>[
+      LessonStep(
+        text:
+            'The dashed outline is a cage: its digits add up to the number in its corner, and none of them repeats.',
+        cells: <int>[0, 9, 10],
+      ),
+      LessonStep(
+        text:
+            'This cage makes 9 and already holds the 6, so its other two cells must make 3.',
+        cells: <int>[0, 10],
+      ),
+      LessonStep(
+        text:
+            'Only 1 and 2 make 3, and this row already has its 2. Place the 1.',
+        cells: <int>[0],
+      ),
+    ],
+    placement: LessonPlacement(cell: 0, digit: 1),
+  ),
   Lesson(
     id: 'hiddenSingle',
     title: 'Hidden single',
@@ -90,6 +118,31 @@ const List<Lesson> lessonCatalogue = <Lesson>[
       ),
     ],
     placement: LessonPlacement(cell: 74, digit: 3),
+  ),
+  Lesson(
+    id: 'fortyFiveRule',
+    title: 'The 45 rule',
+    technique: Technique.fortyFiveRule,
+    grid: _fortyFiveGrid,
+    cages: _killerCages,
+    steps: <LessonStep>[
+      LessonStep(
+        text:
+            'A column holds 1 to 9 once each, so its digits always add up to 45.',
+        cells: <int>[5, 14, 23, 32, 41, 50, 59, 68, 77],
+      ),
+      LessonStep(
+        text:
+            'These two cages sit wholly inside the column and make 7 and 8 — 15 between them.',
+        cells: <int>[23, 32, 41, 50],
+      ),
+      LessonStep(
+        text:
+            'The placed 4, 8, 3 and 9 add 24, so the last cell makes 45 − 15 − 24. Place the 6.',
+        cells: <int>[5],
+      ),
+    ],
+    placement: LessonPlacement(cell: 5, digit: 6),
   ),
   Lesson(
     id: 'boxLineReduction',
@@ -259,3 +312,18 @@ const List<Lesson> lessonCatalogue = <Lesson>[
     placement: LessonPlacement(cell: 74, digit: 3),
   ),
 ];
+
+/// The Greenhorn **killer** puzzle the cage combination **lesson** is taught
+/// on, as the player first sees it.
+const String _killerGrid =
+    '....7...26................6...2456.....9..827.1386..5..6...8...8....37655..6.9.38';
+
+/// The next puzzle down the same dig — same solution, same **cage**s, one
+/// more given (the 4 in r2c6) — where the 45 rule gives a single innie with
+/// the fewest cells in its argument of any position in the **pack**.
+const String _fortyFiveGrid =
+    '....7...26....4...........6...2456.....9..827.1386..5..6...8...8....37655..6.9.38';
+
+/// Both **killer** **lesson**s' **cage**s, as the **pack** stores them.
+const String _killerCages =
+    '[{"sum":9,"cells":[0,9,10]},{"sum":18,"cells":[1,2,11]},{"sum":16,"cells":[3,12,13]},{"sum":13,"cells":[4,5]},{"sum":8,"cells":[6,14,15]},{"sum":19,"cells":[7,8,17]},{"sum":18,"cells":[16,25,26,34]},{"sum":20,"cells":[18,27,36]},{"sum":23,"cells":[19,20,21,22,30]},{"sum":7,"cells":[23,32]},{"sum":19,"cells":[24,33,42]},{"sum":29,"cells":[28,29,37,38,47]},{"sum":7,"cells":[31,40]},{"sum":10,"cells":[35,44]},{"sum":17,"cells":[39,48]},{"sum":8,"cells":[41,50]},{"sum":16,"cells":[43,51,52]},{"sum":20,"cells":[45,46,54,55,63]},{"sum":11,"cells":[49,58]},{"sum":19,"cells":[53,61,62,71]},{"sum":7,"cells":[56,65,74]},{"sum":17,"cells":[57,66,75]},{"sum":22,"cells":[59,68,77,78]},{"sum":28,"cells":[60,69,70,79,80]},{"sum":21,"cells":[64,72,73]},{"sum":3,"cells":[67,76]}]';

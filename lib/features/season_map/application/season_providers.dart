@@ -6,6 +6,7 @@ import '../../persistence/data/pack_repository.dart';
 import '../../puzzle_engine/application/pack_providers.dart';
 import '../../remote_config/application/remote_config_provider.dart';
 import '../data/season_repository.dart';
+import '../domain/node_type.dart';
 import '../domain/season.dart';
 import '../domain/season_one.dart';
 import '../domain/trail_progress.dart';
@@ -81,7 +82,17 @@ final nodePuzzleProvider = FutureProvider.family<StoredPuzzle?, int>((
   // after the first frame, and a **rank** queried mid-install comes back empty.
   await ref.watch(packInstallationProvider.future);
 
-  final row = await ref.watch(packRepositoryProvider).nextUnsolved(rank);
+  // A **variant node** plays **killer** and every other **node** classic
+  // (D-127). Running out of **killer** is null like any other absence — a
+  // classic board in its place would be a **variant node** with no rule.
+  final row = await ref
+      .watch(packRepositoryProvider)
+      .nextUnsolved(
+        rank,
+        kind: node.type == NodeType.variant
+            ? PuzzleKind.killer
+            : PuzzleKind.classic,
+      );
   if (row == null) return null;
   return StoredPuzzle(
     id: row.id,
@@ -89,6 +100,7 @@ final nodePuzzleProvider = FutureProvider.family<StoredPuzzle?, int>((
     solution: row.solution,
     rank: row.rank,
     seed: row.seed,
+    cages: row.cages,
   );
 });
 

@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:test/test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/cage.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/pack.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
+import 'support/killer.dart';
 import 'support/positions.dart';
 
 Pack _pack({List<PackPuzzle>? puzzles}) => Pack(
@@ -183,7 +185,7 @@ void main() {
 
     test('an unknown field on a puzzle is ignored, not rejected', () {
       final json = jsonDecode(_pack().encode()) as Map<String, dynamic>;
-      (json['puzzles'] as List<dynamic>)[0]['variant'] = 'killer';
+      (json['puzzles'] as List<dynamic>)[0]['thermometers'] = <int>[1, 2];
 
       final result = Pack.parse(jsonEncode(json));
       expect(result, isA<ParsedPack>());
@@ -195,6 +197,126 @@ void main() {
       json['territory'] = 'dust-flats';
       final reencoded = _parsed(jsonEncode(json)).encode();
       expect(reencoded, isNot(contains('territory')));
+    });
+  });
+
+  // Written in `add-season-map` as "an unknown `variant` field is ignored", to
+  // hand the format over to this change. **Killer** is the variant, and its
+  // **cage**s are the field (D-127).
+  group('cages', () {
+    final cages = referenceKillerCages(referenceSolution);
+    PackPuzzle killerPuzzle({CageSet? withCages}) => PackPuzzle(
+      id: 'k1',
+      clues: '.' * 81,
+      solution: referenceSolution,
+      rank: Rank.sheriff,
+      seed: 7,
+      cages: withCages ?? cages,
+    );
+
+    test('a killer puzzle reads and round-trips its cages', () {
+      final original = _pack(
+        puzzles: <PackPuzzle>[killerPuzzle(), _pack().puzzles.first],
+      );
+      final restored = _parsed(original.encode());
+
+      final killer = restored.puzzles.first;
+      expect(killer.cages, isNotNull);
+      expect(
+        <String>[for (final cage in killer.cages!.cages) '$cage'],
+        <String>[for (final cage in cages.cages) '$cage'],
+      );
+      expect(restored, original);
+      expect(restored.encode(), original.encode());
+    });
+
+    test('a classic puzzle has none, and writes no cages field', () {
+      final restored = _parsed(_pack().encode());
+      expect(restored.puzzles.first.cages, isNull);
+      final json = jsonDecode(_pack().encode()) as Map<String, dynamic>;
+      expect(
+        ((json['puzzles'] as List<dynamic>).first as Map<String, dynamic>)
+            .containsKey('cages'),
+        isFalse,
+      );
+    });
+
+    test('cages are written as a sum and cells per cage', () {
+      final json =
+          jsonDecode(_pack(puzzles: <PackPuzzle>[killerPuzzle()]).encode())
+              as Map<String, dynamic>;
+      final first =
+          (((json['puzzles'] as List<dynamic>).single
+                      as Map<String, dynamic>)['cages']
+                  as List<dynamic>)
+              .first;
+      expect(first, <String, Object>{
+        'sum': 12,
+        'cells': <int>[0, 1, 2],
+      });
+    });
+
+    test('a malformed cage set is refused as a value', () {
+      final json =
+          jsonDecode(_pack(puzzles: <PackPuzzle>[killerPuzzle()]).encode())
+              as Map<String, dynamic>;
+      final row =
+          (json['puzzles'] as List<dynamic>).single as Map<String, dynamic>;
+      // Drop the first cage: three cells are then in none.
+      (row['cages'] as List<dynamic>).removeAt(0);
+
+      final result = Pack.parse(jsonEncode(json));
+      expect(result, isA<InvalidPack>());
+      expect((result as InvalidPack).problem, PackProblem.invalidCages);
+      expect(result.description, contains('k1'));
+    });
+
+    test('cages of the wrong shape are refused as a value', () {
+      for (final bad in <Object>[
+        'aaab',
+        <Object>[7],
+        <Object>[
+          <String, Object>{
+            'sum': '12',
+            'cells': <int>[0],
+          },
+        ],
+        <Object>[
+          <String, Object>{'sum': 12},
+        ],
+      ]) {
+        final json =
+            jsonDecode(_pack(puzzles: <PackPuzzle>[killerPuzzle()]).encode())
+                as Map<String, dynamic>;
+        ((json['puzzles'] as List<dynamic>).single
+                as Map<String, dynamic>)['cages'] =
+            bad;
+        final result = Pack.parse(jsonEncode(json));
+        expect(result, isA<InvalidPack>(), reason: '$bad');
+        expect((result as InvalidPack).problem, PackProblem.invalidCages);
+      }
+    });
+
+    test('cages the solution does not satisfy are refused', () {
+      // The reference cages over a different solution: its sums are wrong.
+      const other =
+          '123456789456789123789123456214365897365897214897214365531642978642978531978531642';
+      final result = Pack.parse(
+        _pack(
+          puzzles: <PackPuzzle>[
+            PackPuzzle(
+              id: 'k2',
+              clues: '.' * 81,
+              solution: other,
+              rank: Rank.sheriff,
+              seed: 7,
+              cages: cages,
+            ),
+          ],
+        ).encode(),
+      );
+      expect(result, isA<InvalidPack>());
+      expect((result as InvalidPack).problem, PackProblem.invalidCages);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/trail_navigation.dart';
+import '../puzzle_engine/support/killer.dart';
 
 /// Fails the moment anything asks for an HTTP client.
 class _NoNetwork extends HttpOverrides {
@@ -52,6 +54,17 @@ void main() {
               rank: rank,
               seed: i,
             ),
+        // A **variant node** plays **killer** (D-127), which ships in the same
+        // bundled **pack** and needs no network either.
+        for (final rank in Rank.values)
+          StoredPuzzle(
+            id: 'killer-${rank.name}',
+            clues: _clues,
+            solution: _solution,
+            rank: rank,
+            seed: 100,
+            cages: jsonEncode(referenceKillerCages(_solution).toJson()),
+          ),
       ],
     );
   });

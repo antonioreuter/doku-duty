@@ -14,12 +14,12 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ---
 
-## Status — 2026-09-23
+## Status — 2026-09-25
 
-**Nineteen changes archived. Milestones 0 and 1 are complete; Milestone 2 has
-one item left, 17.** Items carry a **Done** line naming the archive directory they landed
-in; anything without one is not built. Five of the finished items — 6, 11, 14,
-15 and 16 — still carry an **OUTSTANDING** note; read those before treating the
+**Twenty changes archived. Milestones 0, 1 and 2 are complete.** Items carry a
+**Done** line naming the archive directory they landed
+in; anything without one is not built. Six of the finished items — 6, 11, 14,
+15, 16 and 17 — still carry an **OUTSTANDING** note; read those before treating the
 capability as settled, because what is outstanding in every case is a
 *measurement on physical hardware*, not code. One session with a mid-tier
 Android phone and a Developer-Mode iPhone closes all of them.
@@ -28,7 +28,7 @@ Android phone and a Developer-Mode iPhone closes all of them.
 |---|---|---|
 | 0 — Foundation | 1–4 | Complete |
 | 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
-| 2 — A reason to come back | 12–17 | 12–16 done; 17 open |
+| 2 — A reason to come back | 12–17 | Complete |
 | *(unlabelled)* — the perk economy | 18, 19 | Not started; 18 unblocked |
 | 3 — The reason it exists | 20–23 | Not started |
 | 4 — The business | 24–29 | Not started |
@@ -168,9 +168,8 @@ Row, column, and block completion effects; chained cascades at 90ms offsets; puz
 
 *Done when: there is a season to progress through, a daily habit, and a permanent record.*
 
-**One item left — 12 through 16 are archived; 17 is open and unblocked.** 18,
-under no milestone heading, is unblocked too now that 14 and 15 have both
-landed.
+**Complete — 12 through 17 are archived.** 18, under no milestone heading, is
+the next unblocked item.
 
 ### 12. `add-rank-progression`
 **Done** — `openspec/changes/archive/2026-09-19-add-rank-progression/`.
@@ -307,11 +306,33 @@ waiting on the same session.
 `persistence`, `technique-tutorials`, `design-system` — widened from the first
 two when planning found a **cage** reaches every system that reads **peer**s,
 and the puzzle table.
-**In progress** — `openspec/changes/add-puzzle-variants/`. **Killer**, on
-**variant node**s only (D-127 … D-130).
+**Done** — `openspec/changes/archive/2026-09-25-add-puzzle-variants/`.
+**Killer**, on **variant node**s only (D-127 … D-131).
 One rule variant beyond classic for the season's variant nodes — killer recommended for v1.
 **Depends on:** 6, 15.
 **Watch for:** scope. One variant, properly. Not four.
+
+A **cage** is peers, not a **unit** (D-130): auto-cleanup, auto-notes and the
+selection highlight reach **cage** mates, and a filled **cage** celebrates
+nothing. Two techniques join the ladder — cage combination at Greenhorn, the 45
+rule at Sheriff — each with a **lesson**, and cage combination's is owed before
+any other **killer** **lesson** (D-128). The **pack** is version 2: 72
+**killer** puzzles, 12 per **rank**, with every classic row unchanged. Schema
+v7 → v8 adds a nullable `cages` column. Notes on a **killer** board shrink to
+8.3px on the smallest phone (D-129, amending D-74 for **killer** only).
+
+**Deferred to change 30 (D-131):** a screen reader announcing a cell's **cage
+sum** — no board has per-cell semantics yet.
+
+**Found in review and fixed before archiving:** the cached **cage** outline
+stayed put when the grid moved inside a taller box, and hardest-first **lesson**
+choice could skip the cage combination **lesson** for good.
+
+**OUTSTANDING — the device checks.** `integration_test/killer_test.dart` opens a
+**variant node** and checks **auto-cleanup** reaches a **cage** mate. It passes
+on the iOS simulator (iPhone 17e) and the Android emulator (Pixel 10 Pro), and
+has been taken on **no** physical device. Whether 8.3px notes and 8px sums read
+at arm's length is a check by eye on the smallest real phone.
 
 ---
 
@@ -478,6 +499,9 @@ API Gateway + Lambda + DynamoDB save sync, free for any signed-in player and not
 ### 30. `add-accessibility-settings`
 **Capabilities:** `accessibility`
 Reduce-effects setting, OS reduce-motion respected, completion tints toggleable, dynamic type, screen reader labels on the grid, colour-independent state signalling verified (D-50).
+Screen reader labels on the grid means **per cell**: today the grid is one
+semantics node on every board. On a **killer** board a cell's label also names
+its **cage sum** and **cage** size — deferred here from change 17 (D-131).
 **Depends on:** 11.
 
 ### 31. `add-analytics`

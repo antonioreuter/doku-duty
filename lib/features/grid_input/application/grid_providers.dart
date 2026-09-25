@@ -9,6 +9,7 @@ import '../../persistence/data/settings_repository.dart';
 import '../../persistence/domain/app_setting.dart';
 import '../../puzzle_engine/application/pack_providers.dart';
 import '../../mistake_model/domain/attempt.dart';
+import '../../puzzle_engine/domain/cage.dart';
 import '../../puzzle_engine/domain/grader.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../../puzzle_engine/domain/rank.dart';
@@ -101,13 +102,14 @@ final puzzleOpeningProvider = FutureProvider.family<PuzzleOpening?, String>((
   }
 
   return PuzzleOpening(
-    techniquesRequired: _techniquesFor(row.clues),
+    techniquesRequired: _techniquesFor(row.clues, row.cages),
     puzzle: StoredPuzzle(
       id: row.id,
       clues: row.clues,
       solution: row.solution,
       rank: row.rank,
       seed: row.seed,
+      cages: row.cages,
     ),
     placedValues: save == null ? null : _encode(save.placedValues),
     // A resumed puzzle carries its tally, so a player two into a **strict
@@ -133,10 +135,19 @@ final puzzleOpeningProvider = FutureProvider.family<PuzzleOpening?, String>((
 /// An ungradable puzzle yields the empty set rather than an error. Nothing
 /// about the player's game should stop because a statistic cannot be computed,
 /// and constraint 1 has no room for a puzzle that refuses to open.
-Set<Technique> _techniquesFor(String clues) {
+///
+/// A **killer** puzzle is graded with its **cage**s (D-128). Without them the
+/// classic ladder cannot finish one, and the empty set that came back would
+/// skip every counter, every **technique unlock** and every **lesson** without
+/// a sign that anything had been missed.
+Set<Technique> _techniquesFor(String clues, String? storedCages) {
   final parsed = Grid.parse(clues);
   if (parsed is! ValidGrid) return const <Technique>{};
-  final result = grade(parsed.grid);
+  final cages = switch (CageSet.fromStoredText(storedCages)) {
+    ValidCageSet(:final cages) => cages,
+    _ => null,
+  };
+  final result = grade(parsed.grid, cages: cages);
   return switch (result) {
     Graded(:final techniquesUsed) => techniquesUsed,
     Ungradable() => const <Technique>{},

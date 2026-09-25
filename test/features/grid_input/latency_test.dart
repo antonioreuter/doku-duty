@@ -15,6 +15,9 @@ import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 
+import 'dart:convert';
+
+import '../puzzle_engine/support/killer.dart';
 import 'support/recording_canvas.dart';
 
 const String _clues =
@@ -237,5 +240,86 @@ void main() {
       '${middle.inMicroseconds}us, worst ${samples.last.inMicroseconds}us',
     );
     expect(middle, lessThan(const Duration(milliseconds: 100)));
+  });
+
+  // D-129's **cage** layer is drawn on every repaint of a **killer** board, so
+  // the two numbers above are taken again on one. Built through the same
+  // opening path the app takes, with the **cage**s read from stored text.
+  group('on a killer board', () {
+    final killer = StoredPuzzle(
+      id: 'k1',
+      clues: '.' * 81,
+      solution: _solution,
+      rank: Rank.sheriff,
+      seed: 1,
+      cages: jsonEncode(referenceKillerCages(_solution).toJson()),
+    );
+
+    test('a tap places a digit and repaints inside the budget', () {
+      final controller = PuzzleController(
+        puzzle: killer,
+        sink: _NullSink(),
+        initial: sessionFor(
+          puzzle: killer,
+          placedValues: null,
+          mode: InputMode.cellFirst,
+        ),
+      );
+      expect(controller.state.board.cages, isNotNull);
+
+      final samples = <Duration>[];
+      for (var run = 0; run < 40; run++) {
+        final stopwatch = Stopwatch()..start();
+        controller.tapCell(run);
+        controller.tapKey(const DigitKey(1));
+        GridPainter(
+          board: controller.state.board,
+          selectedCell: controller.state.selectedCell,
+          textScale: 1,
+          colours: GridColours.standard(),
+        ).paint(RecordingCanvas(), size);
+        stopwatch.stop();
+        samples.add(stopwatch.elapsed);
+      }
+      final middle = medianOf(samples);
+      // ignore: avoid_print
+      print(
+        'killer tap to repaint, host: median ${middle.inMicroseconds}us, '
+        'worst ${samples.last.inMicroseconds}us',
+      );
+      expect(middle, lessThan(const Duration(milliseconds: 100)));
+    });
+
+    test('a repaint at maximum note density', () {
+      var board = sessionFor(
+        puzzle: killer,
+        placedValues: null,
+        mode: InputMode.cellFirst,
+      ).board;
+      for (var cell = 0; cell < 81; cell++) {
+        for (var digit = 1; digit <= 9; digit++) {
+          board = (board.toggleNote(cell, digit) as EditApplied).board;
+        }
+      }
+      final samples = <Duration>[];
+      for (var run = 0; run < 20; run++) {
+        final stopwatch = Stopwatch()..start();
+        GridPainter(
+          board: board,
+          selectedCell: 40,
+          textScale: 1,
+          colours: GridColours.standard(),
+        ).paint(RecordingCanvas(), size);
+        stopwatch.stop();
+        samples.add(stopwatch.elapsed);
+      }
+      final middle = medianOf(samples);
+      // ignore: avoid_print
+      print(
+        'killer repaint at 729 candidates: median '
+        '${middle.inMicroseconds}us, worst ${samples.last.inMicroseconds}us',
+      );
+      expect(middle, lessThan(const Duration(milliseconds: 100)));
+    });
   });
 }

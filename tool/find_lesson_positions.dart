@@ -8,11 +8,17 @@
 // the resulting eliminations immediately leave some cell with one candidate —
 // because a lesson has to end in a placement the player makes, and an
 // elimination technique has no placement of its own.
+//
+// A **killer** technique is looked for only on **killer** puzzles, solved
+// under their **cage**s, and its position is written out with them; a classic
+// technique only on classic puzzles, so adding **killer** content moves none
+// of the positions found before it.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/cage.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/deduction.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/solver_state.dart';
@@ -45,7 +51,8 @@ void main() {
     final pack =
         jsonDecode(File('assets/packs/frontier-1.json').readAsStringSync())
             as Map<String, dynamic>;
-    final puzzles = (pack['puzzles'] as List<dynamic>).cast<Map<String, dynamic>>();
+    final puzzles = (pack['puzzles'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
 
     final wanted = <Technique>[
       for (final t in Technique.values)
@@ -53,14 +60,25 @@ void main() {
     ];
     final found = <Technique, String>{};
 
+    // The 45 rule fires on almost every **killer** board, and the first one
+    // found can reach through five **cage**s — correct, and hopeless to teach.
+    // It keeps the position whose argument has the fewest cells in it instead.
+    final fewestWitnesses = <Technique, int>{};
+    bool keepsLooking(Technique t) => t == Technique.fortyFiveRule;
+
     for (final technique in wanted) {
       final impl = techniqueFor(technique);
 
       outer:
       for (final puzzle in puzzles) {
+        final isKiller = puzzle.containsKey('cages');
+        if (isKiller != technique.killerOnly) continue;
+        final cages = isKiller
+            ? (CageSet.fromJson(puzzle['cages']) as ValidCageSet).cages
+            : null;
         final parsed = Grid.parse(puzzle['clues'] as String);
         if (parsed is! ValidGrid) continue;
-        final state = SolverState.fromGrid(parsed.grid);
+        final state = SolverState.fromGrid(parsed.grid, cages: cages);
 
         for (var step = 0; step < 200; step++) {
           if (state.isSolved) break;
@@ -106,7 +124,12 @@ void main() {
               }
             }
 
-            if (single != null) {
+            final better =
+                !keepsLooking(technique) ||
+                candidate.witnesses.length <
+                    (fewestWitnesses[technique] ?? 1 << 30);
+            if (single != null && better) {
+              fewestWitnesses[technique] = candidate.witnesses.length;
               found[technique] = jsonEncode(<String, Object?>{
                 'technique': technique.name,
                 'puzzleId': puzzle['id'],
@@ -129,8 +152,10 @@ void main() {
                 ],
                 'followWitnesses': follow?.witnesses ?? const <int>[],
                 'filled': 81 - state.emptyCells.length,
+                if (cages != null) 'cages': cages.toJson(),
               });
-              break outer;
+              if (!keepsLooking(technique)) break outer;
+              continue outer;
             }
           }
 
@@ -153,7 +178,9 @@ void main() {
 
     for (final technique in wanted) {
       // ignore: avoid_print
-      print('${technique.name}: ${found.containsKey(technique) ? "found" : "MISSING"}');
+      print(
+        '${technique.name}: ${found.containsKey(technique) ? "found" : "MISSING"}',
+      );
     }
   });
 }

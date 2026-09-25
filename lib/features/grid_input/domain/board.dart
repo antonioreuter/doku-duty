@@ -1,6 +1,8 @@
 import '../../persistence/domain/note_enums.dart';
+import '../../puzzle_engine/domain/cage.dart';
 import '../../puzzle_engine/domain/grid.dart';
 import '../../puzzle_engine/domain/grid_geometry.dart';
+import '../../puzzle_engine/domain/peers.dart';
 import 'note_set.dart';
 
 /// Why an edit did not happen.
@@ -97,25 +99,36 @@ final class EditRefused extends BoardEdit {
 /// Nothing here knows whether a digit is *right*. A wrong digit is placed
 /// exactly as a right one is, because finding it is the game (D-04,
 /// constraint 1); the mistake model is `add-mistake-model`.
+///
+/// A **killer** board also carries its **cage**s. Every **cage** mate is a
+/// **peer** (D-130), so **auto-cleanup**, **auto-notes** and the selection
+/// highlight need no second rule — they ask [peersOf].
 final class Board {
-  const Board._(this._givens, this._placed, this._notes);
+  const Board._(this._givens, this._placed, this._notes, this._shape);
 
   /// An empty cell.
   static const int empty = Grid.blank;
 
-  /// A fresh board for [givens], with nothing placed.
-  factory Board.forPuzzle({required Grid givens}) => Board._(
+  /// A fresh board for [givens], with nothing placed. [cages] makes it a
+  /// **killer** board.
+  factory Board.forPuzzle({required Grid givens, CageSet? cages}) => Board._(
     givens,
     List<int>.unmodifiable(List<int>.filled(GridGeometry.cellCount, empty)),
     const <int, NoteSet>{},
+    _Shape.of(cages),
   );
 
-  /// This puzzle as it was first opened: the same givens, nothing placed, no
-  /// notes.
+  /// This puzzle as it was first opened: the same givens and **cage**s,
+  /// nothing placed, no notes.
   ///
   /// The board a restart hands back. It keeps the givens rather than rebuilding
   /// from a string, so a restart cannot disagree with the puzzle it restarts.
-  Board asFirstOpened() => Board.forPuzzle(givens: _givens);
+  Board asFirstOpened() => Board._(
+    _givens,
+    List<int>.unmodifiable(List<int>.filled(GridGeometry.cellCount, empty)),
+    const <int, NoteSet>{},
+    _shape,
+  );
 
   /// A board rebuilt from a save.
   ///
@@ -126,6 +139,7 @@ final class Board {
     required Grid givens,
     required String placedValues,
     Map<int, NoteSet> notes = const <int, NoteSet>{},
+    CageSet? cages,
   }) {
     final digits = List<int>.filled(GridGeometry.cellCount, empty);
     final parsed = Grid.parse(placedValues);
@@ -148,10 +162,28 @@ final class Board {
       givens,
       List<int>.unmodifiable(digits),
       Map<int, NoteSet>.unmodifiable(kept),
+      _Shape.of(cages),
     );
   }
 
   final Grid _givens;
+
+  /// The **cage**s and the **peer** table built from them, shared by every
+  /// board an edit derives from this one. Built once per puzzle: a placement
+  /// is on constraint 2's path, and rebuilding eighty-one **peer** lists on it
+  /// would be a cost nothing needs.
+  final _Shape _shape;
+
+  /// The **cage**s of a **killer** board, or null for a classic one.
+  CageSet? get cages => _shape.cages;
+
+  /// Every cell that may not share a digit with [cell]: its row, column and
+  /// block, and on a **killer** board its **cage** mates.
+  List<int> peersOf(int cell) => _shape.peers.of(cell);
+
+  /// The **peer** table [peersOf] reads, for asking the engine about this
+  /// board without rebuilding it.
+  Peers get peers => _shape.peers;
   final List<int> _placed;
 
   /// Candidates by cell. Absent means none, so an untouched board carries an
@@ -213,7 +245,7 @@ final class Board {
     final before = _notes[cell] ?? NoteSet.none;
     final after = before.toggle(digit, ink: ink);
     return EditApplied(
-      board: Board._(_givens, _placed, _withNotes(cell, after)),
+      board: Board._(_givens, _placed, _withNotes(cell, after), _shape),
       cell: cell,
       before: empty,
       after: empty,
@@ -236,7 +268,7 @@ final class Board {
   /// Put [notes] into [cell] wholesale. Used by undo to restore what a value
   /// placement cleared.
   Board withNotesAt(int cell, NoteSet notes) =>
-      Board._(_givens, _placed, _withNotes(cell, notes));
+      Board._(_givens, _placed, _withNotes(cell, notes), _shape);
 
   /// The candidates, by cell, for storage. Cells with none are absent.
   Map<int, NoteSet> toNotes() => _notes;
@@ -260,7 +292,7 @@ final class Board {
       return EditRefused(board: this, reason: EditRefusal.noChange);
     }
     return EditApplied(
-      board: Board._(_givens, _placed, _withNotes(cell, NoteSet.none)),
+      board: Board._(_givens, _placed, _withNotes(cell, NoteSet.none), _shape),
       cell: cell,
       before: empty,
       after: empty,
@@ -289,7 +321,8 @@ final class Board {
     };
 
     // **Auto-cleanup** (D-12). A digit placed here cannot also be a candidate
-    // in a cell that shares a **unit** with it, so those candidates go — every
+    // in a **peer** — a cell sharing a **unit** with it, or on a **killer**
+    // board its **cage** (D-130) — so those candidates go — every
     // one of them, on every placement, with no setting to stop it. Without this
     // the board disagrees with itself within about twenty moves and the player
     // stops trusting their own notes, which kills the feature the technique
@@ -299,7 +332,7 @@ final class Board {
     // player did one thing, so undo reverses one thing. Nothing here judges
     // the removal — a candidate is thinking out loud, never a mistake (D-14).
     if (digit != empty) {
-      for (final peer in GridGeometry.peersOf(cell)) {
+      for (final peer in peersOf(cell)) {
         final peerNotes = notes[peer];
         if (peerNotes == null || !peerNotes.contains(digit)) continue;
         final cleaned = peerNotes.without(digit);
@@ -317,6 +350,7 @@ final class Board {
         _givens,
         List<int>.unmodifiable(placed),
         Map<int, NoteSet>.unmodifiable(notes),
+        _shape,
       ),
       cell: cell,
       before: before,
@@ -336,6 +370,9 @@ final class Board {
   ///
   /// Legality is asked of the engine's [Grid.candidatesAt] rather than worked
   /// out again here, so there is exactly one definition of it in the codebase.
+  /// On a **killer** board that means **cage** mates' values are excluded and
+  /// **cage sum**s are not: the arithmetic is a deduction, and doing it here
+  /// would be solving for the player (D-130).
   /// It reads the board as it stands: a value that contradicts the solution
   /// shapes the fill like any other, and nothing is flagged (D-14).
   ///
@@ -350,7 +387,7 @@ final class Board {
       if (digitAt(cell) != empty) continue;
       final before = _notes[cell] ?? NoteSet.none;
       var after = before;
-      for (final digit in grid.candidatesAt(cell).digits) {
+      for (final digit in grid.candidatesAt(cell, peers: _shape.peers).digits) {
         after = after.withGenerated(digit);
       }
       if (after == before) continue;
@@ -362,7 +399,12 @@ final class Board {
       return EditRefused(board: this, reason: EditRefusal.noChange);
     }
     return EditApplied(
-      board: Board._(_givens, _placed, Map<int, NoteSet>.unmodifiable(notes)),
+      board: Board._(
+        _givens,
+        _placed,
+        Map<int, NoteSet>.unmodifiable(notes),
+        _shape,
+      ),
       // The fill is aimed at the board, not a cell. [EditApplied.cell] names
       // the cell a value moved in, and no value moved.
       cell: changes.keys.first,
@@ -416,7 +458,12 @@ final class Board {
       return EditRefused(board: this, reason: EditRefusal.noChange);
     }
     return EditApplied(
-      board: Board._(_givens, _placed, Map<int, NoteSet>.unmodifiable(notes)),
+      board: Board._(
+        _givens,
+        _placed,
+        Map<int, NoteSet>.unmodifiable(notes),
+        _shape,
+      ),
       // Aimed at the board rather than a cell, as the fill is. No value moved.
       cell: changes.keys.first,
       before: empty,
@@ -451,6 +498,7 @@ final class Board {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! Board || other._givens != _givens) return false;
+    if (other.cages != cages) return false;
     for (var cell = 0; cell < GridGeometry.cellCount; cell++) {
       if (other._placed[cell] != _placed[cell]) return false;
     }
@@ -469,4 +517,17 @@ final class Board {
       _notes.entries.map((e) => Object.hash(e.key, e.value)),
     ),
   );
+}
+
+/// A puzzle's **cage**s with their **peer** table, built together once.
+final class _Shape {
+  const _Shape._(this.cages, this.peers);
+
+  factory _Shape.of(CageSet? cages) =>
+      cages == null ? classic : _Shape._(cages, Peers.of(cages));
+
+  static const _Shape classic = _Shape._(null, Peers.classic);
+
+  final CageSet? cages;
+  final Peers peers;
 }

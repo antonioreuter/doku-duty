@@ -10,10 +10,9 @@ enum NodeType {
 
   /// The **season**'s rule twist. Six per **season**.
   ///
-  /// Typed as a variant from the day the **trail** ships, and plays a classic
-  /// puzzle until `add-puzzle-variants` gives the **season** a rule. The type is
-  /// real now so that change has somewhere to land and so D-19's pacing can be
-  /// judged against the real trail rather than a placeholder one.
+  /// Plays a **killer** puzzle at the **node**'s **rank** — the only route to
+  /// **killer** in the app (D-127). One variant, compiled in for every
+  /// **season**, so the **season** document carries no rule key.
   variant,
 
   /// A reward, carrying no puzzle. Four per **season**, at 25/50/75/100%.

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'cage.dart';
 import 'grid.dart';
 import 'rank.dart';
 
@@ -16,6 +17,7 @@ final class PackPuzzle {
     required this.solution,
     required this.rank,
     required this.seed,
+    this.cages,
   });
 
   final String id;
@@ -29,8 +31,14 @@ final class PackPuzzle {
   /// The hardest technique the puzzle requires, as a **rank** (D-07).
   final Rank rank;
 
-  /// The value that reproduces this puzzle from the generator.
+  /// The value that reproduces this puzzle from the generator — a **killer**
+  /// generator when [cages] is set.
   final int seed;
+
+  /// The **cage**s of a **killer** puzzle, or null for a classic one (D-127).
+  final CageSet? cages;
+
+  bool get isKiller => cages != null;
 
   @override
   bool operator ==(Object other) =>
@@ -39,10 +47,11 @@ final class PackPuzzle {
       other.clues == clues &&
       other.solution == solution &&
       other.rank == rank &&
-      other.seed == seed;
+      other.seed == seed &&
+      other.cages == cages;
 
   @override
-  int get hashCode => Object.hash(id, clues, solution, rank, seed);
+  int get hashCode => Object.hash(id, clues, solution, rank, seed, cages);
 }
 
 /// A versioned, immutable shipment of pre-generated puzzles.
@@ -191,6 +200,29 @@ final class Pack {
       );
     }
 
+    // Optional: its absence is what a classic puzzle is. Present, it must be a
+    // valid set the stored solution satisfies — a **cage** that disagrees with
+    // the solution is a board nobody can finish.
+    CageSet? cages;
+    if (row.containsKey('cages')) {
+      final read = CageSet.fromJson(row['cages']);
+      switch (read) {
+        case InvalidCageSet(:final description):
+          return InvalidPack(
+            problem: PackProblem.invalidCages,
+            description: "$id's cages are not a killer board: $description",
+          );
+        case ValidCageSet(cages: final valid):
+          if (!valid.isSatisfiedBy((Grid.parse(solution) as ValidGrid).grid)) {
+            return InvalidPack(
+              problem: PackProblem.invalidCages,
+              description: "$id's solution does not satisfy its cages",
+            );
+          }
+          cages = valid;
+      }
+    }
+
     return ParsedPuzzle(
       PackPuzzle(
         id: id,
@@ -198,6 +230,7 @@ final class Pack {
         solution: solution,
         rank: named.single,
         seed: seed,
+        cages: cages,
       ),
     );
   }
@@ -222,6 +255,7 @@ final class Pack {
               'solution': puzzle.solution,
               'rank': puzzle.rank.name,
               'seed': puzzle.seed,
+              if (puzzle.cages case final cages?) 'cages': cages.toJson(),
             },
         ],
       });
@@ -251,6 +285,10 @@ enum PackProblem {
   unknownRank,
   duplicateId,
   emptyPack,
+
+  /// A **killer** puzzle's **cage**s are malformed, or its solution does not
+  /// satisfy them.
+  invalidCages,
 
   /// The file could not be read at all — most often an asset that never
   /// reached the binary.

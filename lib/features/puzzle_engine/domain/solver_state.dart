@@ -1,7 +1,9 @@
+import 'cage.dart';
 import 'candidates.dart';
 import 'deduction.dart';
 import 'grid.dart';
 import 'grid_geometry.dart';
+import 'peers.dart';
 
 /// A grid together with the candidates still standing in it.
 ///
@@ -13,19 +15,24 @@ import 'grid_geometry.dart';
 /// Candidates are nine-bit masks, so an elimination is one bitwise operation
 /// against no allocation.
 final class SolverState {
-  SolverState._(this._digits, this._candidates);
+  SolverState._(this._digits, this._candidates, this.cages)
+    : peers = Peers.of(cages);
 
   /// Derive the candidates from the grid: every digit not placed in a peer.
-  factory SolverState.fromGrid(Grid grid) {
+  ///
+  /// [cages] makes it a **killer** state: **cage** mates become peers, and the
+  /// **killer** techniques have something to reason about.
+  factory SolverState.fromGrid(Grid grid, {CageSet? cages}) {
+    final peers = Peers.of(cages);
     final digits = <int>[
       for (var cell = 0; cell < GridGeometry.cellCount; cell++)
         grid.digitAt(cell),
     ];
     final candidates = <int>[
       for (var cell = 0; cell < GridGeometry.cellCount; cell++)
-        grid.candidatesAt(cell).mask,
+        grid.candidatesAt(cell, peers: peers).mask,
     ];
-    return SolverState._(digits, candidates);
+    return SolverState._(digits, candidates, cages);
   }
 
   /// Build from explicit candidates.
@@ -36,16 +43,23 @@ final class SolverState {
   factory SolverState.fromCandidates({
     required List<int> digits,
     required List<Candidates> candidates,
+    CageSet? cages,
   }) {
     assert(digits.length == GridGeometry.cellCount);
     assert(candidates.length == GridGeometry.cellCount);
     return SolverState._(List<int>.of(digits), <int>[
       for (final candidate in candidates) candidate.mask,
-    ]);
+    ], cages);
   }
 
   final List<int> _digits;
   final List<int> _candidates;
+
+  /// The **cage**s of a **killer** puzzle, or null for a classic one.
+  final CageSet? cages;
+
+  /// The cells each cell may not share a digit with, **cage** mates included.
+  final Peers peers;
 
   int digitAt(int cell) => _digits[cell];
 
@@ -97,7 +111,7 @@ final class SolverState {
     _digits[cell] = digit;
     _candidates[cell] = 0;
     final removed = ~(1 << (digit - 1));
-    for (final peer in GridGeometry.peersOf(cell)) {
+    for (final peer in peers.of(cell)) {
       _candidates[peer] &= removed;
     }
   }
@@ -109,5 +123,5 @@ final class SolverState {
   Grid toGrid() => Grid.fromDigits(_digits);
 
   SolverState copy() =>
-      SolverState._(List<int>.of(_digits), List<int>.of(_candidates));
+      SolverState._(List<int>.of(_digits), List<int>.of(_candidates), cages);
 }

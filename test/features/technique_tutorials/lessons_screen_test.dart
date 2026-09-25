@@ -47,6 +47,26 @@ void main() {
       }
     });
 
+    // Named rather than left to the loop above: cage combination is a
+    // Greenhorn technique, the one kind that otherwise has no **lesson**, and
+    // a filter by **rank** would drop it without any test here noticing
+    // (D-128).
+    testWidgets('holds both killer lessons, and each replays', (tester) async {
+      _tall(tester);
+      await tester.pumpWidget(_app(db));
+      await tester.pumpAndSettle();
+
+      for (final id in const <String>['cageCombination', 'fortyFiveRule']) {
+        final lesson = lessonCatalogue.singleWhere((l) => l.id == id);
+        await tester.tap(find.byKey(ValueKey<String>('lesson-row-$id')));
+        await tester.pumpAndSettle();
+        expect(find.byType(LessonView), findsOneWidget, reason: id);
+        expect(find.text(lesson.steps.first.text), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey<String>('lesson-skip')));
+        await tester.pumpAndSettle();
+      }
+    });
+
     testWidgets('says not yet seen, never locked', (tester) async {
       _tall(tester);
       await tester.pumpWidget(_app(db));

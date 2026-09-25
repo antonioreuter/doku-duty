@@ -6,7 +6,10 @@ import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/solver.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/uniqueness.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/cage.dart';
+
 import 'support/corpus.dart';
+import 'support/killer.dart';
 
 const String _clues =
     '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
@@ -121,6 +124,79 @@ void main() {
           source.contains(forbidden),
           isFalse,
           reason: 'uniqueness must not reach for $forbidden',
+        );
+      }
+    });
+  });
+
+  // A **killer** search prunes on **cage** repeats and partial sums, and its
+  // answer must be the same three answers for the same reasons.
+  group('on a killer puzzle', () {
+    test('a grid unique only through its sums is reported unique', () {
+      final cages = referenceKillerCages(_solution);
+      // No givens at all: the grid alone admits every sudoku there is.
+      expect(checkUniqueness(Grid.empty), isA<AmbiguousSolutions>());
+
+      final result = checkUniqueness(Grid.empty, cages: cages);
+      expect(result, isA<UniqueSolution>());
+      final solution = (result as UniqueSolution).solution;
+      expect(solution, _grid(_solution));
+      expect(cages.isSatisfiedBy(solution), isTrue);
+    });
+
+    test('the same grid with one cage sum changed is not unique', () {
+      final original = referenceKillerCages(_solution);
+      // The first cage, r1c1-r1c3, holds 5, 3 and 4. Any other sum its size
+      // allows makes the reference solution wrong.
+      final first = original.cageOf(0);
+      expect(first.sum, 12);
+      final result = CageSet.build(<Cage>[
+        for (final cage in original.cages)
+          identical(cage, first) ? Cage(cells: cage.cells, sum: 13) : cage,
+      ]);
+      final altered = (result as ValidCageSet).cages;
+
+      final answer = checkUniqueness(Grid.empty, cages: altered);
+      expect(answer, anyOf(isA<AmbiguousSolutions>(), isA<NoSolution>()));
+    });
+
+    test('a given that contradicts a cage reports no solution', () {
+      // The cages alone admit exactly one completion, with 5 in r1c1, so a
+      // 9 there breaks no unit and still leaves nothing.
+      final result = checkUniqueness(
+        Grid.empty.withDigit(0, 9),
+        cages: referenceKillerCages(_solution),
+      );
+      expect(result, isA<NoSolution>());
+    });
+
+    test('ambiguous solutions both satisfy every cage', () {
+      // One big cage per row, each summing to 45, says nothing a row does not.
+      final rows = cagesFromShape(
+        'aaaaaaaaa'
+        'bbbbbbbbb'
+        'ccccccccc'
+        'ddddddddd'
+        'eeeeeeeee'
+        'fffffffff'
+        'ggggggggg'
+        'hhhhhhhhh'
+        'iiiiiiiii',
+        _solution,
+      );
+      final result = checkUniqueness(_grid(_sevenDigits), cages: rows);
+      expect(result, isA<AmbiguousSolutions>());
+      final ambiguous = result as AmbiguousSolutions;
+      expect(rows.isSatisfiedBy(ambiguous.first), isTrue);
+      expect(rows.isSatisfiedBy(ambiguous.second), isTrue);
+    });
+
+    test('a classic grid answers exactly as before', () {
+      for (final source in <String>[_clues, _sevenDigits, _solution]) {
+        final grid = _grid(source);
+        expect(
+          checkUniqueness(grid, cages: null).runtimeType,
+          checkUniqueness(grid).runtimeType,
         );
       }
     });

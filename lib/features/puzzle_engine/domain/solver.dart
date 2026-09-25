@@ -1,3 +1,4 @@
+import 'cage.dart';
 import 'deduction.dart';
 import 'grid.dart';
 import 'solver_state.dart';
@@ -92,8 +93,10 @@ final class Solver {
       ? techniqueLadder
       : techniqueLadder.where((entry) => allowed!.contains(entry.technique));
 
-  /// The next deduction for [grid], without solving the rest of it.
-  SolverStep step(Grid grid) => stepFrom(SolverState.fromGrid(grid));
+  /// The next deduction for [grid], without solving the rest of it. [cages]
+  /// makes it a **killer** grid.
+  SolverStep step(Grid grid, {CageSet? cages}) =>
+      stepFrom(SolverState.fromGrid(grid, cages: cages));
 
   /// The next deduction for a state that already carries its eliminations.
   ///
@@ -109,9 +112,10 @@ final class Solver {
     return NoProgress(state.toGrid());
   }
 
-  /// Step until the grid is finished or nothing applies.
-  SolveOutcome solve(Grid grid) {
-    final state = SolverState.fromGrid(grid);
+  /// Step until the grid is finished or nothing applies. [cages] makes it a
+  /// **killer** grid.
+  SolveOutcome solve(Grid grid, {CageSet? cages}) {
+    final state = SolverState.fromGrid(grid, cages: cages);
     final deductions = <Deduction>[];
     while (true) {
       if (state.isSolved) {

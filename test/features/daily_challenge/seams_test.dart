@@ -33,6 +33,8 @@ class _Board implements DailyBoard {
   String get clues => '.' * 81;
   @override
   String get solution => '1' * 81;
+  @override
+  bool get isKiller => false;
 }
 
 class _Source implements DailyBoardSource {

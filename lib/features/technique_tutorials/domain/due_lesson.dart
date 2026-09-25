@@ -36,6 +36,23 @@ Lesson? dueLesson({
     );
   }
 
+  // Then the **cage** lesson, whenever a puzzle needs any **killer**
+  // technique. It is the only one that says what the dashed outline and the
+  // corner number are, so it cannot wait behind a harder **lesson**:
+  // hardest-first would show the 45 rule, and solving that puzzle unlocks
+  // cage combination, after which its introduction is never due again
+  // (D-128). A grade can need the 45 rule without cage combination, and that
+  // player has not met a **cage** either.
+  if (techniquesRequired.any((technique) => technique.killerOnly) &&
+      !unlocked.contains(Technique.cageCombination)) {
+    for (final lesson in catalogue) {
+      if (lesson.technique == Technique.cageCombination &&
+          !seen.contains(lesson.id)) {
+        return lesson;
+      }
+    }
+  }
+
   Lesson? hardest;
   for (final lesson in catalogue) {
     final technique = lesson.technique;

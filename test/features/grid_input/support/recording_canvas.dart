@@ -76,9 +76,25 @@ class RecordingCanvas implements Canvas {
     order.add('glyph');
   }
 
+  /// The translation in force, so a path drawn under `translate` is recorded
+  /// where it lands. Only paths honour it: nothing else the painter draws is
+  /// translated, and a recorder that half-modelled transforms everywhere would
+  /// be a second renderer to keep right.
+  Offset _offset = Offset.zero;
+  final List<Offset> _saved = <Offset>[];
+
+  @override
+  void save() => _saved.add(_offset);
+
+  @override
+  void restore() => _offset = _saved.removeLast();
+
+  @override
+  void translate(double dx, double dy) => _offset += Offset(dx, dy);
+
   @override
   void drawPath(Path path, Paint paint) {
-    paths.add((path, paint.color));
+    paths.add((path.shift(_offset), paint.color));
   }
 
   @override

@@ -139,4 +139,96 @@ void main() {
       expect(await packs.puzzleById('b'), isNull);
     });
   });
+
+  // D-127: **killer** is reached only from a **variant node**. The kind is
+  // asked for at the query, so no caller can be handed the other one by
+  // forgetting to filter.
+  group('selecting by rank and kind', () {
+    // Opaque to this layer: it stores **cage**s, it does not read them.
+    const cages = '[{"sum":3,"cells":[0,1]}]';
+    StoredPuzzle killer(String id, Rank rank) => StoredPuzzle(
+      id: id,
+      clues: clues,
+      solution: solution,
+      rank: rank,
+      seed: 777,
+      cages: cages,
+    );
+
+    test('a killer puzzle stores its cages, and a classic one none', () async {
+      await install(
+        puzzles: <StoredPuzzle>[
+          puzzle('c1', Rank.deputy),
+          killer('k1', Rank.deputy),
+        ],
+      );
+      expect((await packs.puzzleById('k1'))!.cages, cages);
+      expect((await packs.puzzleById('c1'))!.cages, isNull);
+    });
+
+    test('classic is the default, and never returns a killer puzzle', () async {
+      // The killer id sorts first, so an unfiltered query would pick it.
+      await install(
+        puzzles: <StoredPuzzle>[
+          killer('a-killer', Rank.sheriff),
+          puzzle('b-classic', Rank.sheriff),
+        ],
+      );
+      expect((await packs.nextUnsolved(Rank.sheriff))?.id, 'b-classic');
+      expect(
+        (await packs.nextUnsolved(Rank.sheriff, kind: PuzzleKind.classic))?.id,
+        'b-classic',
+      );
+    });
+
+    test('asking for killer returns only a killer puzzle', () async {
+      await install(
+        puzzles: <StoredPuzzle>[
+          puzzle('a-classic', Rank.sheriff),
+          killer('b-killer', Rank.sheriff),
+        ],
+      );
+      expect(
+        (await packs.nextUnsolved(Rank.sheriff, kind: PuzzleKind.killer))?.id,
+        'b-killer',
+      );
+    });
+
+    test('no killer left is an absence, never a classic stand-in', () async {
+      await install(
+        puzzles: <StoredPuzzle>[
+          puzzle('c1', Rank.sheriff),
+          killer('k1', Rank.sheriff),
+        ],
+      );
+      await packs.markSolved('k1');
+      expect(
+        await packs.nextUnsolved(Rank.sheriff, kind: PuzzleKind.killer),
+        isNull,
+      );
+      expect((await packs.nextUnsolved(Rank.sheriff))?.id, 'c1');
+    });
+
+    test(
+      'the daily\'s seeded choice is classic only, for every seed',
+      () async {
+        await install(
+          puzzles: <StoredPuzzle>[
+            killer('a-killer', Rank.marshal),
+            puzzle('b-classic', Rank.marshal),
+            killer('c-killer', Rank.marshal),
+          ],
+        );
+        for (var seed = 0; seed < 12; seed++) {
+          final chosen = await packs.puzzleByRankAndSeed(Rank.marshal, seed);
+          expect(chosen?.id, 'b-classic', reason: 'seed $seed');
+        }
+      },
+    );
+
+    test('a rank holding only killer puzzles has no daily board', () async {
+      await install(puzzles: <StoredPuzzle>[killer('k1', Rank.legend)]);
+      expect(await packs.puzzleByRankAndSeed(Rank.legend, 3), isNull);
+    });
+  });
 }

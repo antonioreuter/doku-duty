@@ -21,7 +21,7 @@ final class XyWing extends SolvingTechnique {
       if (bitCount(pivotMask) != 2) continue;
 
       final pincers = <int>[
-        for (final peer in GridGeometry.peersOf(pivot))
+        for (final peer in state.peers.of(pivot))
           if (state.isEmptyAt(peer) && bitCount(state.candidateMask(peer)) == 2)
             peer,
       ]..sort();
@@ -39,9 +39,12 @@ final class XyWing extends SolvingTechnique {
         if (bitCount(third) != 1 || third & pivotMask != 0) continue;
         final digit = digitsOf(third).single;
 
-        final seesBoth = GridGeometry.peersOf(pair[0]).toSet().intersection(
-          GridGeometry.peersOf(pair[1]).toSet(),
-        )..remove(pivot);
+        final seesBoth =
+            state.peers
+                .of(pair[0])
+                .toSet()
+                .intersection(state.peers.of(pair[1]).toSet())
+              ..remove(pivot);
         final eliminations = <CellDigit>[
           for (final cell in seesBoth.toList()..sort())
             if (state.isEmptyAt(cell) && state.hasCandidate(cell, digit))

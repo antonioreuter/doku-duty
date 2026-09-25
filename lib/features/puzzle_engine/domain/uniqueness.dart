@@ -1,5 +1,7 @@
+import 'cage.dart';
 import 'grid.dart';
 import 'grid_geometry.dart';
+import 'peers.dart';
 
 /// Whether a puzzle has no solution, exactly one, or more than one.
 ///
@@ -39,8 +41,13 @@ final class AmbiguousSolutions extends UniquenessResult {
 ///
 /// The search stops as soon as a second solution appears, so the empty grid
 /// returns immediately rather than counting its 6.67e21 completions.
-UniquenessResult checkUniqueness(Grid grid) {
-  final search = _Search(grid);
+///
+/// [cages] makes it a **killer** check: no digit repeats in a **cage**, and a
+/// **cage**'s digits must be able to reach its **cage sum**. Both prune the
+/// search as it goes, which is what makes a zero-given **killer** grid
+/// answerable at all.
+UniquenessResult checkUniqueness(Grid grid, {CageSet? cages}) {
+  final search = _Search(grid, cages);
   if (!search.seedFromClues()) return const NoSolution();
   search.run();
   return switch (search.found.length) {
@@ -55,13 +62,16 @@ UniquenessResult checkUniqueness(Grid grid) {
 /// Candidates are nine-bit masks and placement is a mask operation, so the hot
 /// loop allocates nothing.
 final class _Search {
-  _Search(this.grid)
-    : _digits = List<int>.filled(GridGeometry.cellCount, Grid.blank),
+  _Search(this.grid, this.cages)
+    : _peers = Peers.of(cages),
+      _digits = List<int>.filled(GridGeometry.cellCount, Grid.blank),
       _candidates = List<int>.filled(GridGeometry.cellCount, _allDigits);
 
   static const int _allDigits = 0x1FF;
 
   final Grid grid;
+  final CageSet? cages;
+  final Peers _peers;
   final List<int> _digits;
   final List<int> _candidates;
 
@@ -75,6 +85,11 @@ final class _Search {
       if (digit == Grid.blank) continue;
       if (_candidates[cell] & _bit(digit) == 0) return false;
       if (!_place(cell, digit)) return false;
+    }
+    // A **cage** no clue touched is still narrowed by its sum before the first
+    // guess, not only after one.
+    for (final cage in cages?.cages ?? const <Cage>[]) {
+      if (!_narrowCage(cage)) return false;
     }
     return true;
   }
@@ -119,12 +134,45 @@ final class _Search {
     _digits[cell] = digit;
     _candidates[cell] = 0;
     final removed = ~_bit(digit);
-    for (final peer in GridGeometry.peersOf(cell)) {
+    for (final peer in _peers.of(cell)) {
       if (_digits[peer] != Grid.blank) continue;
       final before = _candidates[peer];
       final after = before & removed;
       if (after == 0) return false;
       _candidates[peer] = after;
+    }
+    final cage = cages?.cageOf(cell);
+    return cage == null || _narrowCage(cage);
+  }
+
+  /// Keep only the digits some completion of [cage] can use: sets of the right
+  /// size and remaining sum that avoid what the **cage** already holds.
+  bool _narrowCage(Cage cage) {
+    var used = 0;
+    var remaining = cage.sum;
+    var open = 0;
+    for (final cell in cage.cells) {
+      final digit = _digits[cell];
+      if (digit == Grid.blank) {
+        open++;
+      } else {
+        used |= _bit(digit);
+        remaining -= digit;
+      }
+    }
+    var allowed = 0;
+    var any = false;
+    for (final set in Cage.combinations(open, remaining)) {
+      if (set & used != 0) continue;
+      allowed |= set;
+      any = true;
+    }
+    if (!any) return false;
+    for (final cell in cage.cells) {
+      if (_digits[cell] != Grid.blank) continue;
+      final after = _candidates[cell] & allowed;
+      if (after == 0) return false;
+      _candidates[cell] = after;
     }
     return true;
   }

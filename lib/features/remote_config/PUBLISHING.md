@@ -54,6 +54,16 @@ puzzle of the node's **rank** from the installed **pack** when the node is
 opened. That is what lets a **pack** be topped up mid-**season** without
 stranding a node or reverting a completion.
 
+**Every `variant` node plays killer (D-127), and there is no rule key.** Killer
+is compiled in for every **season** — **cage**s, **cage sum**s, the same
+**rank** ladder (D-128) — and with one variant there is nothing for a document
+to choose, so a `rule`, `variant` or `killer` key has no effect. A `variant`
+node's `rank` picks from the **pack**'s **killer** puzzles only: if none is left
+unsolved at that **rank** the node reports an ordinary absence rather than
+serving a classic board. The **pack** ships **killer** puzzles at all six
+**rank**s so any `rank` is safe. A key for the rule arrives with the second
+variant, when a **season** can genuinely differ.
+
 ### The palette
 
 `season.palette` is optional, and absent is not a degradation — a **season**
@@ -168,6 +178,9 @@ absent publish does, so there is no failure a player can be shown.
 - A `date` that is not `YYYY-MM-DD`
 - A missing or empty `puzzle_id`
 - A `puzzle_id` naming a puzzle the installed **pack**s do not contain
+- A `puzzle_id` naming a **killer** puzzle — the **daily challenge** is always
+  classic (D-127). It is refused exactly like an unknown id: that day falls back
+  to its derived board, which is always classic too
 
 The last is worth stating plainly because it is the one a publisher will
 actually hit: **publishing a schedule ahead of the pack that contains its

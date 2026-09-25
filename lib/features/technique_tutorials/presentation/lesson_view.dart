@@ -96,6 +96,7 @@ class _LessonViewState extends State<LessonView> {
                         constraints: const BoxConstraints(maxWidth: 360),
                         child: LessonGrid(
                           grid: _lesson.grid,
+                          cages: _lesson.cageSet,
                           marked: step.cells,
                           answerCell: _isFinalStep
                               ? _lesson.placement.cell

@@ -17,7 +17,9 @@ Lesson _for(Technique technique) => Lesson(
 
 final List<Lesson> _catalogue = <Lesson>[
   for (final technique in Technique.values)
-    if (technique.introducedAt.isHarderThan(Rank.greenhorn)) _for(technique),
+    if (technique.introducedAt.isHarderThan(Rank.greenhorn) ||
+        technique.killerOnly)
+      _for(technique),
   Lesson.notes,
 ];
 
@@ -198,6 +200,94 @@ void main() {
 
     test('does not return once seen', () {
       expect(_due(rank: Rank.sheriff, seen: <String>{Lesson.notes.id}), isNull);
+    });
+  });
+
+  // Cage combination is the one **lesson** that says what a **cage** is. The
+  // hardest-first rule (D-106) would show a Sheriff **killer** puzzle's 45 rule
+  // instead — and solving it unlocks cage combination, so the introduction
+  // would never be due again. It is owed first, the way notes are.
+  group('the cage lesson is owed before any other killer lesson', () {
+    final killerSheriff = <Technique>{
+      Technique.nakedSingle,
+      Technique.cageCombination,
+      Technique.fortyFiveRule,
+    };
+
+    test('it comes before the 45 rule, though the 45 rule is harder', () {
+      expect(
+        _due(
+          rank: Rank.sheriff,
+          required: killerSheriff,
+          seen: <String>{Lesson.notes.id},
+        )?.id,
+        Technique.cageCombination.name,
+      );
+    });
+
+    test('it comes before a harder classic lesson on a killer board', () {
+      expect(
+        _due(
+          rank: Rank.ranger,
+          required: <Technique>{Technique.cageCombination, Technique.xWing},
+          seen: <String>{Lesson.notes.id},
+        )?.id,
+        Technique.cageCombination.name,
+      );
+    });
+
+    test('once seen, the hardest killer lesson follows as usual', () {
+      expect(
+        _due(
+          rank: Rank.sheriff,
+          required: killerSheriff,
+          seen: <String>{Lesson.notes.id, Technique.cageCombination.name},
+        )?.id,
+        Technique.fortyFiveRule.name,
+      );
+    });
+
+    test('notes still come first when they are owed', () {
+      expect(
+        _due(rank: Rank.sheriff, required: killerSheriff)?.id,
+        Lesson.notes.id,
+      );
+    });
+
+    test('a player who has solved a killer puzzle is not taught it', () {
+      expect(
+        _due(
+          rank: Rank.sheriff,
+          required: killerSheriff,
+          unlocked: <Technique>{Technique.cageCombination},
+          seen: <String>{Lesson.notes.id},
+        )?.id,
+        Technique.fortyFiveRule.name,
+      );
+    });
+
+    test('it is owed when the puzzle needs only the 45 rule', () {
+      // A grade can reach the 45 rule without ever needing cage combination,
+      // and that player still has not been told what a **cage** is.
+      expect(
+        _due(
+          rank: Rank.sheriff,
+          required: <Technique>{Technique.fortyFiveRule},
+          seen: <String>{Lesson.notes.id},
+        )?.id,
+        Technique.cageCombination.name,
+      );
+    });
+
+    test('a classic puzzle never owes it', () {
+      expect(
+        _due(
+          rank: Rank.ranger,
+          required: <Technique>{Technique.xWing},
+          seen: <String>{Lesson.notes.id},
+        )?.id,
+        Technique.xWing.name,
+      );
     });
   });
 }

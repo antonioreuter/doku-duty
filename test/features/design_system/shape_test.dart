@@ -17,6 +17,17 @@ void main() {
       expect(DokuStroke.interiorDetail, 2.0);
       expect(DokuStroke.gridBoxDivider, 2.5);
       expect(DokuStroke.gridCellHairline, 1.0);
+      expect(DokuStroke.cageOutline, 1.5);
+    });
+
+    // The fifth token (D-129). Dashed, so a **cage** is never mistaken for a
+    // **unit** boundary, and inset so it never sits on one.
+    test('the cage outline is dashed and inset as docs/DESIGN.md §3 says', () {
+      expect(DokuStroke.cageDashOn, 3.0);
+      expect(DokuStroke.cageDashOff, 2.0);
+      expect(DokuStroke.cageInset, 3.0);
+      expect(DokuStroke.cageOutline, lessThan(DokuStroke.gridBoxDivider));
+      expect(DokuStroke.cageOutline, greaterThan(DokuStroke.gridCellHairline));
     });
 
     // The thick-outside/thin-inside relationship is what reads as cartoon

@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// A board is one row of a **pack**, as far as this capability cares.
 class _Board implements DailyBoard {
-  const _Board(this.id, this.rank);
+  const _Board(this.id, this.rank, {this.isKiller = false});
 
   @override
   final String id;
@@ -17,6 +17,8 @@ class _Board implements DailyBoard {
   String get clues => '0' * 81;
   @override
   String get solution => '1' * 81;
+  @override
+  final bool isKiller;
 }
 
 /// A stand-in **pack**, recording what was asked of it.
@@ -42,7 +44,8 @@ class _FakeSource implements DailyBoardSource {
   @override
   Future<DailyBoard?> byRankAndSeed(Rank rank, int seed) async {
     asked.add('bySeed:${rank.name}:$seed');
-    final atRank = boards.where((b) => b.rank == rank).toList()
+    // Classic only, as the contract says and the real source does.
+    final atRank = boards.where((b) => b.rank == rank && !b.isKiller).toList()
       ..sort((a, b) => a.id.compareTo(b.id));
     if (atRank.isEmpty) return null;
     return atRank[seed % atRank.length];
@@ -87,6 +90,45 @@ void main() {
       expect(board, isNotNull, reason: 'the player was left with no daily');
       expect(board!.rank, Rank.greenhorn);
       expect(source.asked.first, 'byId:q-not-installed');
+    });
+  });
+
+  // D-127: the **daily challenge** is always classic. A publish naming a
+  // **killer** puzzle is a mistake in the schedule, and it is refused exactly
+  // as one naming an uninstalled puzzle is — by falling through, not failing.
+  group('the schedule names a killer puzzle', () {
+    test(
+      'it is refused, and the date falls back to its derived board',
+      () async {
+        final source = _FakeSource(
+          _fullPack()
+            ..add(const _Board('k-042', Rank.greenhorn, isKiller: true)),
+        );
+        final resolver = DailyResolver(
+          schedule: DailySchedule(entries: {date: 'k-042'}),
+          source: source,
+        );
+
+        final board = await resolver.boardFor(date);
+
+        expect(board, isNotNull);
+        expect(board!.id, isNot('k-042'));
+        expect(board.isKiller, isFalse);
+        expect(board.rank, Rank.greenhorn);
+        expect(source.asked.first, 'byId:k-042');
+      },
+    );
+
+    test('the fallback is the same board an unknown id gets', () async {
+      Future<String?> boardId(String named) async => (await DailyResolver(
+        schedule: DailySchedule(entries: {date: named}),
+        source: _FakeSource(
+          _fullPack()
+            ..add(const _Board('k-042', Rank.greenhorn, isKiller: true)),
+        ),
+      ).boardFor(date))?.id;
+
+      expect(await boardId('k-042'), await boardId('q-not-installed'));
     });
   });
 

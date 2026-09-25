@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
+import 'package:doku_duty/features/grid_input/presentation/puzzle_screen.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
@@ -18,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/trail_navigation.dart';
+import '../puzzle_engine/support/killer.dart';
 
 /// What each **node type** does when it is opened.
 ///
@@ -45,6 +49,17 @@ void main() {
               rank: rank,
               seed: i,
             ),
+        // Named to sort *before* the classic ones, so a query that forgot the
+        // kind would hand one to a classic **node**.
+        for (final rank in Rank.values)
+          StoredPuzzle(
+            id: 'a-killer-${rank.name}',
+            clues: _clues,
+            solution: _solution,
+            rank: rank,
+            seed: 100,
+            cages: _killerCages,
+          ),
       ],
     );
   });
@@ -226,19 +241,54 @@ void main() {
       expect(marker.semanticLabel, contains('Variant puzzle'));
     });
 
-    testWidgets('plays a classic puzzle — change 17 owns the rule', (
-      tester,
-    ) async {
-      // **The seam, named.** The **season**'s rule twist is
-      // `add-puzzle-variants`. The type is real now so that change has
-      // somewhere to land, and so D-19's pacing can be judged against the real
-      // trail rather than a placeholder one.
+    // Replaces "plays a classic puzzle — change 17 owns the rule", the seam
+    // `add-season-map` left for this change to close (D-127).
+    testWidgets('opens a killer board', (tester) async {
       await walkTo(firstVariant);
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
 
       await openTrailNode(tester, firstVariant);
       expect(find.byType(PuzzleGrid), findsOneWidget);
+      final rank = SeasonOne.season.nodeAt(firstVariant).rank!;
+      expect(
+        tester.widget<PuzzleScreen>(find.byType(PuzzleScreen)).puzzleId,
+        'a-killer-${rank.name}',
+      );
+      // And the board it opened is played under those **cage**s.
+      expect(
+        tester.widget<PuzzleGrid>(find.byType(PuzzleGrid)).board.cages,
+        isNotNull,
+      );
+    });
+
+    testWidgets('with no killer left, reports an absence — never classic', (
+      tester,
+    ) async {
+      final rank = SeasonOne.season.nodeAt(firstVariant).rank!;
+      await PackRepository(db).markSolved('a-killer-${rank.name}');
+      await walkTo(firstVariant);
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+
+      await openTrailNode(tester, firstVariant);
+      expect(find.byType(PuzzleGrid), findsNothing);
+      expect(find.text('Nothing left at this rank for now'), findsOneWidget);
+    });
+
+    testWidgets('a puzzle node beside it still opens classic', (tester) async {
+      final firstPuzzle = SeasonOne.season.nodes
+          .firstWhere((n) => n.type == NodeType.puzzle)
+          .position;
+      await walkTo(firstPuzzle);
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+
+      await openTrailNode(tester, firstPuzzle);
+      expect(
+        tester.widget<PuzzleScreen>(find.byType(PuzzleScreen)).puzzleId,
+        isNot(startsWith('a-killer')),
+      );
     });
   });
 
@@ -271,3 +321,8 @@ const String _clues =
 
 const String _solution =
     '534678912672195348198342567859761423426853791713924856961537284287419635345286179';
+
+/// The reference **killer** board over [_solution], as the **pack** stores it.
+final String _killerCages = jsonEncode(
+  referenceKillerCages(_solution).toJson(),
+);

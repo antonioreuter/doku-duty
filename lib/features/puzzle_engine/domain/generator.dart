@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'cage.dart';
 import 'grader.dart';
 import 'grid.dart';
 import 'grid_geometry.dart';
@@ -15,10 +16,15 @@ final class GeneratedPuzzle {
     required this.solution,
     required this.hardest,
     required this.rank,
+    this.cages,
   });
 
-  /// Reproduces this exact puzzle through [PuzzleGenerator.puzzleForSeed].
+  /// Reproduces this exact puzzle through [PuzzleGenerator.puzzleForSeed], on
+  /// a generator of the same kind.
   final int seed;
+
+  /// The **cage**s of a **killer** puzzle, or null for a classic one.
+  final CageSet? cages;
 
   final Grid clues;
 
@@ -82,8 +88,16 @@ final class GenerationReport {
 /// said about the grid that came out, never what the caller asked for. Asking
 /// for a Marshal puzzle and labelling whatever appears Marshal would make the
 /// ladder a lie, and it is the one bug here that ships silently.
+///
+/// A **killer** generator ([killer]) digs the same seeded grid under a seeded
+/// **cage** partition, asking uniqueness and the grade of each step with the
+/// **cage**s in hand. Everything else — the seed, the dig, the selection — is
+/// shared, so the two kinds cannot drift apart in how they choose.
 final class PuzzleGenerator {
-  const PuzzleGenerator();
+  const PuzzleGenerator({this.killer = false});
+
+  /// Whether this generator makes **killer** puzzles rather than classic ones.
+  final bool killer;
 
   /// Bits of a seed that carry the clue count the dig stopped at.
   static const int _stopBits = 7;
@@ -137,13 +151,16 @@ final class PuzzleGenerator {
     final order = digOrder(gridSeed);
 
     final chain = <GeneratedPuzzle>[];
+    final cages = killer ? cagesFor(gridSeed) : null;
     var clues = solution;
     for (final cell in order) {
       final candidate = clues.cleared(cell);
-      if (checkUniqueness(candidate) is! UniqueSolution) continue;
+      if (checkUniqueness(candidate, cages: cages) is! UniqueSolution) {
+        continue;
+      }
       clues = candidate;
 
-      final graded = grade(clues);
+      final graded = grade(clues, cages: cages);
       if (graded is! Graded || graded.hardest == null) continue;
       chain.add(
         GeneratedPuzzle(
@@ -152,10 +169,97 @@ final class PuzzleGenerator {
           solution: solution,
           hardest: graded.hardest!,
           rank: graded.rank,
+          cages: cages,
         ),
       );
     }
     return chain;
+  }
+
+  /// The **cage** partition of `solvedGrid(gridSeed)`, the same every time.
+  ///
+  /// Grown from a seeded walk: each **cage** starts at the first cell not yet
+  /// taken, aims for a seeded size, and only takes a neighbour whose digit it
+  /// does not already hold — the solution must satisfy every **cage** it is
+  /// cut from. A single cell left stranded joins a neighbouring **cage** where
+  /// one can take it, because a one-cell **cage** is a given in disguise.
+  CageSet cagesFor(int gridSeed) {
+    final solution = solvedGrid(gridSeed);
+    final random = Random(gridSeed ^ _cageSalt);
+    final owner = List<int>.filled(GridGeometry.cellCount, -1);
+    final members = <List<int>>[];
+    final digitsHeld = <int>[];
+
+    int bit(int cell) => 1 << (solution.digitAt(cell) - 1);
+
+    for (var start = 0; start < GridGeometry.cellCount; start++) {
+      if (owner[start] != -1) continue;
+      final id = members.length;
+      final target = _cageSizes[random.nextInt(_cageSizes.length)];
+      final cells = <int>[start];
+      owner[start] = id;
+      var held = bit(start);
+      while (cells.length < target) {
+        final frontier = <int>[
+          for (final cell in cells)
+            for (final next in _edgeNeighbours(cell))
+              if (owner[next] == -1 && held & bit(next) == 0) next,
+        ]..sort();
+        if (frontier.isEmpty) break;
+        final next = frontier[random.nextInt(frontier.length)];
+        owner[next] = id;
+        cells.add(next);
+        held |= bit(next);
+      }
+      members.add(cells);
+      digitsHeld.add(held);
+    }
+
+    for (var id = 0; id < members.length; id++) {
+      if (members[id].length != 1) continue;
+      final cell = members[id].single;
+      int? into;
+      for (final next in _edgeNeighbours(cell)) {
+        final other = owner[next];
+        if (other == id || members[other].length >= GridGeometry.maxDigit) {
+          continue;
+        }
+        if (digitsHeld[other] & bit(cell) != 0) continue;
+        if (into == null || members[other].length < members[into].length) {
+          into = other;
+        }
+      }
+      if (into == null) continue;
+      members[into].add(cell);
+      digitsHeld[into] |= bit(cell);
+      owner[cell] = into;
+      members[id] = <int>[];
+    }
+
+    final result = CageSet.build(<Cage>[
+      for (final cells in members)
+        if (cells.isNotEmpty)
+          Cage(
+            cells: cells,
+            sum: cells.fold(0, (sum, cell) => sum + solution.digitAt(cell)),
+          ),
+    ]);
+    // A partition cut from a valid solved grid is valid by construction; this
+    // is the assertion that says so, not a path anything takes.
+    return (result as ValidCageSet).cages;
+  }
+
+  /// Seeded **cage** sizes, drawn uniformly from this list: mostly twos and
+  /// threes, as a published **killer** is, with the occasional larger one.
+  static const List<int> _cageSizes = <int>[2, 2, 2, 3, 3, 3, 3, 4, 4, 5];
+
+  static Iterable<int> _edgeNeighbours(int cell) sync* {
+    final row = GridGeometry.rowOf(cell);
+    final column = GridGeometry.columnOf(cell);
+    if (row > 0) yield cell - GridGeometry.side;
+    if (row < GridGeometry.side - 1) yield cell + GridGeometry.side;
+    if (column > 0) yield cell - 1;
+    if (column < GridGeometry.side - 1) yield cell + 1;
   }
 
   /// The order clues are taken out in for [gridSeed].
@@ -250,4 +354,7 @@ final class PuzzleGenerator {
   /// Keeps the dig order independent of the digits, so two seeds that happened
   /// to shuffle alike do not also dig alike.
   static const int _orderSalt = 0x5EED;
+
+  /// Keeps the **cage** partition independent of the dig order and the digits.
+  static const int _cageSalt = 0xCA6E;
 }

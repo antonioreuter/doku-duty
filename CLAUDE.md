@@ -3,12 +3,12 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: Milestones 0 and 1 are complete; Milestone 2 has one item
-left.** Nineteen changes are archived — foundation, design system, persistence,
-remote config, puzzle engine, generation, grid and input, notes, note
-automation, provisional notes, the mistake model, completion effects, the pad's
-tools row, rank progression, technique tutorials, the season map, the trail
-path, the daily challenge, and the trophy cabinet. A player opens the app onto
+**Current state: Milestones 0, 1 and 2 are complete.** Twenty changes are
+archived — foundation, design system, persistence, remote config, puzzle
+engine, generation, grid and input, notes, note automation, provisional notes,
+the mistake model, completion effects, the pad's tools row, rank progression,
+technique tutorials, the season map, the trail path, the daily challenge, the
+trophy cabinet, and puzzle variants. A player opens the app onto
 the **trail**: 42 **node**s of a six-week **season**, walked in order, with
 **daily**, **free play**, and the **cabinet** beside it. They place values, mark
 notes in fixed positional slots, run a **chain test** in **provisional note**s,
@@ -17,14 +17,13 @@ and see **unit**s celebrate and hold a **completion tint** — with
 Their **rank** rises and never falls, a **lesson** teaches each technique the
 first time a puzzle demands it, a **daily challenge** keeps a **streak** on the
 **calendar**, and every **boss node**, closed **season**, perfect month and
-**rank** reached mints a **trophy** into the **cabinet**.
+**rank** reached mints a **trophy** into the **cabinet**. The six **variant
+node**s of every **season** play **killer**: **cage**s with a **cage sum**, graded
+on the same ladder, never reached from **free play** or the **daily**.
 
-Nothing is in progress. **Two items are unblocked.** Change 17,
-`add-puzzle-variants`, closes Milestone 2 — the six **variant node**s play
-classic boards until it gives the **season** a rule. Change 18, `add-stamps`, is
-unblocked too now that 14 and 15 have landed, and it inherits a seam test from
-15 (a **chest node** mints no **stamp**) to replace rather than edit. Run
-`openspec status` to confirm before starting.
+Nothing is in progress. **Change 18, `add-stamps`, is next and unblocked.** It
+inherits a seam test from 15 (a **chest node** mints no **stamp**) to replace
+rather than edit. Run `openspec status` to confirm before starting.
 
 Two archived changes are not in `openspec/BACKLOG.md`'s numbering:
 `add-pad-tools-row`, a corrective change that replaced six unlabelled glyph keys
@@ -38,9 +37,10 @@ added to it.** The mid-tier Android latency profile is recorded as unmet against
 *both* change 6 and change 11 in `openspec/BACKLOG.md`; a **cascade** is the
 heavier frame, so `integration_test/completion_effects_test.dart` on one
 physical phone settles both. Haptics are covered by neither — a simulator
-reports success for a haptic it never played. Changes 15, 14 and 16 each added a
-runner — `season_map_test.dart`, `daily_challenge_test.dart`,
-`trophy_cabinet_test.dart` under `integration_test/` — that passes on the iOS
+reports success for a haptic it never played. Changes 15, 14, 16 and 17 each
+added a runner — `season_map_test.dart`, `daily_challenge_test.dart`,
+`trophy_cabinet_test.dart`, `killer_test.dart` under `integration_test/` — that
+passes on the iOS
 simulator and the Android emulator and has been taken on **no** physical device.
 The attached iPhone reports Developer Mode off, and no Android phone is
 attached. **One session with a mid-tier Android phone and a Developer-Mode
@@ -51,7 +51,7 @@ iPhone closes all of it.**
 | File | Holds |
 |---|---|
 | `docs/IDEA.md` | Product description, world, cast, business model |
-| `docs/DECISIONS.md` | 126 numbered decisions (D-01 … D-126) with rationale |
+| `docs/DECISIONS.md` | 131 numbered decisions (D-01 … D-131) with rationale |
 | `docs/SPEC.md` | Long-form product spec |
 | `openspec/project.md` | Platform requirements, conventions, glossary |
 | `docs/TECH_STACK.md` | **Canonical for the stack** — client, AWS backend, auth and guest tier, purchases, offline and sync |
@@ -134,7 +134,8 @@ lesson**; `add-season-map` added **trail**, **node type**, **variant node**,
 **chest node**, **boss node**, **current node**, **not yet reached**, and **free
 play**; `add-daily-challenge` added **daily challenge**, **calendar**,
 **streak**, and **streak freeze**; `add-trophy-cabinet` added **trophy**,
-**award**, and **unfiled**. Read `openspec/project.md` rather than this summary when it matters
+**award**, and **unfiled**; `add-puzzle-variants` added **killer**, **cage**, and
+**cage sum**. Read `openspec/project.md` rather than this summary when it matters
 — a change that needs a new concept adds it there in the same change.
 
 Never write "box" for unit, "level" for node or rank, "pencil mark" for note, or
@@ -207,17 +208,23 @@ is not landing and the installed skill file needs editing.
   good. Settle it before `add-purchases-and-entitlements` (change 26).
 - **No integration test has run on a physical device.** The mid-tier Android
   latency profile has never been taken, and `add-season-map`,
-  `add-daily-challenge` and `add-trophy-cabinet` each added a runner in the same
-  position. Recorded
+  `add-daily-challenge`, `add-trophy-cabinet` and `add-puzzle-variants` each
+  added a runner in the same position. Recorded
   against both `add-grid-and-input` and `add-completion-effects` in
   `openspec/BACKLOG.md`: measured on the host, an emulator, and a simulator
   only, with roughly 200× headroom against the 100 ms budget — but that is an
   inference, not the measurement the backlog asked for. A **cascade** is the
   heavier frame, so `integration_test/completion_effects_test.dart` on the first
   physical phone that comes to hand settles both — and
-  `integration_test/season_map_test.dart`, `daily_challenge_test.dart` and
-  `trophy_cabinet_test.dart` follow in the same session. Record the number, and check
-  the haptics by hand in the same session.
+  `integration_test/season_map_test.dart`, `daily_challenge_test.dart`,
+  `trophy_cabinet_test.dart` and `killer_test.dart` follow in the same session.
+  Record the number, and check the haptics by hand in the same session — and
+  whether **killer**'s 8.3px notes and 8px **cage sum**s read on the smallest
+  real phone (D-129).
+- **The grid has no per-cell semantics on any board.** A screen reader hears one
+  node, "Sudoku grid", and cannot focus a cell — so a **killer** cell's **cage
+  sum** is not announced either. D-131 hands both to `add-accessibility-settings`
+  (change 30).
 
 Resolved, kept here only so they are not re-opened: the Sheriff's retired
 wrong-advice gag (D-39 → D-60) is gone from `docs/ART-BRIEF.md`, whose animation

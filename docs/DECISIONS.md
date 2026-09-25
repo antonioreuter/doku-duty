@@ -2377,6 +2377,15 @@ several cells. Anything past these two belongs to D-34's standalone app.
 because everyone meets them before they meet the app. Nobody meets **cage**s
 before their first **variant node**, whatever their **rank**.
 
+**It is owed first, not hardest-first.** D-106 shows the hardest due **lesson**,
+which on a Sheriff **killer** puzzle is the 45 rule — and solving that puzzle
+unlocks cage combination, so its **lesson** would never be due again. Cage
+combination is the only **lesson** that says what a **cage** is, so it is owed
+before any other **killer** **lesson** whenever a puzzle needs a **killer**
+technique, the way the **notes lesson** is owed before technique **lesson**s.
+Notes still come first; a player who has already solved a **killer** puzzle
+is not taught it (D-104). Found in review, before the change was archived.
+
 **What breaks if reversed.** Grading **killer** any other way leaves the
 shipped-pack audit unable to check it and the **variant node**'s **rank** as a
 label nobody verified — the failure `openspec/BACKLOG.md` warns about under
@@ -2442,3 +2451,29 @@ family to a board already celebrating rows, columns and blocks.
 **auto-cleanup** leaves a candidate the rules forbid. If a **cage** is a
 **unit**, the **cascade**'s chain rules meet shapes they were never
 tuned for.
+
+### D-131 · A cage sum is announced by the per-cell grid semantics change 30 builds
+
+The screen reader announcement of a cell's **cage sum** and **cage** size moves
+out of `add-puzzle-variants` and into `add-accessibility-settings` (change 30),
+which already owns screen reader labels on the grid.
+
+**Rationale.** The planned task was to add the **cage** to "each cell's
+semantics label, alongside what it already announces". Implementation found
+there is no such label on any board: the grid is one semantics node,
+"Sudoku grid, N of 27 groups complete", classic and **killer** alike, so a
+screen reader cannot focus a cell at all. Building per-cell semantics is a
+classic-board accessibility change that predates **killer**, and doing it
+inside a variant change would widen that change into the grid's whole
+accessibility surface. The **cage**'s other two signals ship now — the dashed
+outline and the printed **cage sum**, neither carried by colour
+(constraint 5, D-129).
+
+**What change 30 owes.** When a cell is focusable, a **killer** cell's label
+names its **cage sum** and the number of cells in its **cage**, beside its row,
+column, and value or candidates. The scenario is restored to the `grid-input`
+spec there.
+
+**What breaks if reversed.** Announcing the **cage** on the single grid node
+would read a sum for a cell a screen-reader user had no way to choose.
+

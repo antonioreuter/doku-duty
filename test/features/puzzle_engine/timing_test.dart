@@ -1,10 +1,14 @@
 import 'package:test/test.dart';
 
+import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/rank.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/solver.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/solver_state.dart';
+import 'package:doku_duty/features/puzzle_engine/domain/uniqueness.dart';
 
 import 'support/corpus.dart';
+import 'support/killer.dart';
+import 'support/positions.dart';
 
 /// What the solver costs, measured rather than hoped at.
 ///
@@ -102,5 +106,26 @@ void main() {
       '${median(samples).inMicroseconds}us',
     );
     expect(median(samples), lessThan(const Duration(seconds: 1)));
+  });
+
+  // Offline only, but the killer generator asks this on every clue it tries to
+  // remove, thousands of times a pack. No givens is the search's widest case.
+  test('a uniqueness check on a zero-given killer grid', () {
+    final cages = referenceKillerCages(referenceSolution);
+    final samples = <Duration>[];
+    for (var run = 0; run < 10; run++) {
+      final stopwatch = Stopwatch()..start();
+      final result = checkUniqueness(Grid.empty, cages: cages);
+      stopwatch.stop();
+      expect(result, isA<UniqueSolution>());
+      samples.add(stopwatch.elapsed);
+    }
+    final result = median(samples);
+    // ignore: avoid_print
+    print(
+      'uniqueness, zero-given killer: median ${result.inMilliseconds}ms, '
+      'worst ${samples.last.inMilliseconds}ms',
+    );
+    expect(result, lessThan(const Duration(seconds: 2)));
   });
 }

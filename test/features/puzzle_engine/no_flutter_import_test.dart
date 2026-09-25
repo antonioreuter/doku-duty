@@ -45,13 +45,15 @@ void main() {
     expect(offenders, isEmpty);
   });
 
-  // Named individually as well as by directory: these two are what the tool
-  // runs outside a device, and a move that took either out of `domain/` would
-  // pass the directory check above by leaving its scope.
-  test('the pack format and the generator are pure Dart', () {
+  // Named individually as well as by directory: these are what the tool runs
+  // outside a device, and a move that took one out of `domain/` would pass the
+  // directory check above by leaving its scope. The **cage** model joins them
+  // because the killer generator and the standalone app (D-34) both build on it.
+  test('the pack format, the generator, and the cage model are pure Dart', () {
     for (final path in const <String>[
       'lib/features/puzzle_engine/domain/pack.dart',
       'lib/features/puzzle_engine/domain/generator.dart',
+      'lib/features/puzzle_engine/domain/cage.dart',
     ]) {
       final file = File(path);
       expect(file.existsSync(), isTrue, reason: '$path has moved');

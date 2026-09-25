@@ -167,6 +167,13 @@ class Puzzles extends Table {
 
   IntColumn get seed => integer()();
 
+  /// A **killer** puzzle's **cage**s and **cage sum**s, in the JSON form the
+  /// **pack** carries them in, or null for a classic puzzle (D-127).
+  ///
+  /// Null *is* classic: there is no separate kind column, so a row cannot say
+  /// it is **killer** and carry no **cage**s, or the other way round.
+  TextColumn get cages => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
@@ -636,6 +643,15 @@ class AppDatabase extends _$AppDatabase {
       from6To7: (m, schema) async {
         await m.createTable(schema.trophies);
       },
+      // Version 8 gives a puzzle its **cage**s. One nullable column, so every
+      // puzzle already installed reads as null — classic, which is what it is —
+      // and nothing a player has done moves: saves key by puzzle id, and the
+      // id does not change. The **killer** puzzles themselves arrive with
+      // **pack** version 2, which the existing version check installs on the
+      // next launch.
+      from7To8: (m, schema) async {
+        await m.addColumn(schema.puzzles, schema.puzzles.cages);
+      },
     ),
   );
 
@@ -666,5 +682,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 }

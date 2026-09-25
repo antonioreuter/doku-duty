@@ -21,6 +21,15 @@ true of full house or naked single (D-128).
 - **THEN** that **lesson** fires on the same terms as any other — at most one
   per opening, skippable in one tap (D-106)
 
+#### Scenario: The cage lesson comes before a harder killer lesson
+
+- **WHEN** a **killer** puzzle needing the 45 rule is opened by a player who has
+  seen the **notes lesson** but not the cage combination **lesson**, and has
+  not solved a **killer** puzzle
+- **THEN** the cage combination **lesson** fires rather than the 45 rule's,
+  because it is the one that explains what a **cage** is — and after that
+  puzzle is solved it would never be due again
+
 #### Scenario: A killer lesson is replayed
 
 - **WHEN** the **lesson** list is opened from the **cabinet**

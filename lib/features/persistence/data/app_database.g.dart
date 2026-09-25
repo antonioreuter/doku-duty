@@ -1385,6 +1385,15 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _cagesMeta = const VerificationMeta('cages');
+  @override
+  late final GeneratedColumn<String> cages = GeneratedColumn<String>(
+    'cages',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1393,6 +1402,7 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
     solution,
     rank,
     seed,
+    cages,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1443,6 +1453,12 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
     } else if (isInserting) {
       context.missing(_seedMeta);
     }
+    if (data.containsKey('cages')) {
+      context.handle(
+        _cagesMeta,
+        cages.isAcceptableOrUnknown(data['cages']!, _cagesMeta),
+      );
+    }
     return context;
   }
 
@@ -1478,6 +1494,10 @@ class $PuzzlesTable extends Puzzles with TableInfo<$PuzzlesTable, Puzzle> {
         DriftSqlType.int,
         data['${effectivePrefix}seed'],
       )!,
+      cages: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cages'],
+      ),
     );
   }
 
@@ -1524,6 +1544,13 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
   /// The hardest technique the puzzle requires, never its clue count (D-07).
   final Rank rank;
   final int seed;
+
+  /// A **killer** puzzle's **cage**s and **cage sum**s, in the JSON form the
+  /// **pack** carries them in, or null for a classic puzzle (D-127).
+  ///
+  /// Null *is* classic: there is no separate kind column, so a row cannot say
+  /// it is **killer** and carry no **cage**s, or the other way round.
+  final String? cages;
   const Puzzle({
     required this.id,
     required this.packId,
@@ -1531,6 +1558,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
     required this.solution,
     required this.rank,
     required this.seed,
+    this.cages,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1543,6 +1571,9 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
       map['rank'] = Variable<String>($PuzzlesTable.$converterrank.toSql(rank));
     }
     map['seed'] = Variable<int>(seed);
+    if (!nullToAbsent || cages != null) {
+      map['cages'] = Variable<String>(cages);
+    }
     return map;
   }
 
@@ -1554,6 +1585,9 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
       solution: Value(solution),
       rank: Value(rank),
       seed: Value(seed),
+      cages: cages == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cages),
     );
   }
 
@@ -1571,6 +1605,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
         serializer.fromJson<String>(json['rank']),
       ),
       seed: serializer.fromJson<int>(json['seed']),
+      cages: serializer.fromJson<String?>(json['cages']),
     );
   }
   @override
@@ -1585,6 +1620,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
         $PuzzlesTable.$converterrank.toJson(rank),
       ),
       'seed': serializer.toJson<int>(seed),
+      'cages': serializer.toJson<String?>(cages),
     };
   }
 
@@ -1595,6 +1631,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
     String? solution,
     Rank? rank,
     int? seed,
+    Value<String?> cages = const Value.absent(),
   }) => Puzzle(
     id: id ?? this.id,
     packId: packId ?? this.packId,
@@ -1602,6 +1639,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
     solution: solution ?? this.solution,
     rank: rank ?? this.rank,
     seed: seed ?? this.seed,
+    cages: cages.present ? cages.value : this.cages,
   );
   Puzzle copyWithCompanion(PuzzlesCompanion data) {
     return Puzzle(
@@ -1611,6 +1649,7 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
       solution: data.solution.present ? data.solution.value : this.solution,
       rank: data.rank.present ? data.rank.value : this.rank,
       seed: data.seed.present ? data.seed.value : this.seed,
+      cages: data.cages.present ? data.cages.value : this.cages,
     );
   }
 
@@ -1622,13 +1661,15 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
           ..write('clues: $clues, ')
           ..write('solution: $solution, ')
           ..write('rank: $rank, ')
-          ..write('seed: $seed')
+          ..write('seed: $seed, ')
+          ..write('cages: $cages')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, packId, clues, solution, rank, seed);
+  int get hashCode =>
+      Object.hash(id, packId, clues, solution, rank, seed, cages);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1638,7 +1679,8 @@ class Puzzle extends DataClass implements Insertable<Puzzle> {
           other.clues == this.clues &&
           other.solution == this.solution &&
           other.rank == this.rank &&
-          other.seed == this.seed);
+          other.seed == this.seed &&
+          other.cages == this.cages);
 }
 
 class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
@@ -1648,6 +1690,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
   final Value<String> solution;
   final Value<Rank> rank;
   final Value<int> seed;
+  final Value<String?> cages;
   final Value<int> rowid;
   const PuzzlesCompanion({
     this.id = const Value.absent(),
@@ -1656,6 +1699,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
     this.solution = const Value.absent(),
     this.rank = const Value.absent(),
     this.seed = const Value.absent(),
+    this.cages = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PuzzlesCompanion.insert({
@@ -1665,6 +1709,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
     required String solution,
     required Rank rank,
     required int seed,
+    this.cages = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        packId = Value(packId),
@@ -1679,6 +1724,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
     Expression<String>? solution,
     Expression<String>? rank,
     Expression<int>? seed,
+    Expression<String>? cages,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1688,6 +1734,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
       if (solution != null) 'solution': solution,
       if (rank != null) 'rank': rank,
       if (seed != null) 'seed': seed,
+      if (cages != null) 'cages': cages,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1699,6 +1746,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
     Value<String>? solution,
     Value<Rank>? rank,
     Value<int>? seed,
+    Value<String?>? cages,
     Value<int>? rowid,
   }) {
     return PuzzlesCompanion(
@@ -1708,6 +1756,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
       solution: solution ?? this.solution,
       rank: rank ?? this.rank,
       seed: seed ?? this.seed,
+      cages: cages ?? this.cages,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1735,6 +1784,9 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
     if (seed.present) {
       map['seed'] = Variable<int>(seed.value);
     }
+    if (cages.present) {
+      map['cages'] = Variable<String>(cages.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1750,6 +1802,7 @@ class PuzzlesCompanion extends UpdateCompanion<Puzzle> {
           ..write('solution: $solution, ')
           ..write('rank: $rank, ')
           ..write('seed: $seed, ')
+          ..write('cages: $cages, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6888,6 +6941,7 @@ typedef $$PuzzlesTableCreateCompanionBuilder =
       required String solution,
       required Rank rank,
       required int seed,
+      Value<String?> cages,
       Value<int> rowid,
     });
 typedef $$PuzzlesTableUpdateCompanionBuilder =
@@ -6898,6 +6952,7 @@ typedef $$PuzzlesTableUpdateCompanionBuilder =
       Value<String> solution,
       Value<Rank> rank,
       Value<int> seed,
+      Value<String?> cages,
       Value<int> rowid,
     });
 
@@ -6959,6 +7014,11 @@ class $$PuzzlesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get cages => $composableBuilder(
+    column: $table.cages,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PacksTableFilterComposer get packId {
     final $$PacksTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -7017,6 +7077,11 @@ class $$PuzzlesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get cages => $composableBuilder(
+    column: $table.cages,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PacksTableOrderingComposer get packId {
     final $$PacksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -7064,6 +7129,9 @@ class $$PuzzlesTableAnnotationComposer
 
   GeneratedColumn<int> get seed =>
       $composableBuilder(column: $table.seed, builder: (column) => column);
+
+  GeneratedColumn<String> get cages =>
+      $composableBuilder(column: $table.cages, builder: (column) => column);
 
   $$PacksTableAnnotationComposer get packId {
     final $$PacksTableAnnotationComposer composer = $composerBuilder(
@@ -7123,6 +7191,7 @@ class $$PuzzlesTableTableManager
                 Value<String> solution = const Value.absent(),
                 Value<Rank> rank = const Value.absent(),
                 Value<int> seed = const Value.absent(),
+                Value<String?> cages = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PuzzlesCompanion(
                 id: id,
@@ -7131,6 +7200,7 @@ class $$PuzzlesTableTableManager
                 solution: solution,
                 rank: rank,
                 seed: seed,
+                cages: cages,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7141,6 +7211,7 @@ class $$PuzzlesTableTableManager
                 required String solution,
                 required Rank rank,
                 required int seed,
+                Value<String?> cages = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PuzzlesCompanion.insert(
                 id: id,
@@ -7149,6 +7220,7 @@ class $$PuzzlesTableTableManager
                 solution: solution,
                 rank: rank,
                 seed: seed,
+                cages: cages,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

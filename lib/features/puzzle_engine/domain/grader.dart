@@ -1,3 +1,4 @@
+import 'cage.dart';
 import 'grid.dart';
 import 'rank.dart';
 import 'solver.dart';
@@ -53,8 +54,11 @@ final class Ungradable extends GradeResult {
 /// Never by clue count (D-07). Nothing here counts givens, times a solve, or
 /// consults anything but the ladder — a rank means "this is the hardest thing
 /// you will have to see", and it can only mean that if it is measured that way.
-GradeResult grade(Grid grid) {
-  final outcome = const Solver().solve(grid);
+///
+/// A **killer** grid, given its [cages], is graded on the same ladder (D-128):
+/// its **rank** is the hardest technique, classic or **killer**, it needed.
+GradeResult grade(Grid grid, {CageSet? cages}) {
+  final outcome = const Solver().solve(grid, cages: cages);
   if (!outcome.solved) {
     return Ungradable(
       stalledAt: outcome.grid,

@@ -26,12 +26,6 @@ carry outlines and secondary text, adding no hue (constraint 4, D-129).
 - **WHEN** a classic puzzle is shown
 - **THEN** it renders exactly as it did before **killer** existed
 
-#### Scenario: A screen reader reads a cell
-
-- **WHEN** a screen reader focuses a cell of a **killer** board
-- **THEN** it announces the **cage sum** and the number of cells in the cell's
-  **cage**, alongside what it already announces
-
 #### Scenario: The largest text size
 
 - **WHEN** a **killer** board is shown at the largest supported text size on the

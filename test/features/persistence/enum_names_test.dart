@@ -34,9 +34,11 @@ void main() {
     expect(Technique.values.map((technique) => technique.name), <String>[
       'fullHouse',
       'nakedSingle',
+      'cageCombination',
       'hiddenSingle',
       'nakedPair',
       'pointingPair',
+      'fortyFiveRule',
       'boxLineReduction',
       'nakedTriple',
       'hiddenPair',

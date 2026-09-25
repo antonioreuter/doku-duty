@@ -8,10 +8,12 @@ import 'package:doku_duty/features/puzzle_engine/domain/uniqueness.dart';
 import 'support/corpus.dart';
 
 void main() {
-  test('there is an entry for every technique in the ladder', () {
+  // Classic techniques only: a **killer** technique needs **cage**s, which no
+  // corpus grid has. Its fixtures live in killer_grader_test.dart.
+  test('there is an entry for every classic technique in the ladder', () {
     expect(
       corpus.map((entry) => entry.technique).toList(),
-      Technique.values,
+      Technique.values.where((technique) => !technique.killerOnly),
       reason: 'a technique with no corpus entry is a grade nothing checks',
     );
   });

@@ -80,10 +80,15 @@ void main() {
   // The ladder is only meaningful at its edges: a technique that grades one
   // step out lands every puzzle in the wrong rank at exactly the boundary a
   // player is told they have crossed.
+  // Classic techniques, walked in ladder order. The **killer** ones are graded
+  // on **cage**d grids in killer_grader_test.dart.
   test('each technique grades to its own rank, and the next one grades up', () {
-    for (var i = 1; i < Technique.values.length; i++) {
-      final lower = Technique.values[i - 1];
-      final higher = Technique.values[i];
+    final classic = Technique.values
+        .where((technique) => !technique.killerOnly)
+        .toList();
+    for (var i = 1; i < classic.length; i++) {
+      final lower = classic[i - 1];
+      final higher = classic[i];
       final lowerGrade = grade(entryFor(lower).grid) as Graded;
       final higherGrade = grade(entryFor(higher).grid) as Graded;
 

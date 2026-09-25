@@ -10,16 +10,38 @@ import 'package:doku_duty/features/technique_tutorials/domain/lesson_catalogue.d
 
 void main() {
   group('the catalogue covers the ladder', () {
-    test('every technique above Greenhorn has exactly one lesson', () {
+    // Cage combination is the exception, and D-128 is why: everyone meets full
+    // house and naked single before they meet the app, and nobody meets a
+    // **cage** before their first **variant node**, whatever their **rank**.
+    test('every technique above Greenhorn, and every killer technique, has '
+        'exactly one lesson', () {
       for (final technique in Technique.values) {
         final matches = lessonCatalogue.where(
           (lesson) => lesson.technique == technique,
         );
-        if (technique.introducedAt.isHarderThan(Rank.greenhorn)) {
+        if (technique.introducedAt.isHarderThan(Rank.greenhorn) ||
+            technique.killerOnly) {
           expect(matches, hasLength(1), reason: technique.name);
         } else {
           expect(matches, isEmpty, reason: '${technique.name} is the game');
         }
+      }
+    });
+
+    test('both killer lessons are in it (D-128)', () {
+      expect(
+        lessonCatalogue.map((lesson) => lesson.technique),
+        containsAll(<Technique>[
+          Technique.cageCombination,
+          Technique.fortyFiveRule,
+        ]),
+      );
+    });
+
+    test('a killer lesson carries valid cages, and a classic one none', () {
+      for (final lesson in lessonCatalogue) {
+        final killer = lesson.technique?.killerOnly ?? false;
+        expect(lesson.cageSet != null, killer, reason: lesson.id);
       }
     });
 
@@ -95,7 +117,7 @@ void main() {
         if (technique == null) continue;
 
         final parsed = Grid.parse(lesson.grid) as ValidGrid;
-        final state = SolverState.fromGrid(parsed.grid);
+        final state = SolverState.fromGrid(parsed.grid, cages: lesson.cageSet);
         final deduction = techniqueFor(technique).deduce(state);
 
         expect(
@@ -115,7 +137,7 @@ void main() {
       // the copy says it holds.
       for (final lesson in lessonCatalogue) {
         final parsed = Grid.parse(lesson.grid) as ValidGrid;
-        final state = SolverState.fromGrid(parsed.grid);
+        final state = SolverState.fromGrid(parsed.grid, cages: lesson.cageSet);
 
         for (var step = 0; step < 300 && !state.isSolved; step++) {
           var advanced = false;

@@ -18,6 +18,19 @@ abstract final class DokuStroke {
   static const double interiorDetail = 2.0;
   static const double gridBoxDivider = 2.5;
   static const double gridCellHairline = 1.0;
+
+  /// A **cage** on a **killer** board (D-129). Between the hairline and the
+  /// divider, so it reads as its own layer and as neither.
+  static const double cageOutline = 1.5;
+
+  /// The **cage** outline's dash and gap. Dashed so a **cage** is never read
+  /// as a **unit** boundary, whose lines are solid.
+  static const double cageDashOn = 3.0;
+  static const double cageDashOff = 2.0;
+
+  /// How far inside its cells a **cage** outline runs, so it never sits on a
+  /// grid line and two neighbouring **cage**s stay two outlines.
+  static const double cageInset = 3.0;
 }
 
 /// Solid offset shadows, never blurred (`docs/DESIGN.md` §4).

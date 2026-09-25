@@ -17,7 +17,7 @@ final dailyRepositoryProvider = Provider<DailyRepository>(
 /// A stored puzzle row, seen as a board.
 ///
 /// The adapter exists so `domain/` never has to know Drift: [DailyBoard] is
-/// four getters and the row already has all four.
+/// five getters and the row already has all five.
 class _PackBoard implements DailyBoard {
   const _PackBoard(this._puzzle);
 
@@ -31,6 +31,8 @@ class _PackBoard implements DailyBoard {
   String get clues => _puzzle.clues;
   @override
   String get solution => _puzzle.solution;
+  @override
+  bool get isKiller => _puzzle.cages != null;
 }
 
 class _PackBoardSource implements DailyBoardSource {

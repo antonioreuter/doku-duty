@@ -145,6 +145,8 @@ void main() {
           focusFill: Color(0xFFFFEEBB),
           focusLine: Color(0xFFFFCC00),
           settledNote: Color(0xFF4A3F9E),
+          cageLine: Color(0xFF000000),
+          cageSum: Color(0xFF444444),
         ),
       );
       expect(other.shouldRepaint(_painter()), isTrue);

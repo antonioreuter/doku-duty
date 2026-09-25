@@ -1,5 +1,6 @@
 import 'candidates.dart';
 import 'grid_geometry.dart';
+import 'peers.dart';
 
 /// Why a string could not be read as a grid.
 enum GridProblem {
@@ -115,11 +116,11 @@ final class Grid {
   Grid cleared(int cell) => withDigit(cell, blank);
 
   /// The digits still possible in [cell]: one to nine, less every digit already
-  /// placed in one of its peers. A filled cell offers none.
-  Candidates candidatesAt(int cell) {
+  /// placed in one of its [peers]. A filled cell offers none.
+  Candidates candidatesAt(int cell, {Peers peers = Peers.classic}) {
     if (_digits[cell] != blank) return Candidates.none;
     var mask = Candidates.all.mask;
-    for (final peer in GridGeometry.peersOf(cell)) {
+    for (final peer in peers.of(cell)) {
       final digit = _digits[peer];
       if (digit != blank) mask &= ~(1 << (digit - 1));
     }

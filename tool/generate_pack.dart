@@ -6,6 +6,11 @@
 // Every puzzle it writes was verified unique by the engine's exhaustive search
 // and graded by the engine's grader, so the rank on the row is what the grader
 // said about that grid — never what this tool was asked for.
+//
+// Classic puzzles come first and are generated exactly as they were before
+// killer existed, so adding killer content changes no classic row. Killer
+// puzzles follow, from their own seed, with ids prefixed `k` — the two kinds
+// share a seed encoding, so a bare seed would collide.
 import 'dart:io';
 
 import 'package:doku_duty/features/puzzle_engine/domain/generator.dart';
@@ -21,6 +26,12 @@ const Map<Rank, int> defaultSplit = <Rank, int>{
   Rank.marshal: 50,
   Rank.ranger: 35,
   Rank.legend: 20,
+};
+
+/// Killer content for **variant node**s. Even across the six ranks, because a
+/// published **season** may put a **variant node** at any of them (D-127).
+final Map<Rank, int> defaultKillerSplit = <Rank, int>{
+  for (final rank in Rank.values) rank: 12,
 };
 
 void main(List<String> arguments) {
@@ -71,25 +82,67 @@ void main(List<String> arguments) {
     return;
   }
 
-  // Ordered by rank, then by seed: a diff of a regenerated pack then reads as
-  // content moving rather than as the whole file churning.
-  final ordered = report.puzzles.toList()
-    ..sort((a, b) {
-      final byRank = a.rank.index.compareTo(b.rank.index);
-      return byRank != 0 ? byRank : a.seed.compareTo(b.seed);
-    });
+  final killerWanted = <Rank, int>{
+    for (final entry in defaultKillerSplit.entries)
+      entry.key: options.killerCounts[entry.key] ?? entry.value,
+  };
+  stdout.writeln('');
+  stdout.writeln(
+    'Generating ${killerWanted.values.reduce((a, b) => a + b)} killer puzzles '
+    'from seed ${options.killerSeed}.',
+  );
+  lastReported = 0;
+  final killerStopwatch = Stopwatch()..start();
+  final killerReport = const PuzzleGenerator(killer: true).generate(
+    wanted: killerWanted,
+    firstGridSeed: options.killerSeed,
+    maxGridSeeds: options.killerMaxGridSeeds,
+    maxClues: options.maxClues,
+    onGridSeed: (progress) {
+      if (progress.gridSeedsTried - lastReported < 50) return;
+      lastReported = progress.gridSeedsTried;
+      stdout.writeln(
+        '  ${progress.gridSeedsTried} grids: '
+        '${_counts(progress.found)}',
+      );
+    },
+  );
+  killerStopwatch.stop();
+  stdout.writeln('Grid seeds tried:      ${killerReport.gridSeedsTried}');
+  stdout.writeln('Kept:                  ${killerReport.puzzles.length}');
+  stdout.writeln('Found:                 ${_counts(killerReport.found)}');
+  stdout.writeln('Elapsed:               ${killerStopwatch.elapsed}');
+
+  if (!killerReport.complete) {
+    stdout.writeln('');
+    stdout.writeln(
+      'KILLER SHORT by ${_counts(killerReport.shortfall)} — '
+      'raise --killer-max-grid-seeds or lower the split.',
+    );
+    exitCode = 1;
+    return;
+  }
 
   final pack = Pack(
     packId: options.packId,
     version: options.version,
     puzzles: <PackPuzzle>[
-      for (final puzzle in ordered)
+      for (final puzzle in _ordered(report.puzzles))
         PackPuzzle(
           id: 'q${puzzle.seed}',
           clues: puzzle.clues.toStorageString(),
           solution: puzzle.solution.toStorageString(),
           rank: puzzle.rank,
           seed: puzzle.seed,
+        ),
+      for (final puzzle in _ordered(killerReport.puzzles))
+        PackPuzzle(
+          id: 'k${puzzle.seed}',
+          clues: puzzle.clues.toStorageString(),
+          solution: puzzle.solution.toStorageString(),
+          rank: puzzle.rank,
+          seed: puzzle.seed,
+          cages: puzzle.cages,
         ),
     ],
   );
@@ -102,6 +155,14 @@ void main(List<String> arguments) {
     '(${(file.lengthSync() / 1024).toStringAsFixed(1)} KB)',
   );
 }
+
+/// Ordered by rank, then by seed: a diff of a regenerated pack then reads as
+/// content moving rather than as the whole file churning.
+List<GeneratedPuzzle> _ordered(List<GeneratedPuzzle> puzzles) =>
+    puzzles.toList()..sort((a, b) {
+      final byRank = a.rank.index.compareTo(b.rank.index);
+      return byRank != 0 ? byRank : a.seed.compareTo(b.seed);
+    });
 
 String _counts(Map<Rank, int> counts) => <String>[
   for (final rank in Rank.values)
@@ -117,6 +178,9 @@ final class _Options {
     required this.maxClues,
     required this.maxGridSeeds,
     required this.counts,
+    required this.killerSeed,
+    required this.killerMaxGridSeeds,
+    required this.killerCounts,
   });
 
   final int seed;
@@ -126,6 +190,9 @@ final class _Options {
   final int maxClues;
   final int maxGridSeeds;
   final Map<Rank, int> counts;
+  final int killerSeed;
+  final int killerMaxGridSeeds;
+  final Map<Rank, int> killerCounts;
 }
 
 _Options _parse(List<String> arguments) {
@@ -136,6 +203,9 @@ _Options _parse(List<String> arguments) {
   var maxClues = PuzzleGenerator.defaultMaxClues;
   var maxGridSeeds = 20000;
   final counts = <Rank, int>{};
+  var killerSeed = 20260923;
+  var killerMaxGridSeeds = 3000;
+  final killerCounts = <Rank, int>{};
 
   for (var i = 0; i < arguments.length; i++) {
     final name = arguments[i];
@@ -160,14 +230,26 @@ _Options _parse(List<String> arguments) {
         maxClues = int.parse(next());
       case '--max-grid-seeds':
         maxGridSeeds = int.parse(next());
+      case '--killer-seed':
+        killerSeed = int.parse(next());
+      case '--killer-max-grid-seeds':
+        killerMaxGridSeeds = int.parse(next());
       case '--help':
         stdout.writeln(
           'usage: dart run tool/generate_pack.dart '
           '[--seed N] [--out PATH] [--pack-id ID] [--version N] '
-          '[--max-clues N] [--max-grid-seeds N] [--<rank> N]',
+          '[--max-clues N] [--max-grid-seeds N] [--<rank> N] '
+          '[--killer-seed N] [--killer-max-grid-seeds N] [--killer-<rank> N]',
         );
         exit(0);
       default:
+        final killerRank = Rank.values.where(
+          (r) => '--killer-${r.name}' == name,
+        );
+        if (killerRank.isNotEmpty) {
+          killerCounts[killerRank.single] = int.parse(next());
+          continue;
+        }
         final rank = Rank.values.where((r) => '--${r.name}' == name);
         if (rank.isEmpty) {
           stderr.writeln('unknown option $name');
@@ -185,5 +267,8 @@ _Options _parse(List<String> arguments) {
     maxClues: maxClues,
     maxGridSeeds: maxGridSeeds,
     counts: counts,
+    killerSeed: killerSeed,
+    killerMaxGridSeeds: killerMaxGridSeeds,
+    killerCounts: killerCounts,
   );
 }

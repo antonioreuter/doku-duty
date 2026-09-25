@@ -10,6 +10,10 @@ abstract interface class DailyBoard {
   Rank get rank;
   String get clues;
   String get solution;
+
+  /// Whether this is a **killer** board. The **daily challenge** never offers
+  /// one (D-127), so the resolver refuses it rather than trusting a schedule.
+  bool get isKiller;
 }
 
 /// Where boards come from: the installed **pack**, and nowhere else.
@@ -23,7 +27,8 @@ abstract interface class DailyBoardSource {
   /// The board with this id, or null if the installed **pack**s lack it.
   Future<DailyBoard?> byId(String id);
 
-  /// A board of [rank] chosen by [seed], deterministically.
+  /// A classic board of [rank] chosen by [seed], deterministically — never a
+  /// **killer** one (D-127).
   ///
   /// Must not consider whether the puzzle is already solved. `nextUnsolved` is
   /// the right call for **free play** and the wrong one here: what a player has
