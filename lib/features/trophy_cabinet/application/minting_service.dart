@@ -1,3 +1,4 @@
+import '../../daily_challenge/application/daily_service.dart';
 import '../../daily_challenge/domain/daily_calendar.dart';
 import '../../daily_challenge/domain/daily_date.dart';
 import '../../persistence/data/app_database.dart';
@@ -22,11 +23,13 @@ class MintingService {
     required AppDatabase database,
     required this.seasons,
     required this.trophies,
+    required this.daily,
   }) : _db = database;
 
   final AppDatabase _db;
   final SeasonRepository seasons;
   final TrophyRepository trophies;
+  final DailyService daily;
 
   /// Completes a **node** and mints whatever that earns.
   ///
@@ -61,33 +64,49 @@ class MintingService {
     });
   }
 
+  /// Records a **daily challenge** as completed on [day] and mints whatever
+  /// that earns.
+  ///
+  /// The day and the month's **trophy** commit together, and — called from the
+  /// board sink inside the **solve record**'s transaction — with the solve as
+  /// well. Drift nests this transaction into that one.
+  Future<DailyCompletion> completeDay(DatedDay day) {
+    return _db.transaction(() async {
+      final completion = await daily.complete(day);
+      await _mintPerfectMonth(
+        calendar: await daily.repository.calendar(),
+        day: day.date,
+      );
+      return completion;
+    });
+  }
+
   /// Mints a **trophy** for [day]'s month if that month is now complete — one
   /// per month, never one for the first month and nothing after.
   ///
-  /// Called after a **daily challenge** is recorded, with the **calendar** as
-  /// it stands. A month is complete when every one of its days is on the
-  /// **calendar** — a day a **streak freeze** bridged does not count, because
-  /// the **award** is for turning up (`docs/SPEC.md` §5.3).
-  Future<void> afterDailyCompleted({
+  /// Private, and reached only through [completeDay], because a public
+  /// version was exactly how the perfect month went unminted: it was tested,
+  /// correct, and called by nothing. A month is complete when every one of its
+  /// days is on the **calendar** — a day a **streak freeze** bridged does not
+  /// count, because the **award** is for turning up (`docs/SPEC.md` §5.3).
+  Future<void> _mintPerfectMonth({
     required DailyCalendar calendar,
     required DailyDate day,
-  }) {
-    return _db.transaction(() async {
-      var cursor = DailyDate(day.year, day.month, 1);
-      while (cursor.month == day.month) {
-        if (!calendar.wasCompleted(cursor)) return;
-        cursor = cursor.next;
-      }
+  }) async {
+    var cursor = DailyDate(day.year, day.month, 1);
+    while (cursor.month == day.month) {
+      if (!calendar.wasCompleted(cursor)) return;
+      cursor = cursor.next;
+    }
 
-      for (final award in AwardCatalogue.permanent) {
-        if (award.trigger == AwardTrigger.perfectMonth) {
-          await trophies.mint(
-            award: award.forMonth(day.year, day.month),
-            seasonName: null,
-          );
-        }
+    for (final award in AwardCatalogue.permanent) {
+      if (award.trigger == AwardTrigger.perfectMonth) {
+        await trophies.mint(
+          award: award.forMonth(day.year, day.month),
+          seasonName: null,
+        );
       }
-    });
+    }
   }
 
   /// Mints every **rank** **award** at or below [rank].

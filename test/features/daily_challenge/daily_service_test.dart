@@ -56,7 +56,9 @@ void main() {
       () async {
         final service = serviceOn(DailyDate(2026, 3, 20));
 
-        final completion = await service.complete();
+        final completion = await service.complete(
+          DatedDay(date: DailyDate(2026, 3, 20), isVerified: true),
+        );
 
         // The ordering this test exists for. When the caller has the completion
         // in hand — the thing it would show a celebration for — the row is
@@ -74,7 +76,9 @@ void main() {
         );
       }
 
-      final completion = await serviceOn(DailyDate(2026, 3, 20)).complete();
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
       final stored = (await repository.calendar()).streakOn(
         DailyDate(2026, 3, 20),
       );
@@ -90,16 +94,34 @@ void main() {
         );
       }
 
-      final completion = await serviceOn(DailyDate(2026, 3, 20)).complete();
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
       expect(completion.streak, 7);
       expect(completion.isStreakMilestone, isTrue);
     });
 
     test('an ordinary day is not a milestone', () async {
-      final completion = await serviceOn(DailyDate(2026, 3, 20)).complete();
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
       expect(completion.streak, 1);
       expect(completion.isStreakMilestone, isFalse);
+    });
+  });
+
+  group('the day recorded is the one the board was opened for (D-132)', () {
+    test('a daily opened before midnight credits that day', () async {
+      // Opened on the 14th, solved after the clock has turned to the 15th.
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 15),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 14), isVerified: false));
+
+      expect(completion.date, DailyDate(2026, 3, 14));
+      final calendar = await repository.calendar();
+      expect(calendar.wasCompleted(DailyDate(2026, 3, 14)), isTrue);
+      expect(calendar.wasCompleted(DailyDate(2026, 3, 15)), isFalse);
     });
   });
 
@@ -191,7 +213,9 @@ void main() {
 
     test('a completed day is reported as completed', () async {
       final service = serviceOn(DailyDate(2026, 3, 20));
-      await service.complete();
+      await service.complete(
+        DatedDay(date: DailyDate(2026, 3, 20), isVerified: true),
+      );
 
       expect((await service.today()).isCompleted, isTrue);
     });

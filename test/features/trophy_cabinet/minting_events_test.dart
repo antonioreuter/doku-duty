@@ -1,5 +1,9 @@
-import 'package:doku_duty/features/daily_challenge/domain/daily_calendar.dart';
+import 'package:doku_duty/features/daily_challenge/application/daily_service.dart';
+import 'package:doku_duty/features/daily_challenge/data/daily_repository.dart';
+import 'package:doku_duty/features/daily_challenge/domain/daily_board_source.dart';
 import 'package:doku_duty/features/daily_challenge/domain/daily_date.dart';
+import 'package:doku_duty/features/daily_challenge/domain/daily_resolver.dart';
+import 'package:doku_duty/features/daily_challenge/domain/daily_schedule.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
 import 'package:doku_duty/features/trophy_cabinet/application/minting_service.dart';
@@ -15,10 +19,41 @@ import 'package:flutter_test/flutter_test.dart';
 /// than edited into agreement — a test asserting "nothing is minted" surviving
 /// into the change that mints would block the feature it was written to hand
 /// over.
+class _NoBoards implements DailyBoardSource {
+  @override
+  Future<DailyBoard?> byId(String id) async => null;
+  @override
+  Future<DailyBoard?> byRankAndSeed(Rank rank, int seed) async => null;
+}
+
+DailyService _dailyOver(DailyRepository repository) => DailyService(
+  repository: repository,
+  resolver: DailyResolver(schedule: DailySchedule.empty(), source: _NoBoards()),
+  clock: DailyClock(offset: null),
+);
+
+/// Writes the day, then fails: the failure lands after the day is in sqlite,
+/// which is the only place a missing transaction would show.
+class _FailsAfterWriting extends DailyService {
+  _FailsAfterWriting(DailyRepository repository)
+    : super(
+        repository: repository,
+        resolver: _dailyOver(repository).resolver,
+        clock: DailyClock(offset: null),
+      );
+
+  @override
+  Future<DailyCompletion> complete(DatedDay day) async {
+    await super.complete(day);
+    throw StateError('failed after the day was written');
+  }
+}
+
 void main() {
   late AppDatabase db;
   late MintingService minting;
   late TrophyRepository trophies;
+  late DailyRepository days;
 
   final catalogue = AwardCatalogue.forSeason(
     seasonId: 'dust-gulch',
@@ -28,10 +63,12 @@ void main() {
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
     trophies = TrophyRepository(db);
+    days = DailyRepository(db);
     minting = MintingService(
       database: db,
       seasons: SeasonRepository(db),
       trophies: trophies,
+      daily: _dailyOver(days),
     );
     await SeasonRepository(db).enterSeason('dust-gulch');
   });
@@ -111,19 +148,73 @@ void main() {
     });
   });
 
+  group('a daily is recorded with what it earns', () {
+    DatedDay dated(int day) =>
+        DatedDay(date: DailyDate(2026, 4, day), isVerified: false);
+
+    test('the day lands on the calendar and the completion says so', () async {
+      final completion = await minting.completeDay(dated(9));
+
+      expect(completion.date, DailyDate(2026, 4, 9));
+      expect(completion.streak, 1);
+      expect(
+        (await days.calendar()).wasCompleted(DailyDate(2026, 4, 9)),
+        isTrue,
+      );
+      expect(await trophies.earned(), isEmpty);
+    });
+
+    test('the day that completes a month mints its trophy', () async {
+      for (var day = 1; day <= 29; day++) {
+        await days.completeDay(dated(day));
+      }
+
+      await minting.completeDay(dated(30));
+
+      expect(
+        (await trophies.earned()).single.awardId,
+        'permanent.perfect-month.2026-04',
+      );
+    });
+
+    test('a failure after the day is written leaves neither', () async {
+      for (var day = 1; day <= 29; day++) {
+        await days.completeDay(dated(day));
+      }
+      final failing = MintingService(
+        database: db,
+        seasons: SeasonRepository(db),
+        trophies: trophies,
+        daily: _FailsAfterWriting(days),
+      );
+
+      await expectLater(failing.completeDay(dated(30)), throwsStateError);
+
+      expect(
+        (await days.calendar()).wasCompleted(DailyDate(2026, 4, 30)),
+        isFalse,
+        reason: 'the day survived a completion that did not',
+      );
+      expect(await trophies.earned(), isEmpty);
+    });
+  });
+
   group('a perfect month mints (change 14 left this seam)', () {
-    DailyCalendar monthOf(int upTo) => DailyCalendar(
-      completed: <DailyDate>{
-        for (var day = 1; day <= upTo; day++) DailyDate(2026, 4, day),
-      },
-    );
+    DatedDay dated(int year, int month, int day) =>
+        DatedDay(date: DailyDate(year, month, day), isVerified: false);
+
+    /// Every day of the month up to [upTo] already on the **calendar**, then
+    /// [upTo] + 1 completed through the minting service, as a solve does.
+    Future<void> completeAprilThrough(int upTo) async {
+      for (var day = 1; day < upTo; day++) {
+        await days.completeDay(dated(2026, 4, day));
+      }
+      await minting.completeDay(dated(2026, 4, upTo));
+    }
 
     test('a complete month mints', () async {
       // April has 30 days.
-      await minting.afterDailyCompleted(
-        calendar: monthOf(30),
-        day: DailyDate(2026, 4, 30),
-      );
+      await completeAprilThrough(30);
 
       expect(
         (await trophies.earned()).single.awardId,
@@ -135,18 +226,11 @@ void main() {
       // `docs/SPEC.md` §5.3: "a trophy for that month". Keyed on the **award**
       // alone, the second perfect month would collide with the first and mint
       // nothing — a reward silently withheld for every month after the first.
-      await minting.afterDailyCompleted(
-        calendar: monthOf(30),
-        day: DailyDate(2026, 4, 30),
-      );
-      await minting.afterDailyCompleted(
-        calendar: DailyCalendar(
-          completed: <DailyDate>{
-            for (var day = 1; day <= 31; day++) DailyDate(2026, 5, day),
-          },
-        ),
-        day: DailyDate(2026, 5, 31),
-      );
+      await completeAprilThrough(30);
+      for (var day = 1; day < 31; day++) {
+        await days.completeDay(dated(2026, 5, day));
+      }
+      await minting.completeDay(dated(2026, 5, 31));
 
       expect((await trophies.earned()).map((t) => t.awardId).toSet(), <String>{
         'permanent.perfect-month.2026-04',
@@ -155,31 +239,22 @@ void main() {
     });
 
     test('each month\'s trophy names its month', () async {
-      await minting.afterDailyCompleted(
-        calendar: monthOf(30),
-        day: DailyDate(2026, 4, 30),
-      );
+      await completeAprilThrough(30);
 
       expect((await trophies.earned()).single.name, contains('April 2026'));
     });
 
     test('the same month twice mints once', () async {
       // The 30th recorded, then re-recorded — the month is complete both times.
-      for (var i = 0; i < 2; i++) {
-        await minting.afterDailyCompleted(
-          calendar: monthOf(30),
-          day: DailyDate(2026, 4, 30),
-        );
-      }
+      await completeAprilThrough(30);
+      await minting.completeDay(dated(2026, 4, 30));
 
       expect(await trophies.earned(), hasLength(1));
     });
 
     test('a month with one gap mints nothing', () async {
-      await minting.afterDailyCompleted(
-        calendar: monthOf(29),
-        day: DailyDate(2026, 4, 29),
-      );
+      // The 30th never played.
+      await completeAprilThrough(29);
 
       expect(await trophies.earned(), isEmpty);
     });
@@ -188,32 +263,23 @@ void main() {
       // `docs/SPEC.md` §5.3 gives the trophy for a month of dailies. A day a
       // **streak freeze** bridged kept the **streak** alive, which is what a
       // freeze is for — it is not a day the player turned up.
-      final withFreeze = DailyCalendar(
-        completed: <DailyDate>{
-          for (var day = 1; day <= 30; day++)
-            if (day != 14) DailyDate(2026, 4, day),
-        },
-        frozen: <DailyDate>{DailyDate(2026, 4, 14)},
-      );
+      for (var day = 1; day < 30; day++) {
+        if (day == 14) continue;
+        await days.completeDay(dated(2026, 4, day));
+      }
+      await days.recordFrozen(<DailyDate>[DailyDate(2026, 4, 14)]);
 
-      await minting.afterDailyCompleted(
-        calendar: withFreeze,
-        day: DailyDate(2026, 4, 30),
-      );
+      await minting.completeDay(dated(2026, 4, 30));
 
       expect(await trophies.earned(), isEmpty);
     });
 
     test('the permanent trophy carries no season', () async {
-      await minting.afterDailyCompleted(
-        calendar: monthOf(30),
-        day: DailyDate(2026, 4, 30),
-      );
+      await completeAprilThrough(30);
 
       expect((await trophies.earned()).single.seasonId, isNull);
     });
   });
-
   group('reaching a rank mints', () {
     test('every rank at or below is minted, not only the newest', () async {
       // A player can cross two **rank**s on one solve. Minting the whole run

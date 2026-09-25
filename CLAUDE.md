@@ -3,12 +3,12 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: Milestones 0, 1 and 2 are complete.** Twenty changes are
+**Current state: Milestones 0, 1 and 2 are complete.** Twenty-one changes are
 archived — foundation, design system, persistence, remote config, puzzle
 engine, generation, grid and input, notes, note automation, provisional notes,
 the mistake model, completion effects, the pad's tools row, rank progression,
 technique tutorials, the season map, the trail path, the daily challenge, the
-trophy cabinet, and puzzle variants. A player opens the app onto
+trophy cabinet, puzzle variants, and the wiring of completion events. A player opens the app onto
 the **trail**: 42 **node**s of a six-week **season**, walked in order, with
 **daily**, **free play**, and the **cabinet** beside it. They place values, mark
 notes in fixed positional slots, run a **chain test** in **provisional note**s,
@@ -25,12 +25,21 @@ Nothing is in progress. **Change 18, `add-stamps`, is next and unblocked.** It
 inherits a seam test from 15 (a **chest node** mints no **stamp**) to replace
 rather than edit. Run `openspec status` to confirm before starting.
 
-Two archived changes are not in `openspec/BACKLOG.md`'s numbering:
+Three archived changes are not in `openspec/BACKLOG.md`'s numbering:
 `add-pad-tools-row`, a corrective change that replaced six unlabelled glyph keys
-with named controls after `add-mistake-model` found the pad overflowing, and
-`add-trail-path`, which drew the line joining the **trail**'s **node**s. Expect
-the archive to hold changes the backlog does not number; the backlog's status
-block lists them.
+with named controls after `add-mistake-model` found the pad overflowing;
+`add-trail-path`, which drew the line joining the **trail**'s **node**s; and
+`wire-completion-events`, which connected the **daily challenge**'s
+**calendar** and the **rank** and perfect-month **trophy**s to real solves —
+changes 14 and 16 had built and tested each hook in isolation, and nothing in
+the running app called them. Expect the archive to hold changes the backlog
+does not number; the backlog's status block lists them.
+
+**Test a hook through the production wiring, not only in isolation.** That is
+the lesson of `wire-completion-events`: a service with passing tests and no
+production caller is indistinguishable from a working one until someone plays
+the app. `test/features/grid_input/support/production_solve.dart` drives a
+solve through the real `boardSinkProvider` for exactly this.
 
 **Hardware verification is the standing debt, and every change since 11 has
 added to it.** The mid-tier Android latency profile is recorded as unmet against
@@ -51,7 +60,7 @@ iPhone closes all of it.**
 | File | Holds |
 |---|---|
 | `docs/IDEA.md` | Product description, world, cast, business model |
-| `docs/DECISIONS.md` | 131 numbered decisions (D-01 … D-131) with rationale |
+| `docs/DECISIONS.md` | 132 numbered decisions (D-01 … D-132) with rationale |
 | `docs/SPEC.md` | Long-form product spec |
 | `openspec/project.md` | Platform requirements, conventions, glossary |
 | `docs/TECH_STACK.md` | **Canonical for the stack** — client, AWS backend, auth and guest tier, purchases, offline and sync |

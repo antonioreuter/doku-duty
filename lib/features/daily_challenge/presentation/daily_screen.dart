@@ -6,7 +6,7 @@ import '../../design_system/presentation/doku_colours.dart';
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
 import '../../platform_shell/routing/app_router.dart';
-import '../../season_map/application/season_providers.dart';
+import '../../grid_input/application/puzzle_origin.dart';
 import '../application/daily_providers.dart';
 import '../application/daily_service.dart';
 import '../domain/daily_date.dart';
@@ -193,12 +193,15 @@ class _TodayCard extends ConsumerWidget {
       child: InkWell(
         key: const ValueKey<String>('daily-open'),
         onTap: () {
-          // **The trail must not advance.** `season_map` routes a completion
-          // through `activeNodeProvider`, so a board opened with a **node**
-          // still active would complete that **node** when it was solved. The
-          // **daily challenge** is not on the **trail**, and clearing is how
-          // **free play** says so too.
-          ref.read(activeNodeProvider.notifier).clear();
+          // Opened as the day this card shows, not the day it is solved on: a
+          // daily started before midnight credits the day the player opened
+          // (D-132). Replacing the origin also means a **node** opened earlier
+          // is not completed by this board (D-111).
+          ref
+              .read(puzzleOriginProvider.notifier)
+              .openDaily(
+                DatedDay(date: status.date, isVerified: status.isVerified),
+              );
           Routes.goPuzzle(context, board.id);
         },
         child: Container(

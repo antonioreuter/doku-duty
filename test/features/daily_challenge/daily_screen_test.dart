@@ -9,7 +9,7 @@ import 'package:doku_duty/features/platform_shell/domain/flavour.dart';
 import 'package:doku_duty/features/platform_shell/presentation/app.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
-import 'package:doku_duty/features/season_map/application/season_providers.dart';
+import 'package:doku_duty/features/grid_input/application/puzzle_origin.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -222,8 +222,8 @@ void main() {
 
   group('opening the board', () {
     testWidgets('it does not advance the trail', (tester) async {
-      // The trap this capability had to avoid. `season_map` completes a
-      // **node** by whatever `activeNodeProvider` is holding, so a
+      // The trap this capability had to avoid. The sink completes a **node**
+      // by whatever `puzzleOriginProvider` is holding, so a
       // **daily challenge** board opened with a **node** still active would
       // quietly walk the player's **trail** forward when they solved it.
       late WidgetRef capturedRef;
@@ -254,16 +254,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // Stand on a **node**, as though the player had just opened one.
-      capturedRef.read(activeNodeProvider.notifier).enter(7);
-      expect(capturedRef.read(activeNodeProvider), 7);
+      capturedRef.read(puzzleOriginProvider.notifier).openNode(7);
+      expect(capturedRef.read(puzzleOriginProvider), const TrailOrigin(7));
 
       await openDaily(tester);
       await tester.tap(find.byKey(const ValueKey<String>('daily-open')));
       await tester.pumpAndSettle();
 
       expect(
-        capturedRef.read(activeNodeProvider),
-        isNull,
+        capturedRef.read(puzzleOriginProvider),
+        DailyOrigin(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true)),
         reason: 'the daily opened a board while a node was still active',
       );
     });

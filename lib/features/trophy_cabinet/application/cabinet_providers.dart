@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../daily_challenge/application/daily_providers.dart';
 import '../../persistence/application/database_provider.dart';
 import '../../remote_config/application/remote_config_provider.dart';
 import '../../season_map/application/season_providers.dart';
@@ -35,6 +36,7 @@ final mintingServiceProvider = Provider<MintingService>(
     database: ref.watch(appDatabaseProvider),
     seasons: ref.watch(seasonRepositoryProvider),
     trophies: ref.watch(trophyRepositoryProvider),
+    daily: ref.watch(dailyServiceProvider),
   ),
 );
 

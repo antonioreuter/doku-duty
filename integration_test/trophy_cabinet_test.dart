@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:doku_duty/features/daily_challenge/application/daily_providers.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/application/settings_providers.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
@@ -172,6 +173,9 @@ void main() {
       database: db,
       seasons: seasons,
       trophies: TrophyRepository(db),
+      daily: ProviderContainer(
+        overrides: [appDatabaseProvider.overrideWith((ref) => db)],
+      ).read(dailyServiceProvider),
     ).completeNode(
       seasonId: SeasonOne.id,
       seasonName: SeasonOne.season.name,

@@ -2477,3 +2477,29 @@ spec there.
 **What breaks if reversed.** Announcing the **cage** on the single grid node
 would read a sum for a cell a screen-reader user had no way to choose.
 
+
+### D-132 · A daily is credited to the date it was opened for
+
+A solved **daily challenge** marks the **calendar** with the date its board was
+opened for, not the date at the moment it was solved. A board opened at 23:58
+and solved at 00:02 completes the earlier day. Only a board opened as the daily
+records a day: the same puzzle reached from the **trail** or **free play**
+records none, as a daily board completes no **node** (D-111).
+
+**Rationale.** `add-daily-challenge` recorded "today" at the moment of
+completion, but nothing in the running app called it — the fix
+(`wire-completion-events`) had to choose which day a solve belongs to, and the
+two answers differ only at midnight. Crediting the moment of solving makes a
+player who started before midnight lose a day they played, and lean on the
+**streak freeze** for it, which is a penalty for the clock rather than for
+anything they did (constraint 1). Crediting the opening date always resolves
+the edge in the player's favour.
+
+It cannot be gamed into a day not played. The daily screen only ever opens
+today's board, so the date carried is always one the player saw as today, and
+the credit is always for a board actually solved. The verified flag is the one
+the clock gave at opening, so `ClockTrust` treats the day exactly as it would
+have treated it then.
+
+**What breaks if reversed.** A daily finished after midnight silently costs a
+day the player earned, and the calendar shows it as missed.

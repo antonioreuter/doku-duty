@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
 import '../../grid_input/application/grid_providers.dart';
+import '../../grid_input/application/puzzle_origin.dart';
 import '../../platform_shell/application/clock_provider.dart';
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
@@ -125,7 +126,7 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
     // Which **node** the player is on, so completing the board completes this
     // **node** and not another — and so a board played in **free play**
     // afterwards completes none.
-    ref.read(activeNodeProvider.notifier).enter(node.position);
+    ref.read(puzzleOriginProvider.notifier).openNode(node.position);
 
     if (!node.type.bearsPuzzle) {
       // A **chest node** is opened, never played and never failed. It needs no
@@ -154,7 +155,7 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nothing left at this rank for now')),
       );
-      ref.read(activeNodeProvider.notifier).clear();
+      ref.read(puzzleOriginProvider.notifier).openFreePlay();
       return;
     }
 
@@ -180,7 +181,7 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
     // The read that says where the player stands is cached and this screen
     // stays mounted, so the write has to say so (D-105).
     ref.invalidate(trailProgressProvider);
-    ref.read(activeNodeProvider.notifier).clear();
+    ref.read(puzzleOriginProvider.notifier).openFreePlay();
 
     if (!mounted) return;
     ScaffoldMessenger.of(

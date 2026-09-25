@@ -7,8 +7,8 @@ import '../../persistence/data/pack_repository.dart' show StoredPuzzle;
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../rank_progression/domain/player_rank.dart';
-import '../../season_map/application/season_providers.dart';
 import '../application/grid_providers.dart';
+import '../application/puzzle_origin.dart';
 
 /// **Free play** — six entries, one per **rank**.
 ///
@@ -86,7 +86,8 @@ class _FreePlayScreenState extends ConsumerState<FreePlayScreen> {
                 isAbovePlayer:
                     playerRank.hasValue &&
                     PlayerRank.above(playerRank.value!).contains(rank),
-                onOpen: () => ref.read(activeNodeProvider.notifier).clear(),
+                onOpen: () =>
+                    ref.read(puzzleOriginProvider.notifier).openFreePlay(),
               ),
           ],
         ),

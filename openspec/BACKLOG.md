@@ -16,7 +16,7 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ## Status — 2026-09-25
 
-**Twenty changes archived. Milestones 0, 1 and 2 are complete.** Items carry a
+**Twenty-one changes archived. Milestones 0, 1 and 2 are complete.** Items carry a
 **Done** line naming the archive directory they landed
 in; anything without one is not built. Six of the finished items — 6, 11, 14,
 15, 16 and 17 — still carry an **OUTSTANDING** note; read those before treating the
@@ -45,8 +45,12 @@ changes by number.
 D-100 and D-101. It was corrective work on change 6's surface rather than a
 backlog item. `add-trail-path` (`2026-09-20-add-trail-path`) drew the connector
 joining the **trail**'s 42 **node**s, which `add-season-map` had left to artwork
-and running the built app showed was geometry. Both are recorded here so the
-archive and this list can be reconciled.
+and running the built app showed was geometry. `wire-completion-events` wired
+the completion hooks 14 and 16 had built and tested in isolation into the real
+solve path — until it landed, a solved **daily challenge** never reached the
+**calendar** and no **rank** or perfect-month **trophy** ever minted — and added
+D-132. All three are recorded here so the archive and this list can be
+reconciled.
 
 ---
 
@@ -242,6 +246,14 @@ app running left the old day's board on screen, because the status read was
 cached and nothing invalidated it on resume. Fixed and covered in
 `daily_screen_test.dart`.
 
+**Its completion was never wired to a real solve.** The daily screen opened its
+board as an ordinary puzzle and nothing on the solve path called
+`DailyService.complete`, so in the running app the **streak** never grew. Every
+test passed, because each seeded the **calendar** directly.
+`wire-completion-events` fixed it: a solved daily is recorded in the **solve
+record**'s transaction, on the date it was opened for (D-132), and the device
+runner now solves one on the grid.
+
 **OUTSTANDING — the device checks.** `integration_test/daily_challenge_test.dart`
 passes on the iOS simulator (safe area 62/34pt) and the Android emulator
 (52/24pt). It has been taken on **no** physical device.
@@ -294,6 +306,12 @@ alone; nothing said what a medal would mean. A **trophy** is minted when earned
 seams left by 15 and 14 are filled; the **chest node** → **stamp** seam (18) is
 untouched. A perfect month mints one **trophy** per month — the first cut minted
 only the first month ever, and was caught against `docs/SPEC.md` §5.3 at archive.
+
+**Its rank and perfect-month hooks had no production caller.**
+`afterRankReached` and `afterDailyCompleted` were tested and never called
+outside their tests, so neither **trophy** ever minted in the running app.
+`wire-completion-events` wired both into the solve's transaction; a player who
+already held a **rank** receives its **trophy** on their next solve.
 
 **OUTSTANDING — the device checks.** `integration_test/trophy_cabinet_test.dart`
 passes on the iOS simulator (safe area 62/34pt) and the Android emulator

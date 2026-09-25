@@ -10,6 +10,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:doku_duty/features/daily_challenge/application/daily_providers.dart';
 import 'package:doku_duty/features/daily_challenge/data/daily_repository.dart';
 import 'package:doku_duty/features/daily_challenge/domain/daily_date.dart';
+import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
 import 'package:doku_duty/features/persistence/application/database_provider.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/persistence/data/pack_repository.dart';
@@ -198,5 +199,60 @@ void main() {
     expect(find.text('No streak yet'), findsOneWidget);
     expect(find.text('Streak freeze ready'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a daily solved on the grid reaches the calendar on disk', (
+    tester,
+  ) async {
+    // The path that was broken until `wire-completion-events`: every other
+    // test here seeds the **calendar** directly, which is how a solve that
+    // recorded nothing went unnoticed through two changes.
+    await tester.pumpWidget(appOn(DateTime(2026, 3, 16, 10)));
+    await tester.pumpAndSettle();
+    await openDaily(tester);
+
+    await tester.tap(find.byKey(const ValueKey<String>('daily-open')));
+    await tester.pumpAndSettle();
+    // A first puzzle opens on the **notes lesson**; skipped, as a player may.
+    // Only the first: the device keeps that it was seen between runs.
+    final skip = find.byKey(const ValueKey<String>('lesson-skip'));
+    if (skip.evaluate().isNotEmpty) {
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+    }
+
+    final box = tester.getRect(find.byType(PuzzleGrid));
+    final side = box.width < box.height ? box.width : box.height;
+    final origin = Offset(
+      box.left + (box.width - side) / 2,
+      box.top + (box.height - side) / 2,
+    );
+    final cellSize = side / 9;
+    for (var cell = 0; cell < 81; cell++) {
+      if (_clues[cell] != '.') continue;
+      await tester.tapAt(
+        Offset(
+          origin.dx + cellSize * (cell % 9 + 0.5),
+          origin.dy + cellSize * (cell ~/ 9 + 0.5),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text(_solution[cell]).first);
+      await tester.pump();
+    }
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Completed today'), findsOneWidget);
+
+    await db.close();
+    final reopened = AppDatabase(NativeDatabase(file));
+    addTearDown(reopened.close);
+    expect(
+      await DailyRepository(reopened).wasCompleted(DailyDate(2026, 3, 16)),
+      isTrue,
+    );
+    db = reopened;
   });
 }

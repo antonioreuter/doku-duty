@@ -303,4 +303,51 @@ void main() {
       expect((await stats.lifetime()).puzzlesSolved, 1);
     });
   });
+
+  group('what runs after the solve record', () {
+    Future<void> recordSheriff({Future<void> Function()? after}) =>
+        progression.record(
+          puzzleId: 'fixture-${Rank.sheriff.name}',
+          techniquesRequired: <Technique>{Technique.nakedSingle},
+          timeTaken: Duration.zero,
+          attempt: Attempt.fresh,
+          afterInTransaction: after,
+        );
+
+    test('it sees the rank the solve just raised', () async {
+      // The reason it runs *after*: a **rank** is derived from the **solve
+      // record**s (D-102), so a hook that ran first would read the old one.
+      Rank? seen;
+      await recordSheriff(
+        after: () async => seen = await progression.playerRank(),
+      );
+
+      expect(seen, Rank.sheriff);
+    });
+
+    test('it runs for a puzzle that already holds a record', () async {
+      await recordSheriff();
+
+      var ran = false;
+      await recordSheriff(after: () async => ran = true);
+
+      expect(
+        ran,
+        isTrue,
+        reason:
+            'a player who reached a rank before its trophy could mint gets it '
+            'on their next solve, including a replayed one',
+      );
+    });
+
+    test('a throw from it rolls the solve record back', () async {
+      await expectLater(
+        recordSheriff(after: () async => throw StateError('minting failed')),
+        throwsStateError,
+      );
+
+      expect(await packs.isSolved('fixture-${Rank.sheriff.name}'), isFalse);
+      expect((await stats.lifetime()).puzzlesSolved, 0);
+    });
+  });
 }

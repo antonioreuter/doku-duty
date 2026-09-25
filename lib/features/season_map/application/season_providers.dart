@@ -118,29 +118,6 @@ final bossAttemptsProvider = FutureProvider.family<int, int>((
       .bossAttempts(seasonId: season.id, position: position);
 });
 
-/// The **node** the player is currently playing, or null in **free play**.
-///
-/// Set when a **node** is opened and cleared when **free play** opens a puzzle,
-/// so that completing a board completes the **node** it came from and a board
-/// played outside the **trail** advances nothing (D-111).
-///
-/// A provider rather than a route parameter because the thing that needs it is
-/// the board sink, which is global and has no route. The alternative — plumbing
-/// a position through `PuzzleScreen`, the controller, and the sink — would put
-/// a **season** concept in three layers that have no other use for one.
-class ActiveNode extends Notifier<int?> {
-  @override
-  int? build() => null;
-
-  /// The player opened [position] from the **trail**.
-  void enter(int position) => state = position;
-
-  /// The player opened a puzzle that belongs to no **node**.
-  void clear() => state = null;
-}
-
-final activeNodeProvider = NotifierProvider<ActiveNode, int?>(ActiveNode.new);
-
 /// Paints the app in the **season**'s colours.
 ///
 /// Wired as an override rather than as a default inside `design-system`,

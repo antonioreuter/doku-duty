@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../daily_challenge/application/daily_providers.dart';
 import '../../persistence/application/database_provider.dart';
 import '../../persistence/data/pack_repository.dart';
 import '../../persistence/data/note_repository.dart';
@@ -18,6 +19,7 @@ import '../../rank_progression/data/progression_repository.dart';
 import '../../season_map/application/season_providers.dart';
 import '../../trophy_cabinet/application/cabinet_providers.dart';
 import '../application/puzzle_controller.dart';
+import 'puzzle_origin.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
 import '../domain/puzzle_session.dart';
@@ -198,20 +200,29 @@ final class RepositoryBoardSink implements BoardSink {
     this._notes,
     this._progression, {
     this._onSolveRecorded,
-    this._nodeCompletion,
+    this._originCompletion,
+    this._afterSolveRecorded,
   });
 
   final PuzzleSaveRepository _saves;
   final NoteRepository _notes;
   final ProgressionRepository _progression;
 
-  /// What else to write inside the **solve record**'s transaction, if anything.
+  /// What else to write inside the **solve record**'s transaction, if anything,
+  /// decided by where the board was opened from.
   ///
   /// Returns null in **free play**, where a solved board belongs to no **node**
-  /// and advances no **season** (D-111). On the **trail** it returns the write
-  /// that completes the **node** — inside the transaction, so a failure leaves
-  /// neither and the **node** still reads as the **current node**.
-  final Future<void> Function()? Function()? _nodeCompletion;
+  /// and no day (D-111). On the **trail** it returns the write that completes
+  /// the **node**; for the **daily challenge**, the write that marks its day.
+  /// Inside the transaction either way, so a failure leaves neither and
+  /// nothing reads as done that was not.
+  final Future<void> Function()? Function()? _originCompletion;
+
+  /// What to write once the **solve record** is in, inside its transaction.
+  ///
+  /// Wherever the board came from — the **rank** a solve raises is a fact about
+  /// the solve, not its origin, so every board runs it.
+  final Future<void> Function()? _afterSolveRecorded;
 
   /// Called once a **solve record** has been written.
   ///
@@ -309,7 +320,8 @@ final class RepositoryBoardSink implements BoardSink {
       puzzleId: puzzleId,
       techniquesRequired: techniquesRequired,
       attempt: attempt,
-      alsoInTransaction: _nodeCompletion?.call(),
+      alsoInTransaction: _originCompletion?.call(),
+      afterInTransaction: _afterSolveRecorded,
       // Display-only and never advanced (D-06), exactly as `elapsed` above.
       // **Whoever adds the timer must thread it through here too**, or the
       // lifetime play total stays at zero with no symptom until someone reads
@@ -342,35 +354,48 @@ final boardSinkProvider = Provider<BoardSink>(
     ref.watch(puzzleSaveRepositoryProvider),
     ref.watch(noteRepositoryProvider),
     ref.watch(progressionRepositoryProvider),
-    // Both reads are now stale: which puzzle is next at each **rank**, and the
-    // player's **rank** itself. The picker sits under the puzzle in the
-    // navigation stack and stays mounted, so it keeps its listener and nothing
-    // would re-read on its own.
-    // On the **trail**, the **node** the board was opened from. Read at the
-    // moment of completion rather than captured when the sink was built, so a
-    // player who leaves a **node**, plays in **free play**, and comes back
-    // completes the **node** they are actually on.
-    nodeCompletion: () {
-      final position = ref.read(activeNodeProvider);
-      if (position == null) return null;
-      final season = ref.read(currentSeasonProvider);
-      // Routed through the **cabinet**'s minting service rather than the
-      // **season** repository directly, so the completion and any **trophy**
-      // it earns commit in one transaction (D-124). `season-map` stays unaware
-      // of the **cabinet**; the dependency points one way.
+    // Where the board was opened from, read at the moment of completion rather
+    // than captured when the sink was built, so a player who leaves a **node**,
+    // plays elsewhere, and comes back completes what they are actually on.
+    //
+    // Both writes are routed through the **cabinet**'s minting service rather
+    // than their own repositories, so the completion and any **trophy** it
+    // earns commit in one transaction (D-124). `season-map` and
+    // `daily-challenge` stay unaware of the **cabinet**; the dependency points
+    // one way.
+    originCompletion: () {
       final minting = ref.read(mintingServiceProvider);
-      final catalogue = ref.read(awardCatalogueProvider);
-      return () => minting.completeNode(
-        seasonId: season.id,
-        seasonName: season.name,
-        position: position,
-        nodeCount: season.nodes.length,
-        catalogue: catalogue,
-      );
+      switch (ref.read(puzzleOriginProvider)) {
+        case FreePlayOrigin():
+          return null;
+        case DailyOrigin(:final day):
+          return () => minting.completeDay(day);
+        case TrailOrigin(:final position):
+          final season = ref.read(currentSeasonProvider);
+          final catalogue = ref.read(awardCatalogueProvider);
+          return () => minting.completeNode(
+            seasonId: season.id,
+            seasonName: season.name,
+            position: position,
+            nodeCount: season.nodes.length,
+            catalogue: catalogue,
+          );
+      }
+    },
+    // Every **rank** **award** at or below the player's **rank**, read inside
+    // the transaction so it sees the record this solve just wrote (D-102).
+    // Minting is idempotent, so a solve that raises nothing costs a few
+    // no-op inserts and mints nothing.
+    afterSolveRecorded: () async {
+      final progression = ref.read(progressionRepositoryProvider);
+      await ref
+          .read(mintingServiceProvider)
+          .afterRankReached(await progression.playerRank());
     },
     // Every read derived from the **solve record** is now stale: which puzzle
-    // is next at each **rank**, the player's **rank**, and where they stand on
-    // the **trail**. D-105 was found by a test and not by reasoning — both the
+    // is next at each **rank**, the player's **rank**, where they stand on the
+    // **trail**, the day on the **calendar**, and the **cabinet**'s
+    // **trophy**s and statistics. D-105 was found by a test and not by reasoning — both the
     // **trail** and **free play** sit under the puzzle in the navigation stack
     // and stay mounted, so each keeps its listener and nothing would re-read on
     // its own.
@@ -379,6 +404,10 @@ final boardSinkProvider = Provider<BoardSink>(
       ref.invalidate(playerRankProvider);
       ref.invalidate(trailProgressProvider);
       ref.invalidate(nodePuzzleProvider);
+      ref.invalidate(dailyStatusProvider);
+      ref.invalidate(earnedTrophiesProvider);
+      ref.invalidate(earnedIdsProvider);
+      ref.invalidate(cabinetStatisticsProvider);
     },
   ),
 );

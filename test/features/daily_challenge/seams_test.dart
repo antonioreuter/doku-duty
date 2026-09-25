@@ -72,7 +72,9 @@ void main() {
         );
       }
 
-      final completion = await serviceOn(DailyDate(2026, 3, 20)).complete();
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
       // Both facts D-66 prices are on it: the completion itself (2 **stamp**s)
       // and the seven-day milestone (10).
@@ -84,7 +86,9 @@ void main() {
 
   group('add-stamps (18) — nothing is minted', () {
     test('completing a daily mints no stamp', () async {
-      await serviceOn(DailyDate(2026, 3, 20)).complete();
+      await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
       // There is no **stamp** table and no balance to move. D-66 prices a
       // completed daily at 2 and a seven-day **streak** at 10, and `add-stamps`
@@ -108,7 +112,9 @@ void main() {
       // What stays is the boundary: the **calendar** records the days and
       // knows nothing about **trophy**s. Minting is `MintingService`'s job, and
       // `minting_events_test.dart` is where the perfect-month **award** is
-      // tested. A **daily challenge** completing on its own mints nothing.
+      // tested. A **daily challenge** completing on its own mints nothing; a
+      // solved one mints through `MintingService.completeDay`, which is how
+      // the board sink records it (`wire-completion-events`).
       for (var day = 1; day <= 30; day++) {
         await repository.completeDay(
           DatedDay(date: DailyDate(2026, 4, day), isVerified: true),
@@ -160,7 +166,9 @@ void main() {
     });
 
     test('a completion advances no ad counter', () async {
-      final completion = await serviceOn(DailyDate(2026, 3, 20)).complete();
+      final completion = await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
       // The signal carries the date and the **streak** and nothing an ad
       // cadence could read. Change 24 counts *node* completions (D-24); this
@@ -192,7 +200,9 @@ void main() {
     });
 
     test('a completed day is queued for upload, not uploaded', () async {
-      await serviceOn(DailyDate(2026, 3, 20)).complete();
+      await serviceOn(
+        DailyDate(2026, 3, 20),
+      ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
       final rows = await db.select(db.completedDays).get();
       expect(

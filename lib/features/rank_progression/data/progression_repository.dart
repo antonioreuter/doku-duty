@@ -47,42 +47,63 @@ final class ProgressionRepository {
   /// and a puzzle carries a **solve record** once ever. A replayed board must
   /// still complete the **node** it was opened from, and returning early would
   /// silently leave that **node** current forever.
+  ///
+  /// [afterInTransaction] runs last, once the **solve record** is written, for
+  /// what depends on the record — the **rank** **trophy**s, since a **rank** is
+  /// derived from the records (D-102) and a hook that ran first would read the
+  /// old one. It too runs for a puzzle already solved: a player who reached a
+  /// **rank** before its **trophy** could mint receives it on their next solve.
   Future<void> record({
     required String puzzleId,
     required Set<Technique> techniquesRequired,
     required Duration timeTaken,
     required Attempt attempt,
     Future<void> Function()? alsoInTransaction,
+    Future<void> Function()? afterInTransaction,
   }) {
     return _db.transaction(() async {
       await alsoInTransaction?.call();
-
-      // Checked first, and it is not defensive noise: `solvedPuzzles` holds a
-      // bare id with no foreign key, so an unknown puzzle would be marked
-      // solved without complaint and the counters would rise behind it.
-      final puzzle = await _packs.puzzleById(puzzleId);
-      if (puzzle == null) {
-        throw StateError(
-          'no puzzle "$puzzleId" to record a solve against — the pack does not '
-          'hold it, so nothing about this solve can be trusted',
-        );
-      }
-
-      // A puzzle already holding a **solve record** contributes nothing more.
-      // `markSolved` upserts and is safe to repeat, but `recordSolve`
-      // increments unconditionally — so without this the player who finishes a
-      // board, leaves, resumes it and finishes it again raises every counter a
-      // second time off one puzzle. The first record stands: a later, worse
-      // run must not take away the perfect solve the first one earned.
-      if (await _packs.isSolved(puzzleId)) return;
-
-      await _stats.recordSolve(
+      await _recordSolve(
+        puzzleId: puzzleId,
         techniquesRequired: techniquesRequired,
         timeTaken: timeTaken,
         attempt: attempt,
       );
-      await _packs.markSolved(puzzleId);
+      await afterInTransaction?.call();
     });
+  }
+
+  Future<void> _recordSolve({
+    required String puzzleId,
+    required Set<Technique> techniquesRequired,
+    required Duration timeTaken,
+    required Attempt attempt,
+  }) async {
+    // Checked first, and it is not defensive noise: `solvedPuzzles` holds a
+    // bare id with no foreign key, so an unknown puzzle would be marked
+    // solved without complaint and the counters would rise behind it.
+    final puzzle = await _packs.puzzleById(puzzleId);
+    if (puzzle == null) {
+      throw StateError(
+        'no puzzle "$puzzleId" to record a solve against — the pack does not '
+        'hold it, so nothing about this solve can be trusted',
+      );
+    }
+
+    // A puzzle already holding a **solve record** contributes nothing more.
+    // `markSolved` upserts and is safe to repeat, but `recordSolve`
+    // increments unconditionally — so without this the player who finishes a
+    // board, leaves, resumes it and finishes it again raises every counter a
+    // second time off one puzzle. The first record stands: a later, worse
+    // run must not take away the perfect solve the first one earned.
+    if (await _packs.isSolved(puzzleId)) return;
+
+    await _stats.recordSolve(
+      techniquesRequired: techniquesRequired,
+      timeTaken: timeTaken,
+      attempt: attempt,
+    );
+    await _packs.markSolved(puzzleId);
   }
 
   /// The player's **rank**: the hardest **rank** they have solved (D-102).

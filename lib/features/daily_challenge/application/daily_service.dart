@@ -8,6 +8,7 @@ import '../domain/daily_resolver.dart';
 class DailyStatus {
   const DailyStatus({
     required this.date,
+    required this.isVerified,
     required this.board,
     required this.isCompleted,
     required this.streak,
@@ -16,6 +17,10 @@ class DailyStatus {
   });
 
   final DailyDate date;
+
+  /// Whether [date] came from a known server-time offset. Carried so the board
+  /// can be opened as the day it was shown for, flag and all (D-132).
+  final bool isVerified;
 
   /// Null only when nothing is installed at any **rank**.
   final DailyBoard? board;
@@ -74,6 +79,7 @@ class DailyService {
 
     return DailyStatus(
       date: today.date,
+      isVerified: today.isVerified,
       board: await resolver.boardFor(today.date),
       isCompleted: calendar.wasCompleted(today.date),
       streak: calendar.streakOn(today.date),
@@ -82,23 +88,25 @@ class DailyService {
     );
   }
 
-  /// Records today as completed.
+  /// Records [day] as completed.
+  ///
+  /// [day] is the one the board was opened for, not whatever the clock says
+  /// now: a daily started before midnight and finished after it credits the
+  /// day the player opened (D-132).
   ///
   /// **The write lands before this returns**, which is what lets the caller
   /// show the celebration afterwards and know the day is safe. Doing it the
   /// other way round — celebrate, then write — loses the day to an app kill
   /// during the animation, and the player has every reason to believe it
   /// counted (constraint 9).
-  Future<DailyCompletion> complete() async {
-    final today = clock.today();
-
-    await repository.completeDay(today);
+  Future<DailyCompletion> complete(DatedDay day) async {
+    await repository.completeDay(day);
 
     final calendar = await repository.calendar();
-    final streak = calendar.streakOn(today.date);
+    final streak = calendar.streakOn(day.date);
 
     return DailyCompletion(
-      date: today.date,
+      date: day.date,
       streak: streak,
       isStreakMilestone: streak > 0 && streak % 7 == 0,
     );
