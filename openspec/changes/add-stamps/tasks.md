@@ -74,9 +74,13 @@ their failing tests first anyway.
 - [ ] 4.1 Route every **earning** through `MintingService`, inside the
       transaction it already opens. That covers `completeNode` for **chest
       node**s and **boss node**s (it has to be told the **node type**),
-      `afterDailyCompleted` for the day and the **streak**, and the
-      solve-record hook for the perfect solve. Each call returns the
-      **earning**s it wrote, for the notice.
+      `completeDay` for the day and the **streak** — it already holds the
+      `DailyCompletion`, whose `isStreakMilestone` is the seventh-day flag, so
+      read it there rather than recomputing the **streak** — and the sink's
+      `afterSolveRecorded` hook for the perfect solve. Each call returns the
+      **earning**s it wrote, for the notice. (`afterDailyCompleted` no longer
+      exists: `wire-completion-events` made it the private `_mintPerfectMonth`,
+      reachable only through `completeDay`.)
 - [ ] 4.2 Delete `node_types_test.dart`'s "grants no currency — change 18 owns
       the balance" and replace it with a test that opening a **chest node**
       earns 12 exactly once, the way 16 replaced the **boss node** seam.
@@ -89,13 +93,25 @@ their failing tests first anyway.
   - a failure injected after the **earning** leaves neither it nor its cause;
   - a completed **boss node** played again earns nothing more;
   - a solved board erased and completed again earns nothing more.
+- [ ] 4.5 Carry the **earning**s from the sink to the puzzle screen, test first.
+      Today `RepositoryBoardSink` types both hooks `Future<void>` and discards
+      what they return — including the `DailyCompletion` from `completeDay` —
+      so without this the notice in 5.2 has nothing to show, and the
+      **earning**s would be the same "written, tested, never reaches the
+      player" gap `wire-completion-events` closed. Change `BoardSink.complete`
+      to return the total earned by that completion, from the origin hook and
+      `afterSolveRecorded` together, and have `PuzzleController` expose it for
+      the screen. The failing test drives a solve through the production
+      `boardSinkProvider` with `test/features/grid_input/support/production_solve.dart`,
+      not a hand-built sink, and asserts a perfect daily reports 5.
 
 ## 5. What the player sees
 
 - [ ] 5.1 A balance line in the **cabinet**, showing 0 for a new player, read
       after the first frame like the rest of the **cabinet**. Add a widget test,
       and a golden at 1x and 5x on a 320×568 screen.
-- [ ] 5.2 The earn notice. It shows once per completion, with the total, after
+- [ ] 5.2 The earn notice, reading the total 4.5 exposes. It shows once per
+      completion, with the total, after
       the celebration's last beat, or at once under reduce-motion. It is not
       modal, takes no taps, dismisses itself, and is absent when nothing was
       earned. Opening a **chest node** folds the 12 into the existing "Chest
