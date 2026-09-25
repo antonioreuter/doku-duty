@@ -42,7 +42,8 @@ a statistic for any reason.
 The system MUST write a **trophy** at the moment the event that earns it is
 recorded, in the same transaction, capturing what was earned and which
 **season** it came from. It MUST NOT derive a **trophy** from other state at
-read time.
+read time. Every event that earns a **trophy** MUST reach the minting from a
+real solve in the running app, not only from a test.
 
 #### Scenario: A boss node is completed
 
@@ -73,6 +74,24 @@ read time.
 - **THEN** it mints a **trophy** of its own, named for its month, and the
   **cabinet** shows each month's **trophy** in the place the **unfiled**
   **award** held
+
+#### Scenario: A rank is reached
+
+- **WHEN** a solve on the **trail**, in **free play**, or in the **daily
+  challenge** raises the player to a **rank** that has an **award**
+- **THEN** that **rank**'s **trophy** is minted in the same transaction as the
+  **solve record**, along with every **rank** **award** below it not yet earned
+
+#### Scenario: A rank held before the trophy could be minted
+
+- **WHEN** a player who already holds a **rank** with an **award**, and has no
+  **trophy** for it, completes any puzzle
+- **THEN** the **trophy** is minted, dated at that solve
+
+#### Scenario: The cabinet shows a trophy just earned
+
+- **WHEN** a solve mints a **trophy** and the player opens the **cabinet**
+- **THEN** the **trophy** is shown as earned, with no restart of the app
 
 #### Scenario: The same trophy is earned twice
 
