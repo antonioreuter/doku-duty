@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -32,10 +34,19 @@ class ProductionSolve {
   final AppDatabase db;
   final ProviderContainer container;
 
+  /// The **stamp**s the last [solve] reported to the screen, or null if it
+  /// reported nothing.
+  int? lastEarned;
+
+  /// In memory, or on [file] where a test needs the platform's own SQLite to
+  /// write to disk and read back.
   static Future<ProductionSolve> open({
     List<Override> overrides = const <Override>[],
+    File? file,
   }) async {
-    final db = AppDatabase(NativeDatabase.memory());
+    final db = AppDatabase(
+      file == null ? NativeDatabase.memory() : NativeDatabase(file),
+    );
     await installFixturePack(PackRepository(db));
     final container = ProviderContainer(
       overrides: [
@@ -84,6 +95,7 @@ class ProductionSolve {
     for (var i = 0; i < 20; i++) {
       await Future<void>.delayed(Duration.zero);
     }
+    lastEarned = controller.stampsEarned.value;
     controller.dispose();
     if (expectFailure) return errors;
     expect(errors, isEmpty);

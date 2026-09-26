@@ -51,7 +51,11 @@ abstract interface class BoardSink {
   /// fact about the run and [Attempt] is the one place that decides it; and the
   /// techniques the puzzle actually required rather than its **rank**, because
   /// a **rank** says only what a puzzle *may* need (D-07).
-  Future<void> complete(
+  ///
+  /// Returns the **stamp**s this completion newly earned, so the screen can
+  /// say so (D-134). Zero is an ordinary answer — a solve with a **mistake**,
+  /// or a board completed a second time — and means no notice at all.
+  Future<int> complete(
     String puzzleId, {
     required Set<Technique> techniquesRequired,
     required Attempt attempt,
@@ -112,9 +116,22 @@ class PuzzleController extends ChangeNotifier {
   /// (constraint 2).
   Stream<EffectEvent> get effects => _effects.stream;
 
+  /// The **stamp**s the last completion earned, once its write has landed;
+  /// null until a completion has been recorded.
+  ///
+  /// Its own notifier rather than part of [state], so the grid does not
+  /// rebuild for a number it never shows. The screen reads it after the
+  /// celebration's last beat (D-134) — by which time the write, which never
+  /// waits for the celebration, has long since set it.
+  final ValueNotifier<int?> stampsEarned = ValueNotifier<int?>(null);
+
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     unawaited(_effects.close());
+    stampsEarned.dispose();
     super.dispose();
   }
 
@@ -294,11 +311,15 @@ class PuzzleController extends ChangeNotifier {
       // are in flight concurrently, and an earlier one resuming after the
       // puzzle was finished would report it finished a second time.
       if (_solves(board)) {
-        await sink.complete(
+        final earned = await sink.complete(
           puzzle.id,
           techniquesRequired: techniquesRequired,
           attempt: attempt,
         );
+        // The controller may have been disposed while the write was in
+        // flight — the player left the screen — and a disposed notifier
+        // throws on write.
+        if (!_disposed) stampsEarned.value = earned;
       }
     } on Object catch (error, stack) {
       onError?.call(error, stack);

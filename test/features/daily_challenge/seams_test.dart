@@ -8,6 +8,10 @@ import 'package:doku_duty/features/daily_challenge/domain/daily_resolver.dart';
 import 'package:doku_duty/features/daily_challenge/domain/daily_schedule.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/persistence/domain/sync_metadata.dart';
+import 'package:doku_duty/features/season_map/data/season_repository.dart';
+import 'package:doku_duty/features/stamps/data/stamp_repository.dart';
+import 'package:doku_duty/features/trophy_cabinet/application/minting_service.dart';
+import 'package:doku_duty/features/trophy_cabinet/data/trophy_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -84,22 +88,53 @@ void main() {
     });
   });
 
-  group('add-stamps (18) — nothing is minted', () {
-    test('completing a daily mints no stamp', () async {
+  group('add-stamps (18) — the seam it filled', () {
+    // **Replaced, not edited.** This asserted that completing a daily minted
+    // no **stamp** and that no table pretended to hold one. `add-stamps`
+    // filled the seam, so the assertion it was written to make is gone. What
+    // stays is the boundary: the **daily challenge** records days and knows
+    // nothing about **stamp**s. They are paid by `MintingService.completeDay`,
+    // which is how a solved daily is recorded.
+    late MintingService minting;
+
+    setUp(() {
+      minting = MintingService(
+        database: db,
+        seasons: SeasonRepository(db),
+        trophies: TrophyRepository(db),
+        stamps: StampRepository(db),
+        daily: serviceOn(DailyDate(2026, 3, 20)),
+      );
+    });
+
+    test('a completed day earns 2', () async {
+      await minting.completeDay(
+        DatedDay(date: DailyDate(2026, 3, 20), isVerified: true),
+      );
+
+      expect(await StampRepository(db).balance(), 2);
+    });
+
+    test('a seventh day earns 12 — the day and the milestone', () async {
+      for (var day = 14; day <= 19; day++) {
+        await repository.completeDay(
+          DatedDay(date: DailyDate(2026, 3, day), isVerified: true),
+        );
+      }
+
+      await minting.completeDay(
+        DatedDay(date: DailyDate(2026, 3, 20), isVerified: true),
+      );
+
+      expect(await StampRepository(db).balance(), 12);
+    });
+
+    test('the daily layer on its own earns nothing', () async {
       await serviceOn(
         DailyDate(2026, 3, 20),
       ).complete(DatedDay(date: DailyDate(2026, 3, 20), isVerified: true));
 
-      // There is no **stamp** table and no balance to move. D-66 prices a
-      // completed daily at 2 and a seven-day **streak** at 10, and `add-stamps`
-      // owns the one place a **stamp** may be minted (constraint 10 — earned in
-      // play only, never purchasable).
-      final tables = db.allTables.map((t) => t.actualTableName).toList();
-      expect(
-        tables.any((t) => t.contains('stamp')),
-        isFalse,
-        reason: 'a stamp table appeared before add-stamps',
-      );
+      expect(await StampRepository(db).balance(), 0);
     });
   });
 

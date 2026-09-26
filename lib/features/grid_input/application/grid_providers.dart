@@ -20,6 +20,8 @@ import '../../season_map/application/season_providers.dart';
 import '../../trophy_cabinet/application/cabinet_providers.dart';
 import '../application/puzzle_controller.dart';
 import 'puzzle_origin.dart';
+import '../../stamps/application/stamp_providers.dart';
+import '../../stamps/domain/earning.dart';
 import '../domain/board.dart';
 import '../domain/note_set.dart';
 import '../domain/puzzle_session.dart';
@@ -215,14 +217,22 @@ final class RepositoryBoardSink implements BoardSink {
   /// and no day (D-111). On the **trail** it returns the write that completes
   /// the **node**; for the **daily challenge**, the write that marks its day.
   /// Inside the transaction either way, so a failure leaves neither and
-  /// nothing reads as done that was not.
-  final Future<void> Function()? Function()? _originCompletion;
+  /// nothing reads as done that was not. Returns the **earning**s it wrote.
+  final Future<List<Earning>> Function()? Function()? _originCompletion;
 
-  /// What to write once the **solve record** is in, inside its transaction.
+  /// What to write once the **solve record** is in, inside its transaction,
+  /// returning the **earning**s it wrote.
   ///
-  /// Wherever the board came from — the **rank** a solve raises is a fact about
-  /// the solve, not its origin, so every board runs it.
-  final Future<void> Function()? _afterSolveRecorded;
+  /// Wherever the board came from — the **rank** a solve raises and the
+  /// perfect solve are facts about the solve, not its origin, so every board
+  /// runs it. Told whether this completion wrote the record, because only
+  /// that one can pay the perfect solve (D-133).
+  final Future<List<Earning>> Function({
+    required String puzzleId,
+    required bool isFirstSolve,
+    required bool isPerfect,
+  })?
+  _afterSolveRecorded;
 
   /// Called once a **solve record** has been written.
   ///
@@ -302,7 +312,7 @@ final class RepositoryBoardSink implements BoardSink {
   /// The record is idempotent, so a duplicate completion — a write already in
   /// flight when another lands — costs a query and changes nothing.
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     required Set<Technique> techniquesRequired,
     required Attempt attempt,
@@ -316,12 +326,28 @@ final class RepositoryBoardSink implements BoardSink {
     // share a transaction; not worth threading a database handle through the
     // sink to close it today.
     await _saves.complete(puzzleId);
+    // Gathered from both hooks as they run, and only read once `record` has
+    // returned — so a transaction that rolled back reports nothing, because
+    // it throws before this method gets that far.
+    final earned = <Earning>[];
+    final origin = _originCompletion?.call();
+    final after = _afterSolveRecorded;
     await _progression.record(
       puzzleId: puzzleId,
       techniquesRequired: techniquesRequired,
       attempt: attempt,
-      alsoInTransaction: _originCompletion?.call(),
-      afterInTransaction: _afterSolveRecorded,
+      alsoInTransaction: origin == null
+          ? null
+          : () async => earned.addAll(await origin()),
+      afterInTransaction: after == null
+          ? null
+          : ({required bool isFirstSolve}) async => earned.addAll(
+              await after(
+                puzzleId: puzzleId,
+                isFirstSolve: isFirstSolve,
+                isPerfect: attempt.isPerfect,
+              ),
+            ),
       // Display-only and never advanced (D-06), exactly as `elapsed` above.
       // **Whoever adds the timer must thread it through here too**, or the
       // lifetime play total stays at zero with no symptom until someone reads
@@ -329,6 +355,7 @@ final class RepositoryBoardSink implements BoardSink {
       timeTaken: Duration.zero,
     );
     _onSolveRecorded?.call();
+    return earned.fold<int>(0, (total, e) => total + e.amount);
   }
 }
 
@@ -373,25 +400,39 @@ final boardSinkProvider = Provider<BoardSink>(
         case TrailOrigin(:final position):
           final season = ref.read(currentSeasonProvider);
           final catalogue = ref.read(awardCatalogueProvider);
+          final type = season.nodes
+              .firstWhere((node) => node.position == position)
+              .type;
           return () => minting.completeNode(
             seasonId: season.id,
             seasonName: season.name,
             position: position,
+            type: type,
             nodeCount: season.nodes.length,
             catalogue: catalogue,
           );
       }
     },
     // Every **rank** **award** at or below the player's **rank**, read inside
-    // the transaction so it sees the record this solve just wrote (D-102).
-    // Minting is idempotent, so a solve that raises nothing costs a few
-    // no-op inserts and mints nothing.
-    afterSolveRecorded: () async {
-      final progression = ref.read(progressionRepositoryProvider);
-      await ref
-          .read(mintingServiceProvider)
-          .afterRankReached(await progression.playerRank());
-    },
+    // the transaction so it sees the record this solve just wrote (D-102),
+    // and the perfect solve's **stamp**s. Minting is idempotent, so a solve
+    // that raises nothing costs a few no-op inserts and mints nothing.
+    afterSolveRecorded:
+        ({
+          required String puzzleId,
+          required bool isFirstSolve,
+          required bool isPerfect,
+        }) async {
+          final progression = ref.read(progressionRepositoryProvider);
+          return ref
+              .read(mintingServiceProvider)
+              .afterSolve(
+                puzzleId: puzzleId,
+                isFirstSolve: isFirstSolve,
+                isPerfect: isPerfect,
+                rank: await progression.playerRank(),
+              );
+        },
     // Every read derived from the **solve record** is now stale: which puzzle
     // is next at each **rank**, the player's **rank**, where they stand on the
     // **trail**, the day on the **calendar**, and the **cabinet**'s
@@ -408,6 +449,7 @@ final boardSinkProvider = Provider<BoardSink>(
       ref.invalidate(earnedTrophiesProvider);
       ref.invalidate(earnedIdsProvider);
       ref.invalidate(cabinetStatisticsProvider);
+      ref.invalidate(stampBalanceProvider);
     },
   ),
 );

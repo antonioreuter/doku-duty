@@ -33,10 +33,10 @@ class DailyStatus {
 
 /// What completing a day produced, for whoever else is counting.
 ///
-/// **Nothing in this change consumes it.** `add-stamps` (18) mints the 2 and
-/// the 10 that D-66 prices, and `add-trophy-cabinet` (16) files the full-month
-/// trophy. The signal exists now so neither has to invent its own trigger, and
-/// a test asserts nothing is minted today.
+/// Read by `MintingService.completeDay`, inside the transaction that records
+/// the day: the **stamp**s D-66 prices (2 for the day, 10 on every seventh) are
+/// paid from its date and **streak**, so neither is recomputed from a second
+/// read that could disagree (D-133).
 class DailyCompletion {
   const DailyCompletion({
     required this.date,

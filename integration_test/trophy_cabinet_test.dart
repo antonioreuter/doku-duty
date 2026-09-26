@@ -18,7 +18,9 @@ import 'package:doku_duty/features/platform_shell/presentation/app.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart';
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
+import 'package:doku_duty/features/season_map/domain/node_type.dart';
 import 'package:doku_duty/features/season_map/domain/season_one.dart';
+import 'package:doku_duty/features/stamps/data/stamp_repository.dart';
 import 'package:doku_duty/features/trophy_cabinet/application/minting_service.dart';
 import 'package:doku_duty/features/trophy_cabinet/data/trophy_repository.dart';
 import 'package:doku_duty/features/trophy_cabinet/domain/award_catalogue.dart';
@@ -176,10 +178,12 @@ void main() {
       daily: ProviderContainer(
         overrides: [appDatabaseProvider.overrideWith((ref) => db)],
       ).read(dailyServiceProvider),
+      stamps: StampRepository(db),
     ).completeNode(
       seasonId: SeasonOne.id,
       seasonName: SeasonOne.season.name,
       position: 22,
+      type: NodeType.boss,
       nodeCount: SeasonOne.season.nodes.length,
       catalogue: catalogue,
     );

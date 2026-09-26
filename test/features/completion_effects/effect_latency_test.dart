@@ -43,11 +43,11 @@ class _NullSink implements BoardSink {
   Future<void> writeNotes(String id, Map<int, NoteSet> byCell) async {}
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String id, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }
 
 /// A controller and an effect layer, wired the way the screen wires them.

@@ -314,6 +314,7 @@ the data correctly removes nearly all conflicts.
 | Sets — trophies, completed nodes, unlocked techniques, daily calendar | Union |
 | Per-technique personal bests | Best value per key |
 | Streak | **Recompute from the unioned calendar** — never sync the number |
+| Stamps | **Union the earnings, recompute the balance** — never sync the number (D-133) |
 | Rank | Derive from unlocked techniques |
 | Settings and preferences | Last-write-wins |
 | Cosmetics owned | Union |

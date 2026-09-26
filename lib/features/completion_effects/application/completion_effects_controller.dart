@@ -130,6 +130,14 @@ class CompletionEffectsController extends ChangeNotifier {
   int _sequenceOrigin = 0;
   Duration? _sequenceElapsed;
 
+  /// Whether the four beats are still playing.
+  ///
+  /// False once the last beat ends, when the player taps through it, and
+  /// always under reduce-motion — which plays no sequence. What waits for the
+  /// celebration reads this rather than a timer of its own, so a skipped
+  /// celebration ends for everyone at once (D-46).
+  bool get isSequenceRunning => _sequenceElapsed != null;
+
   /// Whether the sequence's success pattern has already been felt.
   ///
   /// A flag rather than "elapsed is still zero": the first frame after a start

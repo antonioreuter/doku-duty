@@ -11,7 +11,7 @@ their failing tests first anyway.
 
 ## 0. After `wire-completion-events` lands
 
-- [ ] 0.1 Re-read the archived `wire-completion-events` and the main
+- [x] 0.1 Re-read the archived `wire-completion-events` and the main
       `daily-challenge` and `trophy-cabinet` specs. If they changed "A completed
       daily is announced to the rest of the app", rebase this change's
       `daily-challenge` delta onto the new text before anything else. Confirm
@@ -20,11 +20,11 @@ their failing tests first anyway.
 
 ## 1. Vocabulary and decisions
 
-- [ ] 1.1 Add **earning** to the glossary in `openspec/project.md`: one payment
+- [x] 1.1 Add **earning** to the glossary in `openspec/project.md`: one payment
       of **stamp**s, recorded against the event that earned it, and distinct
       from an **award**. Amend **stamp** to say its balance is the sum of its
       **earning**s.
-- [ ] 1.2 Append **D-133** to `docs/DECISIONS.md`. Each event pays once and is
+- [x] 1.2 Append **D-133** to `docs/DECISIONS.md`. Each event pays once and is
       recorded against a key naming it — `daily:<date>`, `perfect:<puzzleId>`,
       `streak:<run start>:<length>`, `chest:<season>:<position>`,
       `boss:<season>:<position>`. The balance is derived from the **earning**s,
@@ -32,18 +32,18 @@ their failing tests first anyway.
       (`docs/TECH_STACK.md` §3b), and there is no back-pay (as D-124). Record why
       a stored counter was rejected: it can neither be merged nor made
       idempotent.
-- [ ] 1.3 Append **D-134**. D-66's **streak** milestone is every seventh day of
+- [x] 1.3 Append **D-134**. D-66's **streak** milestone is every seventh day of
       a run, and a restarted run pays again. The balance lives in the
       **cabinet** and nowhere on the **trail** or grid (D-114). The earn notice
       appears after the celebration, gives one total per completion, takes no
       input, and never offers anything for sale.
-- [ ] 1.4 Add `stamps` to the merge table in `docs/TECH_STACK.md` §3b, as a union of
+- [x] 1.4 Add `stamps` to the merge table in `docs/TECH_STACK.md` §3b, as a union of
       **earning**s with the balance recomputed. Point `openspec/BACKLOG.md` item
       18 at D-133 and D-134.
 
 ## 2. What an event earns *(pure Dart, test-first)*
 
-- [ ] 2.1 Write the failing tests in `test/features/stamps/earning_rules_test.dart`
+- [x] 2.1 Write the failing tests in `test/features/stamps/earning_rules_test.dart`
       for the pure function that turns a completion into **earning**s:
   - each of the five events pays D-66's value under its key;
   - a perfect daily yields two **earning**s, and a perfect **boss node** two;
@@ -52,26 +52,26 @@ their failing tests first anyway.
   - two runs that each reach 7 get different keys;
   - a puzzle **node** and a **variant node** earn only through the perfect
     solve.
-- [ ] 2.2 Implement it in `lib/features/stamps/domain/`, with no Flutter
+- [x] 2.2 Implement it in `lib/features/stamps/domain/`, with no Flutter
       import, and add a `no_flutter_import_test.dart` for the domain.
 
 ## 3. Storage *(test-first)*
 
-- [ ] 3.1 Add an `earnings` table — key, amount, earned-at and the sync metadata
+- [x] 3.1 Add an `earnings` table — key, amount, earned-at and the sync metadata
       every progress table carries — moving the schema from v8 to v9. Export
       `drift_schema_v9.json`, and extend `migration_test.dart` with a v8 → v9
       case proving every save, calendar day, **trophy** and completion comes
       through with the table empty.
-- [ ] 3.2 Write the failing `StampRepository` tests. Earning the same key twice
+- [x] 3.2 Write the failing `StampRepository` tests. Earning the same key twice
       leaves one row and moves the balance once. The balance is the sum of
       **earning**s and reads 0 when there are none. It survives closing and
       reopening a file database.
-- [ ] 3.3 Implement `StampRepository`, earning with insert-or-ignore on the key.
+- [x] 3.3 Implement `StampRepository`, earning with insert-or-ignore on the key.
       The balance is a `SUM` query with no stored counter.
 
 ## 4. Earning with the cause
 
-- [ ] 4.1 Route every **earning** through `MintingService`, inside the
+- [x] 4.1 Route every **earning** through `MintingService`, inside the
       transaction it already opens. That covers `completeNode` for **chest
       node**s and **boss node**s (it has to be told the **node type**),
       `completeDay` for the day and the **streak** — it already holds the
@@ -81,19 +81,19 @@ their failing tests first anyway.
       **earning**s it wrote, for the notice. (`afterDailyCompleted` no longer
       exists: `wire-completion-events` made it the private `_mintPerfectMonth`,
       reachable only through `completeDay`.)
-- [ ] 4.2 Delete `node_types_test.dart`'s "grants no currency — change 18 owns
+- [x] 4.2 Delete `node_types_test.dart`'s "grants no currency — change 18 owns
       the balance" and replace it with a test that opening a **chest node**
       earns 12 exactly once, the way 16 replaced the **boss node** seam.
-- [ ] 4.3 `seams_test.dart`'s group "add-stamps (18) — nothing is minted" was
+- [x] 4.3 `seams_test.dart`'s group "add-stamps (18) — nothing is minted" was
       written to be deleted by this change, as its own header says. **Delete
       it** and replace it with a test that a completed day earns 2, and a
       seventh day 12.
-- [ ] 4.4 Atomicity tests, each on a file database, following
+- [x] 4.4 Atomicity tests, each on a file database, following
       `node_completion_atomicity_test.dart`:
   - a failure injected after the **earning** leaves neither it nor its cause;
   - a completed **boss node** played again earns nothing more;
   - a solved board erased and completed again earns nothing more.
-- [ ] 4.5 Carry the **earning**s from the sink to the puzzle screen, test first.
+- [x] 4.5 Carry the **earning**s from the sink to the puzzle screen, test first.
       Today `RepositoryBoardSink` types both hooks `Future<void>` and discards
       what they return — including the `DailyCompletion` from `completeDay` —
       so without this the notice in 5.2 has nothing to show, and the
@@ -107,10 +107,10 @@ their failing tests first anyway.
 
 ## 5. What the player sees
 
-- [ ] 5.1 A balance line in the **cabinet**, showing 0 for a new player, read
+- [x] 5.1 A balance line in the **cabinet**, showing 0 for a new player, read
       after the first frame like the rest of the **cabinet**. Add a widget test,
       and a golden at 1x and 5x on a 320×568 screen.
-- [ ] 5.2 The earn notice, reading the total 4.5 exposes. It shows once per
+- [x] 5.2 The earn notice, reading the total 4.5 exposes. It shows once per
       completion, with the total, after
       the celebration's last beat, or at once under reduce-motion. It is not
       modal, takes no taps, dismisses itself, and is absent when nothing was
@@ -118,25 +118,41 @@ their failing tests first anyway.
       opened" message rather than adding a second notice. Widget tests cover
       each case, and one confirms a tap during the notice still reaches the
       screen.
-- [ ] 5.3 Assert that the **trail** shows no **stamp** count, and that no route,
+- [x] 5.3 Assert that the **trail** shows no **stamp** count, and that no route,
       screen or string in the app offers **stamp**s for money: search the
       widget tree and `lib/` for price and store vocabulary beside "Stamp".
 
 ## 6. Publishing and docs
 
-- [ ] 6.1 In `lib/features/remote_config/PUBLISHING.md`, record that **stamp**
+- [x] 6.1 In `lib/features/remote_config/PUBLISHING.md`, record that **stamp**
       values are compiled in (D-66) and that no config key can change or
       sell them.
 
 ## Platform checks
 
-- [ ] Verified on iOS: open a **chest node** on a simulator and see the 12 in
+- [x] Verified on iOS: open a **chest node** on a simulator and see the 12 in
       its message and in the **cabinet**. Kill the app and relaunch; the
       balance is unchanged.
-- [ ] Verified on Android: the same. Extend `integration_test/` with a
+      iPhone 17 simulator, iOS 26.5: `integration_test/stamps_test.dart` 2/2 —
+      the chest's "+12 Stamps" message, "Stamps, 12" in the **cabinet**, and 12
+      read back after tearing the app down and reopening the file. The runners
+      this change touched also pass: season map 4/4, trophy cabinet 3/3, daily
+      6/6, killer 2/2, grid latency 1/1. **Pre-existing and not this change:**
+      `mistakes_test.dart` and `notes_test.dart` each fail one case on both
+      platforms — unchanged since 2026-09-19, they still expect the app to
+      open on **free play** (it opens on the **trail** since `add-season-map`)
+      and a "~" glyph key (replaced by `add-pad-tools-row`). No physical device.
+- [x] Verified on Android: the same. Extend `integration_test/` with a
       **stamps** runner that earns on a file database, reopens it, and reads
       the balance back.
-- [ ] Accessibility: the screen reader announces the **cabinet** balance and
+      Pixel emulator, API 37: `stamps_test.dart` 2/2, and the same five other
+      runners pass; the same two pre-existing failures. No physical phone.
+- [x] Accessibility: the screen reader announces the **cabinet** balance and
       the earn notice. The notice needs no colour to be read, obeys
       reduce-motion, and neither it nor the balance clips at 5x on a 320×568
       screen.
+      "Stamps, N" and "N stamps earned" (a live region) are asserted by label;
+      the notice is ink on the paper surface with its meaning in words;
+      reduce-motion shows it at once with no fade; goldens at 5x on 320×568
+      show the balance stacked and the notice wrapped, neither clipped. The
+      balance at 5x was also checked on both devices.

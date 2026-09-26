@@ -19,10 +19,10 @@ abstract final class SeasonOne {
   ///
   /// D-19 wants something meaningful roughly every other **node** through
   /// **node** 8, stretching through the middle, and tightening again for the
-  /// final five. The rewards it was written about are `add-stamps` and
-  /// `add-season-pass`, neither of which exists yet — and the **chest node**s
-  /// and **boss node**s that would otherwise carry the pacing have their
-  /// positions fixed by D-18, none of them inside the first eight.
+  /// final five. The rewards it was written about are **stamp**s and
+  /// `add-season-pass` — and the **chest node**s and **boss node**s that pay
+  /// **stamp**s have their positions fixed by D-18, none of them inside the
+  /// first eight.
   ///
   /// So the **variant node**s carry it. A change of rule is the one thing this
   /// **season** has that reads as an event, and placing them here gives the
@@ -32,9 +32,11 @@ abstract final class SeasonOne {
   /// - **The middle** — 11, 16, 21, 22, 27, 32: stretched, as asked
   /// - **The final five** — 39, 41, 42: tightened for the completion push
   ///
-  /// Worth revisiting when `add-stamps` lands and there are real rewards to
-  /// pace. The positions are data, so revisiting it is an edit here and a
-  /// republished document, not a redesign.
+  /// **Still worth revisiting.** `add-stamps` made the rewards real — a chest
+  /// pays 12, a boss 20, a perfect solve 3 — but did not re-pace these
+  /// positions against them; that wants a look at a real season's earnings,
+  /// not a guess. The positions are data, so revisiting it is an edit here and
+  /// a republished document, not a redesign.
   static const Set<int> variantPositions = <int>{2, 4, 7, 16, 27, 39};
 
   /// The **rank** ramp across the **trail**.

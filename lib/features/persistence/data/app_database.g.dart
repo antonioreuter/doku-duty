@@ -6131,6 +6131,379 @@ class TrophiesCompanion extends UpdateCompanion<Trophy> {
   }
 }
 
+class $EarningsTable extends Earnings
+    with TableInfo<$EarningsTable, EarningRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EarningsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _earnedAtMeta = const VerificationMeta(
+    'earnedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> earnedAt = GeneratedColumn<DateTime>(
+    'earned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: DateTime.now,
+  );
+  static const VerificationMeta _pendingUploadMeta = const VerificationMeta(
+    'pendingUpload',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingUpload = GeneratedColumn<bool>(
+    'pending_upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_upload" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    key,
+    amount,
+    earnedAt,
+    updatedAt,
+    pendingUpload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'earnings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EarningRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('earned_at')) {
+      context.handle(
+        _earnedAtMeta,
+        earnedAt.isAcceptableOrUnknown(data['earned_at']!, _earnedAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('pending_upload')) {
+      context.handle(
+        _pendingUploadMeta,
+        pendingUpload.isAcceptableOrUnknown(
+          data['pending_upload']!,
+          _pendingUploadMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  EarningRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EarningRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      earnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}earned_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pendingUpload: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_upload'],
+      )!,
+    );
+  }
+
+  @override
+  $EarningsTable createAlias(String alias) {
+    return $EarningsTable(attachedDatabase, alias);
+  }
+}
+
+class EarningRow extends DataClass implements Insertable<EarningRow> {
+  /// Names the event — `daily:<date>`, `perfect:<puzzleId>`,
+  /// `streak:<run start>:<length>`, `chest:<season>:<position>`,
+  /// `boss:<season>:<position>`. The primary key, so a second write of the
+  /// same event is ignored rather than paid.
+  final String key;
+
+  /// **Stamp**s paid. D-66's value at the moment of earning; a later change
+  /// to D-66 does not reprice what was already earned.
+  final int amount;
+  final DateTime earnedAt;
+  final DateTime updatedAt;
+  final bool pendingUpload;
+  const EarningRow({
+    required this.key,
+    required this.amount,
+    required this.earnedAt,
+    required this.updatedAt,
+    required this.pendingUpload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['amount'] = Variable<int>(amount);
+    map['earned_at'] = Variable<DateTime>(earnedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['pending_upload'] = Variable<bool>(pendingUpload);
+    return map;
+  }
+
+  EarningsCompanion toCompanion(bool nullToAbsent) {
+    return EarningsCompanion(
+      key: Value(key),
+      amount: Value(amount),
+      earnedAt: Value(earnedAt),
+      updatedAt: Value(updatedAt),
+      pendingUpload: Value(pendingUpload),
+    );
+  }
+
+  factory EarningRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EarningRow(
+      key: serializer.fromJson<String>(json['key']),
+      amount: serializer.fromJson<int>(json['amount']),
+      earnedAt: serializer.fromJson<DateTime>(json['earnedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pendingUpload: serializer.fromJson<bool>(json['pendingUpload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'amount': serializer.toJson<int>(amount),
+      'earnedAt': serializer.toJson<DateTime>(earnedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pendingUpload': serializer.toJson<bool>(pendingUpload),
+    };
+  }
+
+  EarningRow copyWith({
+    String? key,
+    int? amount,
+    DateTime? earnedAt,
+    DateTime? updatedAt,
+    bool? pendingUpload,
+  }) => EarningRow(
+    key: key ?? this.key,
+    amount: amount ?? this.amount,
+    earnedAt: earnedAt ?? this.earnedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingUpload: pendingUpload ?? this.pendingUpload,
+  );
+  EarningRow copyWithCompanion(EarningsCompanion data) {
+    return EarningRow(
+      key: data.key.present ? data.key.value : this.key,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      earnedAt: data.earnedAt.present ? data.earnedAt.value : this.earnedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingUpload: data.pendingUpload.present
+          ? data.pendingUpload.value
+          : this.pendingUpload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EarningRow(')
+          ..write('key: $key, ')
+          ..write('amount: $amount, ')
+          ..write('earnedAt: $earnedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(key, amount, earnedAt, updatedAt, pendingUpload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EarningRow &&
+          other.key == this.key &&
+          other.amount == this.amount &&
+          other.earnedAt == this.earnedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pendingUpload == this.pendingUpload);
+}
+
+class EarningsCompanion extends UpdateCompanion<EarningRow> {
+  final Value<String> key;
+  final Value<int> amount;
+  final Value<DateTime> earnedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> pendingUpload;
+  final Value<int> rowid;
+  const EarningsCompanion({
+    this.key = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.earnedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EarningsCompanion.insert({
+    required String key,
+    required int amount,
+    this.earnedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pendingUpload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       amount = Value(amount);
+  static Insertable<EarningRow> custom({
+    Expression<String>? key,
+    Expression<int>? amount,
+    Expression<DateTime>? earnedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? pendingUpload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (amount != null) 'amount': amount,
+      if (earnedAt != null) 'earned_at': earnedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingUpload != null) 'pending_upload': pendingUpload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EarningsCompanion copyWith({
+    Value<String>? key,
+    Value<int>? amount,
+    Value<DateTime>? earnedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? pendingUpload,
+    Value<int>? rowid,
+  }) {
+    return EarningsCompanion(
+      key: key ?? this.key,
+      amount: amount ?? this.amount,
+      earnedAt: earnedAt ?? this.earnedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pendingUpload: pendingUpload ?? this.pendingUpload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (earnedAt.present) {
+      map['earned_at'] = Variable<DateTime>(earnedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pendingUpload.present) {
+      map['pending_upload'] = Variable<bool>(pendingUpload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EarningsCompanion(')
+          ..write('key: $key, ')
+          ..write('amount: $amount, ')
+          ..write('earnedAt: $earnedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingUpload: $pendingUpload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6151,6 +6524,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $StreakFreezeLedgersTable streakFreezeLedgers =
       $StreakFreezeLedgersTable(this);
   late final $TrophiesTable trophies = $TrophiesTable(this);
+  late final $EarningsTable earnings = $EarningsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6172,6 +6546,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     completedDays,
     streakFreezeLedgers,
     trophies,
+    earnings,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -9656,6 +10031,205 @@ typedef $$TrophiesTableProcessedTableManager =
       Trophy,
       PrefetchHooks Function()
     >;
+typedef $$EarningsTableCreateCompanionBuilder =
+    EarningsCompanion Function({
+      required String key,
+      required int amount,
+      Value<DateTime> earnedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+typedef $$EarningsTableUpdateCompanionBuilder =
+    EarningsCompanion Function({
+      Value<String> key,
+      Value<int> amount,
+      Value<DateTime> earnedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> pendingUpload,
+      Value<int> rowid,
+    });
+
+class $$EarningsTableFilterComposer
+    extends Composer<_$AppDatabase, $EarningsTable> {
+  $$EarningsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get earnedAt => $composableBuilder(
+    column: $table.earnedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EarningsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EarningsTable> {
+  $$EarningsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get earnedAt => $composableBuilder(
+    column: $table.earnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EarningsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EarningsTable> {
+  $$EarningsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get earnedAt =>
+      $composableBuilder(column: $table.earnedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingUpload => $composableBuilder(
+    column: $table.pendingUpload,
+    builder: (column) => column,
+  );
+}
+
+class $$EarningsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EarningsTable,
+          EarningRow,
+          $$EarningsTableFilterComposer,
+          $$EarningsTableOrderingComposer,
+          $$EarningsTableAnnotationComposer,
+          $$EarningsTableCreateCompanionBuilder,
+          $$EarningsTableUpdateCompanionBuilder,
+          (
+            EarningRow,
+            BaseReferences<_$AppDatabase, $EarningsTable, EarningRow>,
+          ),
+          EarningRow,
+          PrefetchHooks Function()
+        > {
+  $$EarningsTableTableManager(_$AppDatabase db, $EarningsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EarningsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EarningsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EarningsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<DateTime> earnedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EarningsCompanion(
+                key: key,
+                amount: amount,
+                earnedAt: earnedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required int amount,
+                Value<DateTime> earnedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> pendingUpload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EarningsCompanion.insert(
+                key: key,
+                amount: amount,
+                earnedAt: earnedAt,
+                updatedAt: updatedAt,
+                pendingUpload: pendingUpload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EarningsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EarningsTable,
+      EarningRow,
+      $$EarningsTableFilterComposer,
+      $$EarningsTableOrderingComposer,
+      $$EarningsTableAnnotationComposer,
+      $$EarningsTableCreateCompanionBuilder,
+      $$EarningsTableUpdateCompanionBuilder,
+      (EarningRow, BaseReferences<_$AppDatabase, $EarningsTable, EarningRow>),
+      EarningRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9692,4 +10266,6 @@ class $AppDatabaseManager {
       $$StreakFreezeLedgersTableTableManager(_db, _db.streakFreezeLedgers);
   $$TrophiesTableTableManager get trophies =>
       $$TrophiesTableTableManager(_db, _db.trophies);
+  $$EarningsTableTableManager get earnings =>
+      $$EarningsTableTableManager(_db, _db.earnings);
 }

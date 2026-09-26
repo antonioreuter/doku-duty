@@ -14,6 +14,7 @@ import 'generated/schema_v5.dart' as v5;
 import 'generated/schema_v6.dart' as v6;
 import 'generated/schema_v7.dart' as v7;
 import 'generated/schema_v8.dart' as v8;
+import 'generated/schema_v9.dart' as v9;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -1107,4 +1108,114 @@ void main() {
       );
     },
   );
+
+  test('migration from v8 to v9 keeps everything and pays nothing', () async {
+    final stamp = DateTime.utc(2026, 9, 25, 9).toIso8601String();
+    const grid =
+        '53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79';
+
+    // A player with something in every layer a **stamp** could have been
+    // paid for: a save in progress, a perfect **solve record**, a **chest
+    // node** and a **boss node** completed, a **calendar** with a seven-day
+    // **streak**, and a **trophy**. Version 9 adds one table and moves nothing.
+    final oldSaves = <v8.PuzzleSavesData>[
+      v8.PuzzleSavesData(
+        puzzleId: 'p1',
+        placedValues: grid,
+        elapsedMs: 480000,
+        isComplete: 0,
+        updatedAt: stamp,
+        pendingUpload: 1,
+        deviceOrigin: 'test-device',
+        mistakes: 2,
+      ),
+    ];
+    final oldSolved = <v8.SolvedPuzzlesData>[
+      v8.SolvedPuzzlesData(
+        puzzleId: 'q-sheriff',
+        solvedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+    final oldNodes = <v8.CompletedNodesData>[
+      for (final position in <int>[11, 22])
+        v8.CompletedNodesData(
+          seasonId: 'dust-gulch',
+          position: position,
+          completedAt: stamp,
+          updatedAt: stamp,
+          pendingUpload: 1,
+        ),
+    ];
+    final oldDays = <v8.CompletedDaysData>[
+      for (var day = 1; day <= 7; day++)
+        v8.CompletedDaysData(
+          day: '2026-09-0$day',
+          isVerified: 1,
+          wasFrozen: 0,
+          updatedAt: stamp,
+          pendingUpload: 1,
+        ),
+    ];
+    final oldTrophies = <v8.TrophiesData>[
+      v8.TrophiesData(
+        awardId: 'dust-gulch.boss.22',
+        name: 'The Midpoint',
+        seasonId: 'dust-gulch',
+        seasonName: 'Dust Gulch',
+        earnedAt: stamp,
+        updatedAt: stamp,
+        pendingUpload: 1,
+      ),
+    ];
+
+    await verifier.testWithDataIntegrity(
+      oldVersion: 8,
+      newVersion: 9,
+      createOld: v8.DatabaseAtV8.new,
+      createNew: v9.DatabaseAtV9.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.puzzleSaves, oldSaves);
+        batch.insertAll(oldDb.solvedPuzzles, oldSolved);
+        batch.insertAll(oldDb.completedNodes, oldNodes);
+        batch.insertAll(oldDb.completedDays, oldDays);
+        batch.insertAll(oldDb.trophies, oldTrophies);
+      },
+      validateItems: (newDb) async {
+        Future<List<Map<String, Object?>>> rows(String sql) async {
+          final result = await newDb.customSelect(sql).get();
+          return <Map<String, Object?>>[for (final r in result) r.data];
+        }
+
+        final saves = await rows(
+          'SELECT placed_values, mistakes FROM puzzle_saves',
+        );
+        expect(saves.single['placed_values'], grid);
+        expect(saves.single['mistakes'], 2);
+        expect(
+          (await rows(
+            'SELECT puzzle_id FROM solved_puzzles',
+          )).single['puzzle_id'],
+          'q-sheriff',
+        );
+        expect(
+          await rows('SELECT position FROM completed_nodes'),
+          hasLength(2),
+        );
+        expect(await rows('SELECT day FROM completed_days'), hasLength(7));
+        expect(
+          (await rows('SELECT name FROM trophies')).single['name'],
+          'The Midpoint',
+        );
+
+        // **No back-pay** (D-133). This player opened a chest, beat a boss,
+        // and held a seven-day **streak** under version 8, and upgrading pays
+        // them nothing for any of it: those events were never recorded as
+        // payments, and inventing them would be inventing a history.
+        expect(await rows('SELECT key FROM earnings'), isEmpty);
+      },
+    );
+  });
 }

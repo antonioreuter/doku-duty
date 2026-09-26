@@ -263,13 +263,33 @@ void main() {
         'extralife',
         'extra life',
         'rewarded',
-        'stamp',
         'purchase',
         'watchad',
         'second chance',
       ]) {
         expect(source, isNot(contains(forbidden)), reason: '$path: $forbidden');
       }
+      // **Stamps are the one word scoped more narrowly.** `add-stamps` put an
+      // earn notice on the puzzle screen — shown after a solve, never on an
+      // ended attempt (D-134) — so the screen as a whole may name them. What
+      // must never name them is the ended attempt itself: spending **stamp**s
+      // to buy an attempt back is the offer this test exists to forbid.
+      final scope = path.endsWith('puzzle_screen.dart')
+          ? _attemptEndedSource(source)
+          : source;
+      expect(scope, isNot(contains('stamp')), reason: '$path: stamp');
     }
   });
+}
+
+/// The source of the ended-attempt widgets alone: from `class _attemptended`
+/// to the end of the file, which holds it and its one private button.
+String _attemptEndedSource(String lowerCasedSource) {
+  final start = lowerCasedSource.indexOf('class _attemptended');
+  expect(
+    start,
+    isNot(-1),
+    reason: 'the ended attempt has moved or been renamed',
+  );
+  return lowerCasedSource.substring(start);
 }

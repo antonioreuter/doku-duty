@@ -47,7 +47,7 @@ final class _CountingSink implements BoardSink {
   }
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,

@@ -13,6 +13,7 @@ import 'package:doku_duty/features/puzzle_engine/domain/technique.dart';
 import 'package:doku_duty/features/rank_progression/data/progression_repository.dart';
 import 'package:doku_duty/features/season_map/application/season_providers.dart';
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
+import 'package:doku_duty/features/stamps/application/stamp_providers.dart';
 import 'package:doku_duty/features/trophy_cabinet/application/cabinet_providers.dart';
 import 'package:doku_duty/features/trophy_cabinet/application/minting_service.dart';
 import 'package:doku_duty/features/trophy_cabinet/data/trophy_repository.dart';
@@ -28,6 +29,7 @@ class _FailsAfterMinting extends MintingService {
         seasons: ref.watch(seasonRepositoryProvider),
         trophies: ref.watch(trophyRepositoryProvider),
         daily: ref.watch(dailyServiceProvider),
+        stamps: ref.watch(stampRepositoryProvider),
       );
 
   @override

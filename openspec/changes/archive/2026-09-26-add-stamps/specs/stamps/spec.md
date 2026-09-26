@@ -51,6 +51,13 @@ event twice, however many times it is completed, retried, or written (D-133).
   node** is played again
 - **THEN** no further **stamp**s are earned for it
 
+#### Scenario: A clean replay of a board first solved with a mistake
+
+- **WHEN** a puzzle first solved with a **mistake** is erased and completed
+  again with none
+- **THEN** no perfect-solve **stamp**s are earned: the perfect solve is the
+  puzzle's first solve, which already happened (D-133)
+
 #### Scenario: A streak breaks and starts again
 
 - **WHEN** a **streak** breaks and a new one reaches its seventh day
@@ -131,3 +138,15 @@ for sale (D-134, constraints 2 and 6).
 
 - **WHEN** a completion earns no **stamp**s
 - **THEN** no notice appears
+
+#### Scenario: Reduce-motion
+
+- **WHEN** motion is reduced and a completion earns **stamp**s
+- **THEN** the notice appears at once, since no celebration plays, and
+  appears and leaves without animating
+
+#### Scenario: A chest is opened
+
+- **WHEN** a **chest node** is opened for the first time
+- **THEN** its message reads "Chest opened · +12 Stamps", rather than a second
+  notice (D-134)

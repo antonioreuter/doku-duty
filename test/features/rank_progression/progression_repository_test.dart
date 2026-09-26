@@ -305,21 +305,23 @@ void main() {
   });
 
   group('what runs after the solve record', () {
-    Future<void> recordSheriff({Future<void> Function()? after}) =>
-        progression.record(
-          puzzleId: 'fixture-${Rank.sheriff.name}',
-          techniquesRequired: <Technique>{Technique.nakedSingle},
-          timeTaken: Duration.zero,
-          attempt: Attempt.fresh,
-          afterInTransaction: after,
-        );
+    Future<void> recordSheriff({
+      Future<void> Function({required bool isFirstSolve})? after,
+    }) => progression.record(
+      puzzleId: 'fixture-${Rank.sheriff.name}',
+      techniquesRequired: <Technique>{Technique.nakedSingle},
+      timeTaken: Duration.zero,
+      attempt: Attempt.fresh,
+      afterInTransaction: after,
+    );
 
     test('it sees the rank the solve just raised', () async {
       // The reason it runs *after*: a **rank** is derived from the **solve
       // record**s (D-102), so a hook that ran first would read the old one.
       Rank? seen;
       await recordSheriff(
-        after: () async => seen = await progression.playerRank(),
+        after: ({required bool isFirstSolve}) async =>
+            seen = await progression.playerRank(),
       );
 
       expect(seen, Rank.sheriff);
@@ -329,7 +331,9 @@ void main() {
       await recordSheriff();
 
       var ran = false;
-      await recordSheriff(after: () async => ran = true);
+      await recordSheriff(
+        after: ({required bool isFirstSolve}) async => ran = true,
+      );
 
       expect(
         ran,
@@ -342,12 +346,27 @@ void main() {
 
     test('a throw from it rolls the solve record back', () async {
       await expectLater(
-        recordSheriff(after: () async => throw StateError('minting failed')),
+        recordSheriff(
+          after: ({required bool isFirstSolve}) async =>
+              throw StateError('minting failed'),
+        ),
         throwsStateError,
       );
 
       expect(await packs.isSolved('fixture-${Rank.sheriff.name}'), isFalse);
       expect((await stats.lifetime()).puzzlesSolved, 0);
+    });
+
+    test('it is told whether this solve wrote the record (D-133)', () async {
+      final firsts = <bool>[];
+      Future<void> note({required bool isFirstSolve}) async =>
+          firsts.add(isFirstSolve);
+
+      await recordSheriff(after: note);
+      await recordSheriff(after: note);
+
+      // Only the first can pay the perfect solve.
+      expect(firsts, <bool>[true, false]);
     });
   });
 }

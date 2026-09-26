@@ -89,7 +89,8 @@ Read them there before proposing or implementing anything.
 | **Mistake** | A placement that disagrees with the puzzle's solution. Counted per placement, never per cell, and never lowered by a correction, an erase, or an undo (D-96). Overwriting an already-correct cell is exempt (D-05), and no note is ever one (D-14) |
 | **Attempt** | One run at a puzzle, and the **mistake**s recorded during it. Ends at the third in **strict mode** (D-95); starting again is the only route back to zero |
 | **Strict mode** | Opt-in setting, off until the player turns it on: immediate error flagging *and* a three-**mistake** limit, together in one switch (D-04, D-94) |
-| **Stamp** | The perk currency. Earned in play only, never purchasable |
+| **Stamp** | The perk currency. Earned in play only, never purchasable. The balance is the sum of the player's **earning**s, recomputed on every read and never stored as a number (D-133) |
+| **Earning** | One payment of **stamp**s, recorded against the event that earned it — a day, a puzzle, a **streak** day, a **node** — so the same event never pays twice (D-133). Distinct from an **award**, which is a **trophy**'s definition, not a payment |
 | **Perk** | An assist bought with Stamps — hint, reveal a cell, scan a unit, digit sweep, solve a row, auto-notes charge |
 | **Digit sweep** | The perk that reveals every remaining cell where a chosen digit belongs. Distinct from free candidate highlighting |
 | **Guest** | A player with no account. Keeps full local save, streaks, and cabinet; lacks cross-device sync and reinstall recovery |

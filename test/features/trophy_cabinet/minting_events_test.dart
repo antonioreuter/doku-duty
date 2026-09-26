@@ -6,6 +6,9 @@ import 'package:doku_duty/features/daily_challenge/domain/daily_resolver.dart';
 import 'package:doku_duty/features/daily_challenge/domain/daily_schedule.dart';
 import 'package:doku_duty/features/persistence/data/app_database.dart';
 import 'package:doku_duty/features/season_map/data/season_repository.dart';
+import 'package:doku_duty/features/season_map/domain/season_one.dart';
+import 'package:doku_duty/features/stamps/data/stamp_repository.dart';
+import 'package:doku_duty/features/stamps/domain/earning.dart';
 import 'package:doku_duty/features/trophy_cabinet/application/minting_service.dart';
 import 'package:doku_duty/features/trophy_cabinet/data/trophy_repository.dart';
 import 'package:doku_duty/features/trophy_cabinet/domain/award_catalogue.dart';
@@ -69,6 +72,7 @@ void main() {
       seasons: SeasonRepository(db),
       trophies: trophies,
       daily: _dailyOver(days),
+      stamps: StampRepository(db),
     );
     await SeasonRepository(db).enterSeason('dust-gulch');
   });
@@ -78,6 +82,9 @@ void main() {
     seasonId: 'dust-gulch',
     seasonName: 'Dust Gulch',
     position: position,
+    type: SeasonOne.season.nodes
+        .firstWhere((node) => node.position == position)
+        .type,
     nodeCount: 42,
     catalogue: catalogue,
   );
@@ -152,11 +159,12 @@ void main() {
     DatedDay dated(int day) =>
         DatedDay(date: DailyDate(2026, 4, day), isVerified: false);
 
-    test('the day lands on the calendar and the completion says so', () async {
-      final completion = await minting.completeDay(dated(9));
+    test('the day lands on the calendar and says what it earned', () async {
+      final earned = await minting.completeDay(dated(9));
 
-      expect(completion.date, DailyDate(2026, 4, 9));
-      expect(completion.streak, 1);
+      expect(earned, const <Earning>[
+        Earning(key: 'daily:2026-04-09', amount: 2),
+      ]);
       expect(
         (await days.calendar()).wasCompleted(DailyDate(2026, 4, 9)),
         isTrue,
@@ -186,6 +194,7 @@ void main() {
         seasons: SeasonRepository(db),
         trophies: trophies,
         daily: _FailsAfterWriting(days),
+        stamps: StampRepository(db),
       );
 
       await expectLater(failing.completeDay(dated(30)), throwsStateError);
@@ -302,27 +311,18 @@ void main() {
     });
   });
 
-  group('what still mints nothing', () {
-    test('no stamp is minted — add-stamps (18) still owns that', () async {
-      await complete(22);
-      for (var position = 1; position <= 42; position++) {
-        await complete(position);
-      }
+  group('a chest node files no trophy', () {
+    test(
+      'it pays its stamps and nothing else (add-stamps filled this)',
+      () async {
+        // Chests are at 11, 21, 32 and 42 (D-120). A **chest node** pays 12
+        // **stamp**s (D-66) and files no **trophy**; 42 files one only because
+        // it also closes the **season**.
+        await complete(11);
 
-      final tables = db.allTables.map((t) => t.actualTableName).toList();
-      expect(
-        tables.any((t) => t.contains('stamp')),
-        isFalse,
-        reason: 'a stamp table appeared before add-stamps',
-      );
-    });
-
-    test('a chest node mints nothing yet', () async {
-      // Chests are at 11, 21, 32 and 42 (D-120). Completing one earns a
-      // **stamp** under change 18 and, today, nothing at all — 42 is the
-      // exception only because it also closes the season.
-      await complete(11);
-      expect(await trophies.earned(), isEmpty);
-    });
+        expect(await trophies.earned(), isEmpty);
+        expect(await StampRepository(db).balance(), 12);
+      },
+    );
   });
 }

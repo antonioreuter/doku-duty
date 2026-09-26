@@ -47,11 +47,14 @@ class _RecordingSink implements BoardSink {
   }
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async => completed.add(puzzleId);
+  }) async {
+    completed.add(puzzleId);
+    return 0;
+  }
 }
 
 /// Records the order of publish and write, so one can be shown to precede the
@@ -73,11 +76,11 @@ class _OrderedSink implements BoardSink {
       order.add('writeNotes');
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }
 
 class _FailingSink implements BoardSink {
@@ -93,11 +96,11 @@ class _FailingSink implements BoardSink {
       throw StateError('disk full');
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }
 
 PuzzleController _controller(

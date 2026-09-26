@@ -2503,3 +2503,79 @@ have treated it then.
 
 **What breaks if reversed.** A daily finished after midnight silently costs a
 day the player earned, and the calendar shows it as missed.
+
+### D-133 · A stamp is an earning keyed by its event, and the balance is their sum
+
+Every payment of **stamp**s is an **earning**: a row recorded against a key
+naming the event that earned it, written with insert-or-ignore on that key.
+
+| Event | Key | Stamps (D-66) |
+|---|---|---|
+| A **daily challenge** completed | `daily:<date>` | 2 |
+| A puzzle's first solve, with no **mistake** | `perfect:<puzzleId>` | 3 |
+| The seventh day of a **streak**, and every seventh after | `streak:<run start>:<length>` | 10 |
+| A **chest node** opened | `chest:<season>:<position>` | 12 |
+| A **boss node** completed | `boss:<season>:<position>` | 20 |
+
+The balance is the sum of the **earning**s, read on every request. Nothing
+stores it. A player upgrading to the version that introduces **stamp**s starts
+at 0 — there is no back-pay, as D-124 settled for **trophy**s.
+
+**The perfect solve is the puzzle's first solve.** The **solve record** is
+written once per puzzle and the first one stands (a later, worse run cannot
+take away a perfect one), so the perfect-solve **earning** is paid only by the
+completion that writes the record. A board first solved with a **mistake** and
+then erased and finished cleanly earns nothing more: it is the same puzzle, and
+paying for the replay would make "clear the board and do it again" a way to
+farm the perk currency.
+
+**Rationale.** The key is what makes "each event pays once" structural rather
+than careful. A repeated write, a retried transaction, a **boss node** played
+again, a board completed twice — each lands on a key that already exists and
+changes nothing, without any caller having to check first.
+
+**A stored counter was rejected on two counts.** It cannot be made idempotent:
+`balance += 3` run twice pays twice, and the only defence is every caller
+remembering, which is how a counter drifts. And it cannot be merged: two
+devices that each earned offline hold two numbers, and neither the maximum nor
+the sum is right. A set of keyed **earning**s unions exactly the way the
+**calendar** does (`docs/TECH_STACK.md` §3b) — duplicates collapse, nothing is
+lost — and the balance recomputed from the union is correct by construction.
+
+**The streak key names the run.** A **streak** that breaks and starts again
+reaches a new seventh day, and that day pays: it is a different event from the
+first run's seventh. Keying on the run's first day and the length reached is
+what tells the two apart.
+
+**What breaks if reversed.** A stored balance double-pays on the first retried
+write and cannot survive change 29's sync. Paying the perfect solve on any
+clean completion turns the eraser into a **stamp** tap.
+
+### D-134 · Stamps are shown in the cabinet and in one notice after the celebration
+
+D-66's **streak** milestone is every seventh day of a run — 7, 14, 21 — and a
+restarted run pays again at its own seventh (D-133). The balance is shown in the
+**cabinet** and nowhere else: not on the **trail**, not on a **node** marker,
+not in the grid. When a completion earns, the player is told once, with the
+total, after its celebration has finished — or at once under reduce-motion. The
+notice is not modal, takes no input, dismisses itself, and never offers
+anything for sale. A **chest node** folds its 12 into the "Chest opened"
+message it already shows rather than adding a second notice.
+
+**Rationale.** D-114 records that a marker carrying a count drifts out of its
+anchor box; a **stamp** count on the **trail** would be that marker. The
+**cabinet** is where the player's permanent record already lives, and a balance
+is part of it.
+
+The notice waits for the celebration because the celebration is the reward and
+must not be talked over (constraint 6), and it takes no input because the tap
+after a solve belongs to the player (constraint 2). One total, not a line per
+**earning**: a perfect daily on a seventh day earns three times, and three
+notices for one solve is a slot machine, not a receipt.
+
+**Never offering anything for sale** is D-66 and constraint 10 applied at the
+one moment a player is most likely to accept an offer.
+
+**What breaks if reversed.** A balance on the **trail** re-opens D-114. A
+notice during the celebration competes with it; one that takes input steals
+the next tap; one per **earning** turns a solve into a payout sequence.

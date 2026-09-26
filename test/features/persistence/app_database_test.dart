@@ -16,11 +16,12 @@ void main() {
       // save, to 4 by add-technique-tutorials, which added the seen
       // **lesson**s, and to 5 by add-season-map, which added the **season** in
       // force, the **node**s completed on it, and the **boss node** attempt
-      // counts — then to 6, 7, and to 8 by add-puzzle-variants, which gave a
-      // puzzle its **cage**s. Asserted by number rather than loosely, so a schema change has
-      // to change a test that names the version — and, with it, produce a
-      // snapshot and a migration.
-      expect(db.schemaVersion, 8);
+      // counts — then to 6, 7, to 8 by add-puzzle-variants, which gave a
+      // puzzle its **cage**s, and to 9 by add-stamps, which added the
+      // **earning**s. Asserted by number rather than loosely, so a schema
+      // change has to change a test that names the version — and, with it,
+      // produce a snapshot and a migration.
+      expect(db.schemaVersion, 9);
       // Force the connection open — schemaVersion alone is a Dart getter and
       // would pass without sqlite ever being touched.
       await db.customSelect('SELECT 1').get();

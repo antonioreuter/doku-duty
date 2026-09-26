@@ -3,12 +3,12 @@
 A free-to-play sudoku game for iOS and Android (Flutter, single codebase) with a
 comedic frontier setting and a deliberately non-punitive design.
 
-**Current state: Milestones 0, 1 and 2 are complete.** Twenty-one changes are
+**Current state: Milestones 0, 1 and 2 are complete.** Twenty-two changes are
 archived — foundation, design system, persistence, remote config, puzzle
 engine, generation, grid and input, notes, note automation, provisional notes,
 the mistake model, completion effects, the pad's tools row, rank progression,
 technique tutorials, the season map, the trail path, the daily challenge, the
-trophy cabinet, puzzle variants, and the wiring of completion events. A player opens the app onto
+trophy cabinet, puzzle variants, the wiring of completion events, and stamps. A player opens the app onto
 the **trail**: 42 **node**s of a six-week **season**, walked in order, with
 **daily**, **free play**, and the **cabinet** beside it. They place values, mark
 notes in fixed positional slots, run a **chain test** in **provisional note**s,
@@ -19,11 +19,14 @@ first time a puzzle demands it, a **daily challenge** keeps a **streak** on the
 **calendar**, and every **boss node**, closed **season**, perfect month and
 **rank** reached mints a **trophy** into the **cabinet**. The six **variant
 node**s of every **season** play **killer**: **cage**s with a **cage sum**, graded
-on the same ladder, never reached from **free play** or the **daily**.
+on the same ladder, never reached from **free play** or the **daily**. Every
+daily, perfect solve, seventh **streak** day, **chest node** and **boss node**
+pays **stamp**s — each event once, as an **earning** in its cause's transaction
+— and the balance, a sum never stored, sits in the **cabinet** (D-133, D-134).
 
-Nothing is in progress. **Change 18, `add-stamps`, is next and unblocked.** It
-inherits a seam test from 15 (a **chest node** mints no **stamp**) to replace
-rather than edit. Run `openspec status` to confirm before starting.
+Nothing is in progress. **Change 19, `add-perks`, is next and unblocked** — the
+first thing that spends a **stamp**. Run `openspec status` to confirm before
+starting.
 
 Three archived changes are not in `openspec/BACKLOG.md`'s numbering:
 `add-pad-tools-row`, a corrective change that replaced six unlabelled glyph keys
@@ -60,7 +63,7 @@ iPhone closes all of it.**
 | File | Holds |
 |---|---|
 | `docs/IDEA.md` | Product description, world, cast, business model |
-| `docs/DECISIONS.md` | 132 numbered decisions (D-01 … D-132) with rationale |
+| `docs/DECISIONS.md` | 134 numbered decisions (D-01 … D-134) with rationale |
 | `docs/SPEC.md` | Long-form product spec |
 | `openspec/project.md` | Platform requirements, conventions, glossary |
 | `docs/TECH_STACK.md` | **Canonical for the stack** — client, AWS backend, auth and guest tier, purchases, offline and sync |

@@ -15,11 +15,13 @@ import 'package:doku_duty/features/season_map/domain/node_type.dart';
 import 'package:doku_duty/features/season_map/domain/season_one.dart';
 import 'package:doku_duty/features/season_map/domain/trail_progress.dart';
 import 'package:doku_duty/features/season_map/presentation/trail_node_marker.dart';
+import 'package:doku_duty/features/stamps/data/stamp_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/home_navigation.dart';
 import '../../support/trail_navigation.dart';
 import '../puzzle_engine/support/killer.dart';
 
@@ -105,7 +107,8 @@ void main() {
       await openTrailNode(tester, firstChest);
 
       expect(find.byType(PuzzleGrid), findsNothing);
-      expect(find.text('Chest opened'), findsOneWidget);
+      // The 12 folded into the message the chest already shows (D-134).
+      expect(find.text('Chest opened · +12 Stamps'), findsOneWidget);
     });
 
     testWidgets('completes on opening and advances the trail', (tester) async {
@@ -120,36 +123,35 @@ void main() {
       expect(progress.currentPosition, firstChest + 1);
     });
 
-    testWidgets('grants no currency — change 18 owns the balance', (
+    testWidgets('earns 12 stamps, exactly once — the seam change 18 filled', (
       tester,
     ) async {
-      // **The seam, named.** A **chest node** awards 12 Stamps under D-66, and
-      // `add-stamps` is where the balance lives. D-66 wants exactly one place
-      // that can mint one, so this change records the chest as opened and mints
-      // nothing. There is no balance to check yet — the assertion is that no
-      // table here pretends to be one.
+      // **Replaced, not edited.** This asserted that no table here pretended
+      // to be a balance, because `add-stamps` owned it. It does now, so the
+      // assertion it was written to make is gone — the way change 16 replaced
+      // the **boss node** seam. A **chest node** pays D-66's 12, once.
       await walkTo(firstChest);
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
       await openTrailNode(tester, firstChest);
 
-      final tables = await db
-          .customSelect(
-            "SELECT name FROM sqlite_master WHERE type='table' "
-            "AND name NOT LIKE 'sqlite_%'",
-          )
-          .map((row) => row.read<String>('name'))
-          .get();
-      expect(
-        tables.where(
-          (t) =>
-              t.contains('stamp') ||
-              t.contains('balance') ||
-              t.contains('currency'),
-        ),
-        isEmpty,
-        reason: 'the Stamp balance is add-stamps, and must have one home',
-      );
+      expect(await StampRepository(db).balance(), 12);
+
+      // Opened again — a replay, a double tap — pays nothing more (D-133),
+      // and the message says only what happened.
+      ScaffoldMessenger.of(
+        tester.element(find.byType(Scaffold).first),
+      ).removeCurrentSnackBar();
+      await tester.pumpAndSettle();
+      await openTrailNode(tester, firstChest);
+      expect(find.text('Chest opened'), findsOneWidget);
+      expect(await StampRepository(db).balance(), 12);
+      expect(await db.select(db.earnings).get(), hasLength(1));
+
+      // And the **cabinet**, built at launch and cached, reads it without a
+      // restart.
+      await goToCabinet(tester);
+      expect(find.bySemanticsLabel('Stamps, 12'), findsOneWidget);
     });
 
     testWidgets('cannot be failed and needs no network', (tester) async {

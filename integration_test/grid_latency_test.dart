@@ -97,9 +97,9 @@ class _NullSink implements BoardSink {
   Future<void> writeNotes(String puzzleId, Map<int, NoteSet> byCell) async {}
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }

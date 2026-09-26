@@ -287,6 +287,19 @@ puzzle, before a celebration finishes, without an explicit tap, or on a chest,
 boss, or daily node. Those rules are compiled in. A key that looks like one is
 ignored like any other unrecognised key.
 
+**Stamp values are compiled in, and nothing here can sell one.** The five
+**earning**s — 2 for a **daily challenge**, 3 for a perfect solve, 10 on every
+seventh day of a **streak**, 12 for a **chest node**, 20 for a **boss node** —
+are D-66's, and they live in `EarningRules`, not in this document. There is no
+key for a **stamp** value, a multiplier, a bonus weekend, a price, a bundle, or
+a conversion from money: **stamp**s are earned in play and can never be bought
+(D-66, constraint 10). A document carrying a key that looks like one is ignored
+like any other unrecognised key.
+
+Changing a value means amending D-66 and shipping a build — and it does not
+reprice what a player has already earned, because each **earning** records the
+amount it paid (D-133).
+
 ## Serving it
 
 - **URL** — supplied at build time, not committed:

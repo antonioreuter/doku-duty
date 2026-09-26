@@ -49,11 +49,11 @@ class _Sink implements BoardSink {
   }
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }
 
 PuzzleController _controller(
@@ -356,9 +356,9 @@ class _FailingSink implements BoardSink {
   }
 
   @override
-  Future<void> complete(
+  Future<int> complete(
     String puzzleId, {
     Set<Technique> techniquesRequired = const <Technique>{},
     Attempt attempt = Attempt.fresh,
-  }) async {}
+  }) async => 0;
 }

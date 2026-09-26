@@ -278,6 +278,42 @@ class Trophies extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{awardId};
 }
 
+/// Every **earning** of **stamp**s, keyed by the event that earned it (D-133).
+///
+/// **The balance is not stored anywhere.** It is the sum of these rows, read
+/// on demand, for the reason the **streak** is not stored: two devices holding
+/// two numbers cannot be reconciled, and two sets of keyed rows union cleanly
+/// (`docs/TECH_STACK.md` §3b). A stored counter could also be incremented
+/// twice by one event; a row keyed by its event cannot be written twice.
+///
+/// As with **trophy**s there is no way to unset a row. Spending, which is
+/// change 19's, will be a record of its own — never a deletion from here.
+///
+/// The row class is `EarningRow`, not drift's default `Earning`, which would
+/// collide with the domain type in every file that needed both — the trap
+/// `StreakFreezeLedgers` records.
+@DataClassName('EarningRow')
+class Earnings extends Table {
+  /// Names the event — `daily:<date>`, `perfect:<puzzleId>`,
+  /// `streak:<run start>:<length>`, `chest:<season>:<position>`,
+  /// `boss:<season>:<position>`. The primary key, so a second write of the
+  /// same event is ignored rather than paid.
+  TextColumn get key => text()();
+
+  /// **Stamp**s paid. D-66's value at the moment of earning; a later change
+  /// to D-66 does not reprice what was already earned.
+  IntColumn get amount => integer()();
+
+  DateTimeColumn get earnedAt => dateTime().clientDefault(DateTime.now)();
+
+  DateTimeColumn get updatedAt => dateTime().clientDefault(DateTime.now)();
+
+  BoolColumn get pendingUpload => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{key};
+}
+
 /// Which days the **daily challenge** was completed.
 ///
 /// **A set of dates, never a count.** The **streak** is recomputed from these
@@ -535,6 +571,7 @@ class Notes extends Table {
     CompletedDays,
     StreakFreezeLedgers,
     Trophies,
+    Earnings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -652,6 +689,19 @@ class AppDatabase extends _$AppDatabase {
       from7To8: (m, schema) async {
         await m.addColumn(schema.puzzles, schema.puzzles.cages);
       },
+      // Version 9 adds the **stamp** **earning**s. One new table and nothing
+      // else moves, so every saved game, **solve record**, **season**
+      // completion, **calendar** day and **trophy** carries over untouched —
+      // which the migration test asserts rather than assumes.
+      //
+      // It arrives *empty*: a player upgrading holds 0 **stamp**s whatever
+      // they completed before. No back-pay, for the reason there was no
+      // retroactive minting at version 7 (D-124, D-133) — the events before
+      // this version were never recorded as payments, and inventing them would
+      // be inventing a history.
+      from8To9: (m, schema) async {
+        await m.createTable(schema.earnings);
+      },
     ),
   );
 
@@ -682,5 +732,5 @@ class AppDatabase extends _$AppDatabase {
   /// version 1, against a throwaway version 2, so that the first real migration
   /// is not also the first attempt.
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 }

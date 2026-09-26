@@ -18,8 +18,8 @@ enum NodeType {
   /// A reward, carrying no puzzle. Four per **season**, at 25/50/75/100%.
   ///
   /// Opening one *is* the reward. It cannot be failed, costs nothing, and needs
-  /// no network. It grants no currency until `add-stamps` — D-66 wants exactly
-  /// one place that can mint a **stamp**, and this is not yet it.
+  /// no network. It pays 12 **stamp**s, once, through the **cabinet**'s
+  /// minting service — the one place a **stamp** is earned (D-66, D-133).
   chest,
 
   /// The midpoint and the finale. Two per **season**.

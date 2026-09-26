@@ -4,6 +4,7 @@ import '../../daily_challenge/application/daily_providers.dart';
 import '../../persistence/application/database_provider.dart';
 import '../../remote_config/application/remote_config_provider.dart';
 import '../../season_map/application/season_providers.dart';
+import '../../stamps/application/stamp_providers.dart';
 import '../../persistence/data/app_database.dart';
 import '../data/statistics_repository.dart';
 import '../data/trophy_repository.dart';
@@ -37,6 +38,7 @@ final mintingServiceProvider = Provider<MintingService>(
     seasons: ref.watch(seasonRepositoryProvider),
     trophies: ref.watch(trophyRepositoryProvider),
     daily: ref.watch(dailyServiceProvider),
+    stamps: ref.watch(stampRepositoryProvider),
   ),
 );
 

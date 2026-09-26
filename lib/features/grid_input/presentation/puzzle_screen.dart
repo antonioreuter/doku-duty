@@ -15,6 +15,8 @@ import '../../design_system/presentation/paper_grain.dart';
 import '../../persistence/domain/note_enums.dart';
 import '../../mistake_model/application/strict_mode.dart';
 import '../../completion_effects/domain/effect_event.dart';
+import '../../stamps/application/earn_notice.dart';
+import '../../stamps/presentation/earn_notice_view.dart';
 import '../../technique_tutorials/application/lesson_providers.dart';
 import '../../technique_tutorials/domain/lesson.dart';
 import '../../technique_tutorials/presentation/lesson_view.dart';
@@ -182,12 +184,21 @@ class _PuzzleBodyState extends State<_PuzzleBody>
     _effects,
   );
 
+  late final EarnNotice _earnNotice = EarnNotice(
+    earned: _controller.stampsEarned,
+    celebration: _effects,
+    isCelebrating: () => _effects.isSequenceRunning,
+  );
+
   @override
   void initState() {
     super.initState();
     // Touch the subscription so it is live from the first frame. A completion
     // in the first second of a resumed puzzle is an ordinary thing.
     _subscription;
+    // Live from the start for the same reason: the total can land before the
+    // first rebuild after the last cell.
+    _earnNotice;
   }
 
   /// The stored choice arrives after the first frame (D-85), and the player
@@ -212,6 +223,7 @@ class _PuzzleBodyState extends State<_PuzzleBody>
   @override
   void dispose() {
     unawaited(_subscription.cancel());
+    _earnNotice.dispose();
     _effects.dispose();
     _controller.dispose();
     super.dispose();
@@ -245,7 +257,11 @@ class _PuzzleBodyState extends State<_PuzzleBody>
       // Both, so a frame of the celebration and a change to the board each
       // repaint on their own. The effect layer never causes a board change, so
       // listening to it cannot cause a write (constraint 9).
-      listenable: Listenable.merge(<Listenable>[_controller, _effects]),
+      listenable: Listenable.merge(<Listenable>[
+        _controller,
+        _effects,
+        _earnNotice,
+      ]),
       builder: (context, _) {
         final session = _controller.state;
         final remaining = session.mistakesRemaining;
@@ -273,22 +289,40 @@ class _PuzzleBodyState extends State<_PuzzleBody>
                   onLeave: () => Navigator.of(context).maybePop(),
                 ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: PuzzleGrid(
-                    board: session.board,
-                    selectedCell: session.selectedCell,
-                    highlightedDigit: session.highlightedDigit,
-                    flaggedCells: session.flaggedCells,
-                    // Derived from the board every frame rather than stored.
-                    // Nothing is written when a **unit** completes, so nothing
-                    // can be written wrongly (D-48).
-                    completedCells: UnitCompletion.tintedCells(session.board),
-                    freshCells: _effects.freshCells,
-                    showCompletionTints: !widget.hideCompletionTints,
-                    effects: _effects.frame,
-                    onCellTapped: _onCellTapped,
-                  ),
+                child: Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: PuzzleGrid(
+                          board: session.board,
+                          selectedCell: session.selectedCell,
+                          highlightedDigit: session.highlightedDigit,
+                          flaggedCells: session.flaggedCells,
+                          // Derived from the board every frame rather than stored.
+                          // Nothing is written when a **unit** completes, so nothing
+                          // can be written wrongly (D-48).
+                          completedCells: UnitCompletion.tintedCells(
+                            session.board,
+                          ),
+                          freshCells: _effects.freshCells,
+                          showCompletionTints: !widget.hideCompletionTints,
+                          effects: _effects.frame,
+                          onCellTapped: _onCellTapped,
+                        ),
+                      ),
+                    ),
+                    // Over the top of a finished grid — the only grid it ever
+                    // appears over, because it waits for the solve's
+                    // celebration — and letting every tap through (D-134).
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: EarnNoticeView(
+                        total: _earnNotice.showing,
+                        reduceMotion: widget.reduceMotion,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // The pad goes when the **attempt** does. It accepts nothing at

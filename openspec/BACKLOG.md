@@ -14,9 +14,9 @@ Items are ordered by dependency. Milestones are checkpoints where something real
 
 ---
 
-## Status — 2026-09-25
+## Status — 2026-09-26
 
-**Twenty-one changes archived. Milestones 0, 1 and 2 are complete.** Items carry a
+**Twenty-two changes archived. Milestones 0, 1 and 2 are complete.** Items carry a
 **Done** line naming the archive directory they landed
 in; anything without one is not built. Six of the finished items — 6, 11, 14,
 15, 16 and 17 — still carry an **OUTSTANDING** note; read those before treating the
@@ -29,7 +29,7 @@ Android phone and a Developer-Mode iPhone closes all of them.
 | 0 — Foundation | 1–4 | Complete |
 | 1 — A sudoku you can play | 5, 5a, 6–11 | Complete |
 | 2 — A reason to come back | 12–17 | Complete |
-| *(unlabelled)* — the perk economy | 18, 19 | Not started; 18 unblocked |
+| *(unlabelled)* — the perk economy | 18, 19 | 18 done; 19 unblocked |
 | 3 — The reason it exists | 20–23 | Not started |
 | 4 — The business | 24–29 | Not started |
 | 5 — Ship quality | 30–34 | Not started |
@@ -355,13 +355,27 @@ at arm's length is a check by eye on the smallest real phone.
 ---
 
 ### 18. `add-stamps`
+**Done** — `openspec/changes/archive/2026-09-26-add-stamps/`.
 **Capabilities:** `stamps`
 The perk currency. Earning on daily completion, perfect solve, streak milestone, chest, and boss; a persisted balance that survives app kill; and the earn values in D-66. Never purchasable — no store surface of any kind.
 **Depends on:** 3, 14, 15.
-**Unblocked** — 3, 14 and 15 are all archived. 15 left a seam test asserting a
-**chest node** mints no **stamp**; replace it rather than edit it, the way 16
-replaced the **boss node** one.
 **Watch for:** the balance is save state, so it inherits constraint 9 — write on every change, never on a timer. A Stamp awarded and lost to a crash is worse than one never awarded.
+
+**Settled in D-133 and D-134:** each payment is an **earning** keyed by its
+event and the balance is their sum, never stored; the perfect solve pays on a
+puzzle's first solve only; the balance lives in the **cabinet**, and one notice
+after the celebration gives the total.
+
+**D-19's pacing was not revisited.** The variant positions carry it and were
+meant to be re-paced once **stamp**s were real; that wants a real season's
+earnings, not a guess, and `season_one.dart` says so.
+
+**OUTSTANDING — the device checks.** `integration_test/stamps_test.dart` passes
+on the iOS simulator and the Android emulator, and on no physical device.
+Two older runners found stale on the way — `mistakes_test.dart` expecting
+the app to open on **free play**, `notes_test.dart` looking for the "~" glyph
+the **tools row** replaced — were brought up to date after archive and pass on
+both platforms, so the hardware session starts from green.
 
 ### 19. `add-perks`
 **Capabilities:** `perks`

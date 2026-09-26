@@ -9,6 +9,7 @@ import '../../platform_shell/application/clock_provider.dart';
 import '../../platform_shell/routing/app_router.dart';
 import '../../puzzle_engine/domain/rank.dart';
 import '../../rank_progression/domain/player_rank.dart';
+import '../../stamps/application/stamp_providers.dart';
 import '../../trophy_cabinet/application/cabinet_providers.dart';
 import '../application/season_providers.dart';
 import '../domain/node_type.dart';
@@ -130,9 +131,9 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
 
     if (!node.type.bearsPuzzle) {
       // A **chest node** is opened, never played and never failed. It needs no
-      // puzzle, no network, and no payment — opening it *is* the reward. It
-      // grants no currency until `add-stamps`: D-66 wants exactly one place
-      // that can mint a **stamp**, and this is not yet it.
+      // puzzle, no network, and no payment — opening it *is* the reward, and
+      // it pays its 12 **stamp**s in the same write that completes it (D-66,
+      // D-133).
       await _openChest(node);
       return;
     }
@@ -169,24 +170,36 @@ class _TrailScreenState extends ConsumerState<TrailScreen> {
     // together (D-124). A **chest node** earns none today, and routing it the
     // same way is what stops that being a special case somebody has to
     // remember when it does.
-    await ref
+    final earned = await ref
         .read(mintingServiceProvider)
         .completeNode(
           seasonId: season.id,
           seasonName: season.name,
           position: node.position,
+          type: node.type,
           nodeCount: season.nodes.length,
           catalogue: ref.read(awardCatalogueProvider),
         );
     // The read that says where the player stands is cached and this screen
     // stays mounted, so the write has to say so (D-105).
     ref.invalidate(trailProgressProvider);
+    ref.invalidate(stampBalanceProvider);
+    ref.invalidate(earnedTrophiesProvider);
+    ref.invalidate(earnedIdsProvider);
     ref.read(puzzleOriginProvider.notifier).openFreePlay();
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Chest opened')));
+    // The **stamp**s go in the message the chest already shows rather than a
+    // second notice (D-134). A chest opened before pays nothing more (D-133),
+    // and then the message says only what happened.
+    final total = earned.fold<int>(0, (sum, e) => sum + e.amount);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          total > 0 ? 'Chest opened · +$total Stamps' : 'Chest opened',
+        ),
+      ),
+    );
   }
 }
 

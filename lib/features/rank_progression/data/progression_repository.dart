@@ -53,27 +53,31 @@ final class ProgressionRepository {
   /// derived from the records (D-102) and a hook that ran first would read the
   /// old one. It too runs for a puzzle already solved: a player who reached a
   /// **rank** before its **trophy** could mint receives it on their next solve.
+  /// It is told whether this call wrote the record, because the perfect-solve
+  /// **stamp**s belong to that solve alone (D-133).
   Future<void> record({
     required String puzzleId,
     required Set<Technique> techniquesRequired,
     required Duration timeTaken,
     required Attempt attempt,
     Future<void> Function()? alsoInTransaction,
-    Future<void> Function()? afterInTransaction,
+    Future<void> Function({required bool isFirstSolve})? afterInTransaction,
   }) {
     return _db.transaction(() async {
       await alsoInTransaction?.call();
-      await _recordSolve(
+      final isFirstSolve = await _recordSolve(
         puzzleId: puzzleId,
         techniquesRequired: techniquesRequired,
         timeTaken: timeTaken,
         attempt: attempt,
       );
-      await afterInTransaction?.call();
+      await afterInTransaction?.call(isFirstSolve: isFirstSolve);
     });
   }
 
-  Future<void> _recordSolve({
+  /// Writes the record, and says whether it did — false for a puzzle that
+  /// already held one.
+  Future<bool> _recordSolve({
     required String puzzleId,
     required Set<Technique> techniquesRequired,
     required Duration timeTaken,
@@ -96,7 +100,7 @@ final class ProgressionRepository {
     // board, leaves, resumes it and finishes it again raises every counter a
     // second time off one puzzle. The first record stands: a later, worse
     // run must not take away the perfect solve the first one earned.
-    if (await _packs.isSolved(puzzleId)) return;
+    if (await _packs.isSolved(puzzleId)) return false;
 
     await _stats.recordSolve(
       techniquesRequired: techniquesRequired,
@@ -104,6 +108,7 @@ final class ProgressionRepository {
       attempt: attempt,
     );
     await _packs.markSolved(puzzleId);
+    return true;
   }
 
   /// The player's **rank**: the hardest **rank** they have solved (D-102).

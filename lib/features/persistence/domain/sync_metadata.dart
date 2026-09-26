@@ -79,4 +79,10 @@ const List<String> syncableTables = <String>[
   // records when something first happened, so last-write-wins is backwards
   // here in the one direction that matters (D-124).
   'trophies',
+  // The **stamp** **earning**s. A set keyed by event, so it unions exactly the
+  // way the **calendar** does: an event earned on both devices is one row, an
+  // event earned on one is kept, and the balance recomputed from the union is
+  // right by construction (D-133). There is no balance column to list — the
+  // number is derived, so two devices have nothing to disagree about.
+  'earnings',
 ];

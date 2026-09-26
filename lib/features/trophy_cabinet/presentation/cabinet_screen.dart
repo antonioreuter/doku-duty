@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_system/presentation/doku_type.dart';
 import '../../design_system/presentation/paper_grain.dart';
 import '../../persistence/data/app_database.dart';
+import '../../stamps/application/stamp_providers.dart';
+import '../../stamps/presentation/stamp_balance.dart';
 import '../../technique_tutorials/presentation/lessons_screen.dart';
 import '../application/cabinet_providers.dart';
 import '../data/statistics_repository.dart';
@@ -47,6 +49,9 @@ class _CabinetScreenState extends ConsumerState<CabinetScreen> {
     final stats = _pastFirstFrame
         ? ref.watch(cabinetStatisticsProvider)
         : const AsyncValue<CabinetStatistics>.loading();
+    final stamps = _pastFirstFrame
+        ? ref.watch(stampBalanceProvider)
+        : const AsyncValue<int>.loading();
 
     // The **award**s are known without reading anything, so the shelf has its
     // shape on the first frame and fills in rather than appearing. An
@@ -67,6 +72,10 @@ class _CabinetScreenState extends ConsumerState<CabinetScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: <Widget>[
               Text('Cabinet', style: TypeRole.screenTitle.style),
+              const SizedBox(height: 12),
+              // Zero until the read lands, as the statistics are: zero is
+              // what a player holds until the database says otherwise.
+              StampBalance(balance: stamps.value ?? 0),
               const SizedBox(height: 12),
               Shelf(
                 awards: catalogue.awards,
