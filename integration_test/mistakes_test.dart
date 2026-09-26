@@ -27,6 +27,8 @@ import 'package:doku_duty/features/puzzle_engine/application/pack_installer.dart
 import 'package:doku_duty/features/puzzle_engine/application/pack_providers.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 
+import '../test/support/home_navigation.dart';
+
 /// The half of constraint 9 a host test cannot reach, for the **mistake**
 /// tally.
 ///
@@ -293,8 +295,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The app opens on the **trail** (D-111); the **rank** rows are **free
+    // play**'s, so walk there the way a player would.
+    await goToFreePlay(tester);
     await tester.tap(find.byKey(const ValueKey<String>('rank-deputy')));
     await tester.pumpAndSettle();
+    final skip = find.byKey(const ValueKey<String>('lesson-skip'));
+    if (skip.evaluate().isNotEmpty) {
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+    }
     expect(find.text('3 mistakes left'), findsOneWidget);
 
     // The painted grid is the largest square that fits its box, centred — the

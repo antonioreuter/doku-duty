@@ -12,6 +12,7 @@ import 'package:doku_duty/features/design_system/domain/note_ink.dart';
 import 'package:doku_duty/features/design_system/domain/shape.dart';
 import 'package:doku_duty/features/grid_input/presentation/grid_painter.dart';
 import 'package:doku_duty/features/grid_input/presentation/number_pad.dart';
+import 'package:doku_duty/features/grid_input/presentation/pad_tools.dart';
 import 'package:doku_duty/features/grid_input/presentation/puzzle_grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 import 'package:doku_duty/features/puzzle_engine/domain/grid_geometry.dart';
@@ -415,6 +416,10 @@ void main() {
   });
 
   // The three controls the second ink adds, on the device's own metrics.
+  //
+  // Named controls in the **tools row** since `add-pad-tools-row`, which
+  // replaced the `~`, `✕` and `✓` glyphs this first measured. The tappable
+  // box is found the way `notes_pad_test.dart` finds it on the host.
   testWidgets('the provisional controls meet the tap target on the device', (
     tester,
   ) async {
@@ -422,24 +427,34 @@ void main() {
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: Center(child: NumberPad(onKey: pressed.add)),
+        child: Center(
+          child: PadTools(
+            notesMode: true,
+            provisionalInk: false,
+            hasProvisionalNotes: true,
+            onKey: pressed.add,
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
 
-    for (final glyph in const <String>['~', '✕', '✓']) {
-      expect(find.text(glyph), findsOneWidget, reason: glyph);
+    for (final label in const <String>['Test', 'Discard test', 'Keep test']) {
+      expect(find.text(label), findsOneWidget, reason: label);
       final size = tester.getSize(
         find
-            .ancestor(of: find.text(glyph), matching: find.byType(SizedBox))
+            .ancestor(
+              of: find.text(label),
+              matching: find.byType(ConstrainedBox),
+            )
             .first,
       );
       expect(
         size.shortestSide,
         greaterThanOrEqualTo(DokuLayout.minimumTapTarget),
-        reason: glyph,
+        reason: label,
       );
-      await tester.tap(find.text(glyph));
+      await tester.tap(find.text(label));
       await tester.pump();
     }
 
