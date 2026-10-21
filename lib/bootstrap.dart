@@ -17,7 +17,7 @@ import 'features/season_map/application/season_providers.dart';
 ///
 /// Nothing that can wait belongs here. Every millisecond spent before
 /// [runApp] is paid on every cold start for the life of the app, and the
-/// 2-second budget in `openspec/project.md` is measured from here.
+/// 2-second budget in `docs/specs/platform-shell.md` is measured from here.
 Future<void> bootstrap(FlavourConfig config) async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
 

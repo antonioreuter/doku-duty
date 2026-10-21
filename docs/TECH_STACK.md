@@ -3,8 +3,8 @@
 Decided stack for Doku Duty, iOS and Android. Rationale for the framework choice
 is D-31 in `docs/DECISIONS.md`; the rest is argued below.
 
-This supersedes the stack table in `openspec/project.md` where the two disagree —
-three entries changed. See §6.
+This superseded the stack table `openspec/project.md` carried before OpenSpec was
+removed (D-135) — three entries changed. See §6.
 
 ---
 
@@ -268,7 +268,7 @@ commission saving is not worth an app removal.
 ## 3b. Offline and sync
 
 Full offline play is mandatory and is not negotiable. (It is stated in the
-platform paragraph of `openspec/config.yaml`, not in the numbered ten —
+platform paragraph of `CLAUDE.md`, not in the numbered ten —
 constraint 9 is *note state is written on every change, never on a timer*, which
 this section also depends on.) Network is needed only
 for ads, pack top-ups, cloud sync, and remote config, and every one degrades
@@ -346,7 +346,7 @@ nothing to gain by cheating, so server-side validation would cost real
 engineering to protect nothing.
 
 This changes if tournaments or leaderboards ship — those need server-verified
-solve times. Neither is in v1 (see the exclusions in `openspec/BACKLOG.md`).
+solve times. Neither is in v1 (see the exclusions in `docs/BACKLOG.md`).
 
 ### Resolved — who gets cloud sync
 
@@ -405,10 +405,10 @@ Retrofitting it after the ad logic ships means touching every placement.
 
 ---
 
-## 6. Changes from `openspec/project.md`
+## 6. Changes from the old `openspec/project.md` table
 
-Three entries differ. **Done:** `openspec/project.md` now defers to this file
-rather than restating the table, so the two cannot disagree again.
+Three entries differ. **Done:** `openspec/project.md` deferred to this file
+rather than restating the table, and was later removed with OpenSpec (D-135).
 
 **Isar → Drift.** Isar's maintenance status has been unstable. An unmaintained
 database for a game that must never lose a saved puzzle is a bad risk. Drift over
@@ -427,7 +427,7 @@ and Meta federation, plus a fully functional guest tier — see §2a.
 
 **CI/CD confirmed as GitHub Actions**, with Fastlane for both stores. (This
 previously cited `changes/setup-mobile-foundation/tasks.md` §7; that change was
-removed from `openspec/changes/` and will be regenerated, so the citation is to
+later removed with the rest of `openspec/changes/`, so the citation is to
 the backlog entry rather than to a change directory.)
 
 ---

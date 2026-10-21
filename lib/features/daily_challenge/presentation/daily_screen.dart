@@ -58,7 +58,7 @@ class _DailyScreenState extends ConsumerState<DailyScreen>
   /// showing yesterday: yesterday's board, at yesterday's **rank**, with
   /// today's square still blank. Changing the device's timezone on the
   /// emulator reproduced it exactly, which is the check
-  /// `openspec/changes/.../tasks.md` asked for and the reason it asked on
+  /// `add-daily-challenge`'s task list asked for and the reason it asked on
   /// hardware rather than in a widget test, where rebuilding the tree hides it.
   ///
   /// Guarded on the date rather than firing on every resume: re-reading the

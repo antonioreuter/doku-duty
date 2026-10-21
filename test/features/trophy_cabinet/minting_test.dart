@@ -87,7 +87,7 @@ void main() {
 
       // Same id, renamed by a later publish. The trophy is already minted and
       // is not re-minted or duplicated — which is why the id is the key and
-      // `openspec` says progress is keyed to it.
+      // `docs/specs/trophy-cabinet.md` says progress is keyed to it.
       await trophies.mint(
         award: Award(
           id: 'dust-gulch.boss.22',

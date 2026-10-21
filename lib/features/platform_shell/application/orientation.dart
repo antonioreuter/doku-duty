@@ -6,7 +6,7 @@ import '../domain/device_class.dart';
 /// The orientations each device class is allowed.
 ///
 /// Portrait is primary; landscape is a tablet affordance only
-/// (`openspec/project.md`, Platform requirements).
+/// (`docs/specs/platform-shell.md`).
 List<DeviceOrientation> orientationsFor(DeviceClass deviceClass) {
   return switch (deviceClass) {
     DeviceClass.phone => const [DeviceOrientation.portraitUp],

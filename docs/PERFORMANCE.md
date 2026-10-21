@@ -2,7 +2,7 @@
 
 Numbers that a later change has to design against, recorded when they were
 taken rather than reconstructed later. Nothing here is a budget — the budgets
-are the ten constraints in `openspec/config.yaml`. This is what the code
+are the ten constraints in `CLAUDE.md`. This is what the code
 actually costs.
 
 Each entry says what was measured, on what, and when. Re-measure rather than
@@ -95,7 +95,7 @@ the last twenty-six median 300 µs, because the painter's cost is the eighty-one
 cells it always draws, not the digits that accumulate in them.
 
 **These are an emulator and a simulator, and that is not the measurement the
-backlog asks for.** `openspec/BACKLOG.md` says of this change: *"the sub-100ms
+backlog asks for.** `docs/BACKLOG.md` says of this change: *"the sub-100ms
 latency budget is a product requirement, not an aspiration. Profile on a
 mid-tier Android device before this change is considered done."* An emulator
 runs on the desktop's CPU and will happily report a budget a £150 phone misses.
@@ -128,7 +128,7 @@ shaping, and a candidate's position comes from `NoteSet.slotOf` rather than from
 a layout pass.
 
 **Not measured on a phone.** The outstanding device profile recorded against
-change 6 in `openspec/BACKLOG.md` applies here too, and more so — this change
+change 6 in `docs/BACKLOG.md` applies here too, and more so — this change
 multiplies the glyph count by up to nine. When a mid-tier Android phone is
 available, measure it with a dense board rather than an empty one.
 
@@ -174,7 +174,7 @@ with the number of completed **unit**s rather than with the number of cells, the
 tint has become additive and D-48 is broken.
 
 **Still not measured on a phone**, and the gap is now recorded against two
-changes. The outstanding device profile for change 6 in `openspec/BACKLOG.md`
+changes. The outstanding device profile for change 6 in `docs/BACKLOG.md`
 applies here as well, and a cascade is a heavier frame than anything change 6
 measured — so one session on a mid-tier Android phone settles both. Haptics are
 not covered by any of this: the simulator reports success for a haptic it never
@@ -220,7 +220,7 @@ never waits on it. What the 35 ms does mean is that a **solve record** must
 never be moved onto a synchronous path.
 
 **Still not measured on a phone.** This inherits the outstanding device profile
-recorded against changes 6 and 11 in `openspec/BACKLOG.md` rather than adding a
+recorded against changes 6 and 11 in `docs/BACKLOG.md` rather than adding a
 third: a **cascade** is a heavier frame than anything here, so the phone session
 that settles those settles this too.
 

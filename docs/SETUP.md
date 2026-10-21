@@ -1,6 +1,6 @@
 # Working on Doku Duty
 
-How a change goes from an idea to merged specs. Read this once; after that the
+How a change goes from an idea to a merged spec. Read this once; after that the
 loop is three commands.
 
 ## The loop
@@ -8,29 +8,31 @@ loop is three commands.
 ```
    ┌─ idea is still loose ────────────────────────────────┐
    │  /grill-with-docs        settle it first             │
-   │  → docs/DECISIONS.md (D-NN) + glossary in project.md      │
+   │  → docs/DECISIONS.md (D-NN) + docs/GLOSSARY.md       │
    └──────────────────────────┬───────────────────────────┘
                               │ decisions settled
                               ▼
    ┌──────────────────────────────────────────────────────┐
-   │  PLAN     /opsx:propose <name>     (or /opsx:ff)     │
-   │           → proposal.md · specs/ · tasks.md          │
+   │  PLAN     /propose-change <name>                     │
+   │           → docs/changes/<name>/proposal.md, tasks.md│
+   │           → spec edits in docs/specs/                │
    └──────────────────────────┬───────────────────────────┘
                               ▼
    ┌──────────────────────────────────────────────────────┐
-   │  BUILD    /opsx:apply                                │
+   │  BUILD    /apply-change                              │
    │           tick each checkbox as you finish it        │
    └──────────────────────────┬───────────────────────────┘
                               ▼
    ┌──────────────────────────────────────────────────────┐
-   │  MERGE    /opsx:archive                              │
-   │           deltas fold into openspec/specs/           │
+   │  CLOSE    /finish-change                             │
+   │           review, backlog Done line, folder removed  │
    └──────────────────────────────────────────────────────┘
 ```
 
-Everything under `openspec/changes/<name>/` is temporary. `openspec/specs/` is
-the permanent record, and archive is the only thing that writes to it. That is
-the whole reason specs are worth keeping on a solo project.
+`docs/changes/<name>/` is temporary: the proposal and the task list, deleted
+when the change finishes. `docs/specs/` is the permanent record of behaviour,
+and a change edits it in place — the diff is the delta. The three commands are
+project skills in `.claude/skills/`; the project moved off OpenSpec in D-135.
 
 ## Which document wins
 
@@ -40,23 +42,26 @@ disagree, this table decides.
 | Question | Authoritative source |
 |---|---|
 | What are we building, and why | `docs/IDEA.md` |
-| What exactly does it do | `docs/SPEC.md` |
+| What exactly does it do | `docs/specs/<capability>.md`, then `docs/SPEC.md` |
 | Why is it that way | `docs/DECISIONS.md` — cite as `D-NN`, never re-argue |
 | Colour, type, motion, haptic values | `docs/DESIGN.md` — newest and most precise |
 | Character art and animation states | `docs/ART-BRIEF.md` |
-| The ten constraints | `openspec/config.yaml` (`context`) |
-| Tech stack, conventions, glossary | `openspec/project.md` |
-| What to build next, and in what order | `openspec/BACKLOG.md` |
-| Load-bearing systems that need test-first | `openspec/config.yaml` (`rules.tasks`) |
+| The ten constraints, platform requirements | `CLAUDE.md` |
+| Tech stack | `docs/TECH_STACK.md` |
+| Vocabulary | `docs/GLOSSARY.md` |
+| What to build next, and in what order | `docs/BACKLOG.md` |
+| Load-bearing systems that need test-first | `.claude/rules/testing.md` |
+| Code and spec conventions | `.claude/rules/dart-code.md`, `.claude/rules/specs.md` |
 
-Only `openspec/config.yaml` is injected automatically into every artifact
-prompt. Everything else is read on request, so name the file when it matters.
+`CLAUDE.md` is loaded on every turn, and each rule loads when a file under its
+paths is touched. Everything else is read on request, so name the file when it
+matters.
 
 ## Starting a change
 
-**1. Pick from the backlog.** `openspec/BACKLOG.md` is dependency-ordered across
+**1. Pick from the backlog.** `docs/BACKLOG.md` is dependency-ordered across
 six milestones. Take the lowest-numbered change whose dependencies are done. Do
-not start Milestone 2 work because it sounds more fun — the ordering is the
+not start later work because it sounds more fun — the ordering is the
 schedule.
 
 Each entry gives you the change name, its capability, the decisions it
@@ -68,37 +73,32 @@ cites. If the change needs a decision nobody has made, stop and run
 `/grill-with-docs` as its own session first. Do not invent the decision inside
 the proposal — a proposal is not where decisions get made.
 
-**3. Propose.**
+**3. Propose.** `/propose-change add-perks`
 
-```bash
-/opsx:propose add-notes        # step-by-step
-/opsx:ff add-notes             # same artifacts, one pass, no review gate
-```
-
-Use `ff` when the change is well understood and you want momentum. Use
-`propose` when you want to read each artifact as it lands.
-
-**4. Read what it produced.** Three files:
+**4. Read what it produced.**
 
 | Artifact | Answers | Notes |
 |---|---|---|
-| `proposal.md` | Why now, what changes, what it will not do | One screen. The "Not doing" section is the scope guard |
-| `specs/<capability>/spec.md` | What a player can observe | `MUST` + at least one `WHEN`/`THEN` scenario each |
-| `tasks.md` | The build order | Atomic checkboxes, tests interleaved |
+| `docs/changes/<name>/proposal.md` | Why now, what changes, what it will not do | One screen. The "Not doing" section is the scope guard |
+| `docs/specs/<capability>.md` (edited) | What a player can observe | `MUST` + at least one `WHEN`/`THEN` scenario each |
+| `docs/changes/<name>/tasks.md` | The build order | Atomic checkboxes, tests interleaved |
 
-There is no `design.md`. `doku-lite` folds its questions into the proposal
-template as three prompts — grid performance, offline/cold-start/app-kill, and
-new dependency — that you answer only where they apply.
+There is no design document. The proposal template carries its three questions
+— grid performance, offline/cold-start/app-kill, and new dependency — answered
+only where they apply.
 
-**5. Build.** `/opsx:apply` works the list top to bottom. Tick each box as you
+**5. Build.** `/apply-change` works the list top to bottom. Tick each box as you
 finish it, not in a batch at the end.
 
-**6. Archive.** `/opsx:archive` merges the delta into `openspec/specs/`.
+**6. Finish.** `/finish-change` checks every task is ticked and the specs match
+what was built, reviews the diff against the ten constraints, records any
+deviation as a `D-NN`, writes the backlog's **Done** line and the status in
+`CLAUDE.md`, and removes the change folder.
 
 ## When to skip specs
 
-Set `skip_specs: true` in the change's `.openspec.yaml` when nothing a player or
-another capability can observe changes — refactors, dependency bumps, CI work.
+A change where nothing a player or another capability can observe changes —
+refactors, dependency bumps, CI work — edits no spec, and its proposal says so.
 Anything observable needs a spec. When in doubt, write the spec; an unnecessary
 requirement is cheaper than a capability with no record.
 
@@ -115,41 +115,27 @@ the agent to "run grill-with-docs" silently does nothing.
 | `/to-spec`, `/to-tickets` | `research` — verify an external API claim |
 | `/implement`, `/wayfinder` | `tdd` — failing test first |
 | | `diagnosing-bugs` — before fixing anything |
-| | `code-review` — before archive |
+| | `code-review` — before finishing a change |
 
 Two rules that come from how these behave in practice:
 
 - **Run `/grill-with-docs` on its own, before the change exists.** Nested inside
-  a spec-driven workflow it runs the interview but silently writes no files.
-- **Its output goes to `docs/DECISIONS.md` and `openspec/project.md`**, not the
-  `CONTEXT.md` and `docs/adr/` it defaults to. `openspec/config.yaml` redirects
-  it. If a `CONTEXT.md` or `adr/` ever appears, the redirect stopped working.
+  another workflow it runs the interview but silently writes no files.
+- **Its output goes to `docs/DECISIONS.md` and `docs/GLOSSARY.md`**, not the
+  `CONTEXT.md` and `docs/adr/` it defaults to. `CLAUDE.md` redirects it. If a
+  `CONTEXT.md` or `adr/` ever appears, move the content and delete it.
 
 ## Things that will bite you
 
-- **`/opsx:verify` does not exist here.** The installed workflows are `propose`,
-  `explore`, `apply`, `ff`, `sync`, `archive`. Add more with
-  `openspec config set workflows '[...]'` then `openspec update`.
-- **The skills live in the plugin cache, not this repo** —
+- **The mattpocock skills live in the plugin cache, not this repo** —
   `~/.claude/plugins/cache/claude-plugins-official/mattpocock-skills/`. Editing
-  them is possible but a plugin update overwrites your edits.
-- **`rules:` in `openspec/config.yaml` must be a list of strings.** Write it as
-  a `|` block and OpenSpec silently discards every rule. Run any `openspec`
-  command and check for `must be an array of strings` warnings after editing.
-- **Capability names are permanent.** They become `openspec/specs/<name>/` and
-  `lib/features/<name>/`. Rename before the first archive or not at all.
-- **The colour count is stated inconsistently** across `docs/DESIGN.md`, `docs/SPEC.md`,
-  `docs/DECISIONS.md`, and the config. `docs/DESIGN.md` wins. Reconcile the others before
-  `add-design-system` is built.
-
-## Checking the setup is sound
-
-```bash
-openspec doctor                      # root health
-openspec schema validate doku-lite   # schema and templates
-openspec list                        # active changes
-openspec context                     # watch for parse warnings
-```
-
-Zero warnings from `openspec context` is the signal that your rules are actually
-reaching the agent rather than being dropped.
+  them is possible but a plugin update overwrites your edits. The three
+  workflow skills (`propose-change`, `apply-change`, `finish-change`) are this
+  repo's own, in `.claude/skills/`.
+- **Capability names are permanent.** They become `docs/specs/<name>.md` and
+  `lib/features/<name>/`, and the code cites them.
+- **Code comments never cite `docs/changes/`.** The folder is deleted when the
+  change finishes; cite the spec, the `D-NN`, or the backlog change number.
+- **Archived OpenSpec changes are in git only.** Read one with
+  `git show d5b7dc5:openspec/changes/archive/<dir>/proposal.md`; the backlog's
+  **Done** lines name the directories.

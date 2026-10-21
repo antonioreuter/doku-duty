@@ -3,7 +3,7 @@
 A funny, non-punitive sudoku game for iOS and Android. You are a frontier deputy
 who files numbers for a living.
 
-Flutter, single codebase. Spec-driven with OpenSpec.
+Flutter, single codebase. Spec-driven: behaviour is recorded in `docs/specs/`.
 
 ## Documents
 
@@ -11,14 +11,16 @@ Flutter, single codebase. Spec-driven with OpenSpec.
 |---|---|
 | `docs/IDEA.md` | Product description — start here |
 | `docs/SPEC.md` | Full specification |
-| `docs/DECISIONS.md` | 70 numbered decisions with rationale, cited as D-NN |
+| `docs/DECISIONS.md` | Numbered decisions with rationale, cited as D-NN |
 | `docs/DESIGN.md` | Colour, type, motion, and haptic values |
 | `docs/ART-BRIEF.md` | Brief for the character illustrator |
 | `docs/TECH_STACK.md` | The decided stack and why — canonical for technology choices |
 | `docs/doku-duty-game-bible.md` | Mechanism, rules, objectives, and narrative in one place |
-| `docs/SETUP.md` | How to set this repository up |
-| `openspec/BACKLOG.md` | 34 changes, dependency-ordered |
-| `openspec/project.md` | Conventions and glossary |
+| `docs/SETUP.md` | How a change is planned, built and finished |
+| `docs/BACKLOG.md` | 34 changes, dependency-ordered |
+| `docs/specs/` | What each capability does — the permanent record |
+| `docs/GLOSSARY.md` | The canonical vocabulary |
+| `CLAUDE.md` | The ten constraints, platform requirements, conventions |
 
 ## Running
 
@@ -83,17 +85,17 @@ The environment wins where both are present.
 ## Working on it
 
 ```
-/opsx:propose <name>
-/opsx:apply
-/opsx:archive
+/propose-change <name>
+/apply-change
+/finish-change
 ```
 
-See `docs/SETUP.md` for the full loop and `openspec/BACKLOG.md` for what to build
+See `docs/SETUP.md` for the full loop and `docs/BACKLOG.md` for what to build
 next.
 
 ## Rules that are not negotiable
 
-The ten constraints in `openspec/config.yaml`. The short version: nothing
+The ten constraints in `CLAUDE.md`. The short version: nothing
 punishes the player, nothing blocks input, notes hold nine candidates in fixed
 positions, no colour does two jobs, no ad interrupts a grid, and the game works
 offline. Every one has a decision behind it in `docs/DECISIONS.md`.

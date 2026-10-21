@@ -472,6 +472,6 @@ Check every delivered asset against all five. Anything that fails goes back.
 
 ## What this still does not cover
 
-Sound. `docs/DESIGN.md` §6 specifies per-event audio, `openspec/BACKLOG.md`
+Sound. `docs/DESIGN.md` §6 specifies per-event audio, `docs/BACKLOG.md`
 records that no change owns it and no audio package is chosen, and an image
 model does not help. It needs a decision and a change of its own.

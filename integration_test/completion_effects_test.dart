@@ -20,7 +20,7 @@ import 'package:doku_duty/features/puzzle_engine/domain/grid.dart';
 /// than a recording canvas that throws the drawing away.
 ///
 /// **Read emulator and simulator numbers as an upper bound on good hardware,
-/// never as the answer.** `openspec/BACKLOG.md` is explicit that the number
+/// never as the answer.** `docs/BACKLOG.md` is explicit that the number
 /// which counts for constraint 2 comes off a mid-tier Android phone, and that
 /// it is still outstanding for `add-grid-and-input` as well as for this
 /// capability. This file exists so that taking it is one command rather than a

@@ -2579,3 +2579,40 @@ one moment a player is most likely to accept an offer.
 **What breaks if reversed.** A balance on the **trail** re-opens D-114. A
 notice during the celebration competes with it; one that takes input steals
 the next tap; one per **earning** turns a solve into a payout sequence.
+
+### D-135 · OpenSpec is removed; its content moves into docs, CLAUDE.md, rules and skills
+
+The project stops using OpenSpec and the `doku-lite` schema. Nothing it held is
+dropped; each part moves to where it is read:
+
+| Was | Now |
+|---|---|
+| `openspec/specs/<capability>/spec.md` | `docs/specs/<capability>.md` |
+| `openspec/BACKLOG.md` | `docs/BACKLOG.md` |
+| `openspec/project.md` glossary | `docs/GLOSSARY.md` |
+| `openspec/project.md` platform requirements and conventions | `CLAUDE.md` and `.claude/rules/` |
+| The ten constraints in `openspec/config.yaml` | `CLAUDE.md` — the canonical copy |
+| The test-first list in `config.yaml` `rules.tasks` | `.claude/rules/testing.md` — the canonical copy |
+| The schema's artifact instructions and templates | `.claude/skills/propose-change/` |
+| The `apply` and `archive` guidance | `.claude/skills/apply-change/`, `.claude/skills/finish-change/` |
+| `openspec/changes/archive/` | Git history, at `d5b7dc5` |
+
+A change in progress lives in `docs/changes/<name>/` as `proposal.md` and
+`tasks.md`. Specs are edited in place in `docs/specs/` in the same change rather
+than written as deltas and merged on archive: the diff is the delta. When the
+change finishes, its folder is deleted and the backlog's **Done** line names the
+commit.
+
+**Rationale.** The value OpenSpec gave a solo project was a permanent record of
+behaviour under `specs/`, a forced scope section, and rules injected into every
+planning prompt. The first is a directory of Markdown, which needs no tool. The
+second is a template. The third is what `CLAUDE.md` and `.claude/rules/` do
+natively — and do on every turn, not only inside an OpenSpec command, which is
+where the constraints were invisible before. The tool's cost was a CLI, a
+schema whose `rules:` silently vanished when written as a block, a second
+copy of every requirement as a delta, and a merge step that existed only to
+reconcile the two.
+
+**What breaks if reversed.** Re-adopting OpenSpec means splitting `docs/specs/`
+back into `specs/<name>/spec.md` and moving the constraints back into
+`config.yaml`, where only OpenSpec commands see them.
